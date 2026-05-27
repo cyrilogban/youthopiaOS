@@ -9,4 +9,7 @@ env/
 
 # Local Architecture Documentation
 ARCHITECTURE.md
-TECH_STACK.md
+STACK.md
+
+# Local setup script
+setup.bat
