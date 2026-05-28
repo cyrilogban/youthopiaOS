@@ -10,6 +10,7 @@ class Settings:
     LUSY_BOT_TOKEN: str = os.getenv("LUSY_BOT_TOKEN", "")
     PETE_BOT_TOKEN: str = os.getenv("PETE_BOT_TOKEN", "")
     ED_BOT_TOKEN: str = os.getenv("ED_BOT_TOKEN", "")
+    EDDY_BOT_TOKEN: str = os.getenv("EDDY_BOT_TOKEN", os.getenv("ED_BOT_TOKEN", ""))
     SUSY_BOT_TOKEN: str = os.getenv("SUSY_BOT_TOKEN", "")
 
     # Supabase (Primary Database)
@@ -18,5 +19,6 @@ class Settings:
 
     # MongoDB (Optional Secondary Database)
     MONGO_URI: str = os.getenv("MONGO_URI", "")
+    MONGO_DATABASE: str = os.getenv("MONGO_DATABASE", "youthopiaos")
 
 settings = Settings()

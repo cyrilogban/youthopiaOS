@@ -6,4 +6,4 @@ from shared.services.container import ServiceContainer
 
 
 async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
-    await run_polling_bot(config, services, description="Pete moderation and security bot")
+    await run_polling_bot(config, services, description="Eddy events and scheduling bot")

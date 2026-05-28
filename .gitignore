@@ -10,6 +10,7 @@ env/
 # Local Architecture Documentation
 ARCHITECTURE.md
 STACK.md
+DECISIONS.md
 
 # Local setup script
 setup.bat
