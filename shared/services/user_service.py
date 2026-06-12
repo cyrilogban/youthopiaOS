@@ -58,6 +58,31 @@ class UserService:
         )
         return user
 
+    async def set_subscription(
+        self,
+        user_id: str,
+        bot_name: str,
+        subscription_type: str,
+        *,
+        enabled: bool = True,
+        schedule: str | None = None,
+        timezone: str = "UTC",
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return await self.db.upsert(
+            "user_subscriptions",
+            {
+                "user_id": user_id,
+                "bot_name": bot_name,
+                "subscription_type": subscription_type,
+                "enabled": enabled,
+                "schedule": schedule,
+                "timezone": timezone,
+                "metadata": metadata or {},
+            },
+            on_conflict="user_id,bot_name,subscription_type",
+        )
+
 
 _default_service: UserService | None = None
 

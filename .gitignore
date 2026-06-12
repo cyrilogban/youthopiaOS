@@ -11,6 +11,8 @@ env/
 ARCHITECTURE.md
 STACK.md
 DECISIONS.md
+ROADMAP.md
+THEO-ROADMAP.md
 
 # Local setup script
 setup.bat

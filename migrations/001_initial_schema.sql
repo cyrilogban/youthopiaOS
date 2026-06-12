@@ -81,6 +81,20 @@ create table if not exists chat_subscriptions (
     unique (chat_id, bot_name, subscription_type)
 );
 
+create table if not exists user_subscriptions (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references users(id) on delete cascade,
+    bot_name text not null check (bot_name in ('theo', 'lusy', 'pete', 'eddy', 'susy')),
+    subscription_type text not null,
+    enabled boolean not null default true,
+    schedule text,
+    timezone text not null default 'UTC',
+    metadata jsonb not null default '{}'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (user_id, bot_name, subscription_type)
+);
+
 create table if not exists roles (
     id uuid primary key default gen_random_uuid(),
     name text not null unique,
@@ -192,6 +206,7 @@ create index if not exists idx_telegram_chats_telegram_chat_id on telegram_chats
 create index if not exists idx_bot_chat_memberships_bot_name on bot_chat_memberships(bot_name);
 create index if not exists idx_chat_bot_settings_bot_name on chat_bot_settings(bot_name);
 create index if not exists idx_chat_subscriptions_bot_type on chat_subscriptions(bot_name, subscription_type);
+create index if not exists idx_user_subscriptions_bot_type on user_subscriptions(bot_name, subscription_type);
 create index if not exists idx_chat_memberships_user_id on chat_memberships(user_id);
 create index if not exists idx_xp_transactions_user_id on xp_transactions(user_id);
 create index if not exists idx_moderation_actions_user_id on moderation_actions(user_id);

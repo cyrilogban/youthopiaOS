@@ -21,6 +21,7 @@ class FakeSupabaseGateway:
             "bot_chat_memberships": {},
             "chat_bot_settings": {},
             "chat_subscriptions": {},
+            "user_subscriptions": {},
             "xp_transactions": {},
             "user_levels": {},
         }
@@ -223,3 +224,24 @@ async def test_group_message_registers_chat_and_default_bot_settings():
     assert membership["status"] == "active"
     assert membership["enabled"] is True
     assert settings["settings"] == {"translation": "kjv"}
+
+
+@pytest.mark.asyncio
+async def test_user_service_tracks_private_theo_subscription():
+    db = FakeSupabaseGateway()
+    service = UserService(db)
+    user = await service.create_user(display_name="Grace")
+
+    subscription = await service.set_subscription(
+        user["id"],
+        "theo",
+        "daily_devotional",
+        enabled=True,
+        timezone="Africa/Lagos",
+    )
+
+    assert subscription["user_id"] == user["id"]
+    assert subscription["bot_name"] == "theo"
+    assert subscription["subscription_type"] == "daily_devotional"
+    assert subscription["enabled"] is True
+    assert subscription["timezone"] == "Africa/Lagos"
