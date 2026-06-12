@@ -113,6 +113,15 @@ async def run_polling_bot(
     dispatcher.include_router(router or build_router(config.name, description))
 
     if commands:
+        from aiogram.types import BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators
+        try:
+            # Wipe out any ghost menus stuck in these specific layers
+            await bot.delete_my_commands(scope=BotCommandScopeAllPrivateChats())
+            await bot.delete_my_commands(scope=BotCommandScopeAllGroupChats())
+            await bot.delete_my_commands(scope=BotCommandScopeAllChatAdministrators())
+        except Exception:
+            pass
+        
         await bot.set_my_commands(commands)
         logger.info("Registered %d menu commands for %s.", len(commands), config.name)
 

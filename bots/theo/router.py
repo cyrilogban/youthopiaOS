@@ -255,22 +255,5 @@ def build_theo_router(description: str) -> Router:
         scheduler.start()
         logger.info("VOTD Scheduler started. Next run at 6:00 AM.")
 
-    @router.message(Command("broadcast_votd"))
-    async def manual_broadcast_votd(message: Message, services: ServiceContainer) -> None:
-        from bots.theo.services.delivery_service import DeliveryService
-        
-        await message.answer("Starting manual VOTD broadcast to all subscribers...")
-        delivery_service = DeliveryService(bot=message.bot, services=services)
-        
-        result = await delivery_service.broadcast_votd()
-        
-        summary = (
-            f"✅ **Broadcast Completed!**\n\n"
-            f"**Status:** {result.get('status')}\n"
-            f"**Reference:** {result.get('reference', 'N/A')}\n"
-            f"**Successfully Sent:** {result.get('success_count', 0)}\n"
-            f"**Failed:** {result.get('failure_count', 0)}"
-        )
-        await message.answer(summary, parse_mode="Markdown")
 
     return router
