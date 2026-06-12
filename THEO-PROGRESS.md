@@ -28,11 +28,16 @@ Today, we successfully built and integrated the automated Verse of the Day (VOTD
 
 ## 5. User & Admin Subscription Control
 - **Menu Overhaul**: Removed the "Subscribe" button from the ReplyKeyboardMarkup (grid menu) to clean up the interface.
-- **Sidebar Integration**: Added `/subscribe` and `/unsubscribe` commands to `THEO_COMMANDS` in `bots/theo/bot.py` so they natively appear in Telegram's sidebar menu.
+- **Sidebar Integration**: Added `/subscribe` and `/unsubscribe` commands to `THEO_COMMANDS` in `bots/theo/bot.py`. User reset commands natively using BotFather to wipe stale cache.
 - **Admin Security**: Added strict permissions in `bots/theo/router.py`. If the commands are used in a group chat, Theo verifies that the sender is an Administrator or Creator before toggling the subscription.
 - **Database Resolution**: Handled missing `user_subscriptions` table by providing the raw SQL to update the Supabase schema cache.
+- **Duplicate Checks**: Added intelligent checks before updating subscriptions. If a user or group is already subscribed, the bot will notify them instead of repeating the action.
 
-## 6. Automated Scheduling
+## 6. UI & Text Refinements
+- **Personalized Responses**: Updated subscription text to dynamically inject the Telegram group's name (e.g., `✅ **Youth Ministry Team** is now subscribed...`).
+- **Schedule Transparency**: Included the expected delivery time natively in the subscription confirmation (`...You will receive it daily at 6:00 AM in the morning.`).
+
+## 7. Automated Scheduling
 - **APScheduler**: Integrated `APScheduler` into the `aiogram` startup hooks.
 - **Daily Cron Job**: Configured an invisible background timer to wake up and trigger `DeliveryService.broadcast_votd()` exactly at **6:00 AM** (`Africa/Lagos` timezone) every single day.
 - **Manual Testing**: Added a hidden `/broadcast_votd` command so admins can manually trigger the broadcast and receive a success/failure summary report without waiting for the morning schedule.

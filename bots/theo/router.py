@@ -111,6 +111,18 @@ def build_theo_router(description: str) -> Router:
     async def subscribe(message: Message, services: ServiceContainer) -> None:
         if message.chat.type == "private":
             user = await services.identity.resolve_telegram_user(message.from_user)
+            
+            existing_sub = await services.supabase.find_one_multi(
+                "user_subscriptions",
+                {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
+            )
+            if existing_sub and existing_sub.get("enabled"):
+                await message.answer(
+                    "ℹ️ You are already subscribed to Theo's Bible verse of the day.",
+                    reply_markup=theo_menu(),
+                )
+                return
+
             await services.users.set_subscription(
                 user_id=user["id"],
                 bot_name="theo",
@@ -118,7 +130,7 @@ def build_theo_router(description: str) -> Router:
                 enabled=True,
             )
             await message.answer(
-                "✅ You are now subscribed to Theo's Verse of the Day in your DMs.",
+                "✅ You are now subscribed to Theo's Bible verse of the day. You will receive it daily at 6:00 AM in the morning.",
                 reply_markup=theo_menu(),
             )
             return
@@ -137,6 +149,18 @@ def build_theo_router(description: str) -> Router:
         except Exception:
             pass
 
+        existing_sub = await services.supabase.find_one_multi(
+            "chat_subscriptions",
+            {"chat_id": chat["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
+        )
+        if existing_sub and existing_sub.get("enabled"):
+            await message.answer(
+                f"ℹ️ **{message.chat.title}** is already subscribed to Theo's Bible verse of the day.",
+                parse_mode="Markdown",
+                reply_markup=theo_menu(),
+            )
+            return
+
         await services.chats.set_subscription(
             bot_name="theo",
             chat_id=chat["id"],
@@ -144,7 +168,8 @@ def build_theo_router(description: str) -> Router:
             enabled=True,
         )
         await message.answer(
-            "✅ This group is now subscribed to Theo's Verse of the Day.",
+            f"✅ **{message.chat.title}** is now subscribed to Theo's Bible verse of the day. You will receive it daily at 6:00 AM in the morning.",
+            parse_mode="Markdown",
             reply_markup=theo_menu(),
         )
 
@@ -152,6 +177,18 @@ def build_theo_router(description: str) -> Router:
     async def unsubscribe(message: Message, services: ServiceContainer) -> None:
         if message.chat.type == "private":
             user = await services.identity.resolve_telegram_user(message.from_user)
+            
+            existing_sub = await services.supabase.find_one_multi(
+                "user_subscriptions",
+                {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
+            )
+            if not existing_sub or not existing_sub.get("enabled"):
+                await message.answer(
+                    "ℹ️ You are not currently subscribed to Theo's Bible verse of the day.",
+                    reply_markup=theo_menu(),
+                )
+                return
+
             await services.users.set_subscription(
                 user_id=user["id"],
                 bot_name="theo",
@@ -159,7 +196,7 @@ def build_theo_router(description: str) -> Router:
                 enabled=False,
             )
             await message.answer(
-                "🚫 You have unsubscribed from Theo's Verse of the Day.",
+                "🚫 You have unsubscribed from Theo's Bible verse of the day.",
                 reply_markup=theo_menu(),
             )
             return
@@ -178,6 +215,18 @@ def build_theo_router(description: str) -> Router:
         except Exception:
             pass
 
+        existing_sub = await services.supabase.find_one_multi(
+            "chat_subscriptions",
+            {"chat_id": chat["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
+        )
+        if not existing_sub or not existing_sub.get("enabled"):
+            await message.answer(
+                f"ℹ️ **{message.chat.title}** is not currently subscribed to Theo's Bible verse of the day.",
+                parse_mode="Markdown",
+                reply_markup=theo_menu(),
+            )
+            return
+
         await services.chats.set_subscription(
             bot_name="theo",
             chat_id=chat["id"],
@@ -185,7 +234,8 @@ def build_theo_router(description: str) -> Router:
             enabled=False,
         )
         await message.answer(
-            "🚫 This group has been unsubscribed from Theo's Verse of the Day.",
+            f"🚫 **{message.chat.title}** has been unsubscribed from Theo's Bible verse of the day.",
+            parse_mode="Markdown",
             reply_markup=theo_menu(),
         )
 
