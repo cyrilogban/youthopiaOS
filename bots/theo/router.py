@@ -34,8 +34,30 @@ def build_theo_router(description: str) -> Router:
     @router.message(Command("start"))
     async def start(message: Message, services: ServiceContainer) -> None:
         await register_group_chat(message, services, "theo")
+        
+        welcome_text = (
+            "<blockquote>"
+            "Hi there, I'm Theo. 🤍\n\n"
+            "I serve <b>YOUTHOPIA BIBLE COMMUNITY</b> as your dedicated Bible companion bot. "
+            "Every YouTopian in this community has me in their corner, keeping Scripture alive in their daily journey.\n\n"
+            "Think of me as the community's digital anchor to God's Word.\n\n"
+            "<b>What I bring to you:</b>\n"
+            "🌅 Daily Verse every morning at 6 AM when you subscribe to daily verses\n"
+            "📖 Instant Scripture lookup on demand in the chat e.g John 3:16\n"
+            "👤 Community profile to track your growth\n\n"
+            "Welcome to the family, YouTopian. Use the menu below to get started. 💜\n\n"
+            "<b>Join our communities:</b>\n"
+            "📱 <a href=\"https://t.me/youthopiabiblecommunity\">Telegram Community</a>\n"
+            "💬 <a href=\"https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn\">WhatsApp Community</a>\n\n"
+            "<i>Sharing God's Love All The Way.</i>\n"
+            "#YouThopia #YouThopiaBibleCommunity"
+            "</blockquote>"
+        )
+        
         await message.answer(
-            "Theo devotional bot is connected to YouThopiaOS.",
+            welcome_text,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
             reply_markup=theo_menu(),
         )
 
