@@ -173,14 +173,16 @@ def build_theo_router(description: str) -> Router:
         trust = user.get("trust_score", 100)
 
         await message.answer(
-            "✝ YOUTHOPIA  BIBLE PROFILE\n\n"
+            "✝ YOUTHOPIA  BIBLE  COMMUNITY PROFILE\n\n"
+            "<blockquote>"
             f"{name}  ·  Member since {join_date}\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"  Level {level}           {xp} XP\n"
             f"  Trust Score {trust}    Bible: {translation}\n"
             f"  Daily Verse: {subscribed_text}\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "</blockquote>\n\n"
             f"  Last seen: {last_seen_text}",
+            parse_mode="HTML",
             reply_markup=theo_menu(),
         )
 
