@@ -69,19 +69,16 @@ def build_theo_router(description: str) -> Router:
         await register_group_chat(message, services, "theo")
         
         welcome_text = (
-            "Hi there, I'm Theo. 🤍\n\n"
-            "I serve <b>YOUTHOPIA BIBLE COMMUNITY</b> as your dedicated Bible companion bot. "
-            "Every YouTopian in this community has me in their corner, keeping Scripture alive in their daily journey.\n\n"
-            "Think of me as the community's digital anchor to God's Word.\n\n"
-            "<b>What I bring to you:</b>\n"
-            "🌅 Daily Verse every morning at 6 AM when you subscribe to daily verses\n"
-            "📖 Instant Scripture lookup on demand in the chat e.g John 3:16\n"
-            "👤 Community profile to track your growth\n\n"
-            "Welcome to the family, YouTopian. Use the buttons below to get started. 💜\n\n"
-            "<b>Join our communities:</b>\n"
-            "📱 Telegram Community\n"
-            "💬 WhatsApp Community\n\n"
-            "<i>Sharing God's Love All The Way.</i>"
+            "I'm Theo.\n\n"
+            "The Bible bot that lives inside\n"
+            "<b>YOUTHOPIA BIBLE COMMUNITY</b>.\n\n"
+            "My job is simple: keep every YouTopian\n"
+            "connected to God's Word, every single day.\n\n"
+            "6 AM verse, daily\n"
+            "Any Scripture on demand\n"
+            "Your YouTopian profile and growth stats\n\n"
+            "Set up your experience below and let's go.\n\n"
+            "Sharing God's Love All The Way."
         )
         
         if THEO_PHOTO:
@@ -373,7 +370,8 @@ def build_theo_router(description: str) -> Router:
         try:
             photos = await bot.get_user_profile_photos(bot.id)
             if photos and photos.photos:
-                THEO_PHOTO = photos.photos[0][-1].file_id
+                sizes = photos.photos[0]
+                THEO_PHOTO = sizes[len(sizes) // 3].file_id if len(sizes) >= 2 else sizes[0].file_id
         except Exception:
             pass
 
