@@ -3,6 +3,7 @@ from __future__ import annotations
 import calendar
 import random
 from datetime import date, datetime
+from typing import Any
 
 from aiogram import F
 from aiogram import Router
@@ -114,7 +115,7 @@ def build_theo_router(description: str) -> Router:
     @router.callback_query(F.data == "profile")
     async def inline_profile(callback: CallbackQuery, services: ServiceContainer) -> None:
         await callback.answer()
-        await send_profile(callback.message, services)
+        await send_profile(callback.message, services, telegram_user=callback.from_user)
 
     @router.callback_query(F.data == "translation")
     async def inline_translation(callback: CallbackQuery) -> None:
@@ -123,10 +124,11 @@ def build_theo_router(description: str) -> Router:
             "Send /translation KJV, /translation ASV, /translation WEB, or /translation BBE.",
         )
 
-    async def send_profile(message: Message, services: ServiceContainer) -> None:
+    async def send_profile(message: Message, services: ServiceContainer, telegram_user: Any | None = None) -> None:
         await register_group_chat(message, services, "theo")
-        user = await services.identity.resolve_telegram_user(message.from_user)
-        name = message.from_user.first_name or user.get("display_name", "Beloved")
+        user_from = telegram_user or message.from_user
+        user = await services.identity.resolve_telegram_user(user_from)
+        name = user_from.first_name or user.get("display_name", "Beloved")
 
         # Check daily devotional subscription
         sub = await services.supabase.find_one_multi(
@@ -155,7 +157,7 @@ def build_theo_router(description: str) -> Router:
             join_date = "Unknown"
 
         # Get last_seen_at from telegram_accounts
-        account = await services.supabase.find_one("telegram_accounts", "telegram_id", message.from_user.id)
+        account = await services.supabase.find_one("telegram_accounts", "telegram_id", user_from.id)
         if account and account.get("last_seen_at"):
             try:
                 last_dt = datetime.fromisoformat(account["last_seen_at"].replace("Z", "+00:00"))
