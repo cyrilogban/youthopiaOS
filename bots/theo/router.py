@@ -38,12 +38,12 @@ THEO_PHOTO: str | None = None
 def welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📱 Telegram Community", url="https://t.me/youthopiabiblecommunity"),
-            InlineKeyboardButton(text="💬 WhatsApp Community", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
+            InlineKeyboardButton(text="Telegram", url="https://t.me/youthopiabiblecommunity"),
+            InlineKeyboardButton(text="WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
         ],
         [
-            InlineKeyboardButton(text="👤 My Profile", callback_data="profile"),
-            InlineKeyboardButton(text="🔤 Translation", callback_data="translation"),
+            InlineKeyboardButton(text="My Profile", callback_data="profile"),
+            InlineKeyboardButton(text="Translation", callback_data="translation"),
         ],
     ])
 
