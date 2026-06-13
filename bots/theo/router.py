@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+
 from aiogram import F
 from aiogram import Router
 from aiogram.filters import Command
@@ -13,6 +15,15 @@ from bots.theo.handlers.messages import handle_bible_detection
 VALID_TRANSLATIONS = {"kjv", "asv", "web", "bbe"}
 PROFILE_BUTTON = "My Profile"
 TRANSLATION_BUTTON = "Translation"
+
+FOOTER_SCRIPTURES = [
+    "Let your light shine before others. — Matthew 5:16",
+    "I can do all things through Christ who strengthens me. — Philippians 4:13",
+    "For God has not given us a spirit of fear, but of power. — 2 Timothy 1:7",
+    "Be strong and courageous. Do not be afraid. — Joshua 1:9",
+    "The Lord is my shepherd; I shall not want. — Psalm 23:1",
+    "Trust in the Lord with all your heart. — Proverbs 3:5",
+]
 
 
 def theo_menu() -> ReplyKeyboardMarkup:
@@ -86,11 +97,35 @@ def build_theo_router(description: str) -> Router:
     async def send_profile(message: Message, services: ServiceContainer) -> None:
         await register_group_chat(message, services, "theo")
         user = await services.identity.resolve_telegram_user(message.from_user)
+        name = message.from_user.first_name or user.get("display_name", "Beloved")
+
+        # Check daily devotional subscription
+        sub = await services.supabase.find_one_multi(
+            "user_subscriptions",
+            {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
+        )
+        subscribed = "Subscribed" if (sub and sub.get("enabled")) else "Not subscribed"
+
+        # Check translation preference
+        state_row = await services.supabase.find_one_multi(
+            "bot_user_state",
+            {"bot_name": "theo", "user_id": user["id"]}
+        )
+        state = (state_row.get("state", {}) or {}) if state_row else {}
+        translation = state.get("translation", "KJV").upper()
+
+        verse_text = random.choice(FOOTER_SCRIPTURES)
+
         await message.answer(
-            "Your Community Profile is Active\n"
-            f"Level: {user.get('level', 1)}\n"
-            f"XP: {user.get('total_xp', 0)}\n"
-            f"Trust: {user.get('trust_score', 100)}",
+            "✝️  YouThopia Profile\n\n"
+            "Beloved Child of God,\n"
+            "you are doing well in your walk.\n\n"
+            f"📖 Name: {name}\n"
+            f"⛰ Level: {user.get('level', 1)}  |  XP: {user.get('total_xp', 0)}\n"
+            f"🕊 Trust: {user.get('trust_score', 100)}\n"
+            f"🔤 {translation}\n"
+            f"🌅 Daily Verse: {subscribed}\n\n"
+            f"\"{verse_text}\"",
             reply_markup=theo_menu(),
         )
 
