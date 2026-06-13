@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import calendar
 import random
+from datetime import date, datetime
 
 from aiogram import F
 from aiogram import Router
@@ -22,15 +24,6 @@ from bots.theo.handlers.messages import handle_bible_detection
 VALID_TRANSLATIONS = {"kjv", "asv", "web", "bbe"}
 PROFILE_BUTTON = "My Profile"
 TRANSLATION_BUTTON = "Translation"
-
-FOOTER_SCRIPTURES = [
-    "Let your light shine before others. — Matthew 5:16",
-    "I can do all things through Christ who strengthens me. — Philippians 4:13",
-    "For God has not given us a spirit of fear, but of power. — 2 Timothy 1:7",
-    "Be strong and courageous. Do not be afraid. — Joshua 1:9",
-    "The Lord is my shepherd; I shall not want. — Psalm 23:1",
-    "Trust in the Lord with all your heart. — Proverbs 3:5",
-]
 
 THEO_PHOTO: str | None = None
 
@@ -140,7 +133,7 @@ def build_theo_router(description: str) -> Router:
             "user_subscriptions",
             {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
         )
-        subscribed = "Subscribed" if (sub and sub.get("enabled")) else "Not subscribed"
+        subscribed_text = "Subscribed" if (sub and sub.get("enabled")) else "Not subscribed"
 
         # Check translation preference
         state_row = await services.supabase.find_one_multi(
@@ -150,18 +143,44 @@ def build_theo_router(description: str) -> Router:
         state = (state_row.get("state", {}) or {}) if state_row else {}
         translation = state.get("translation", "KJV").upper()
 
-        verse_text = random.choice(FOOTER_SCRIPTURES)
+        # Format join date from users.created_at
+        created = user.get("created_at")
+        if created:
+            try:
+                dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                join_date = f"{calendar.month_abbr[dt.month]} {dt.year}"
+            except Exception:
+                join_date = "Unknown"
+        else:
+            join_date = "Unknown"
+
+        # Get last_seen_at from telegram_accounts
+        account = await services.supabase.find_one("telegram_accounts", "telegram_id", message.from_user.id)
+        if account and account.get("last_seen_at"):
+            try:
+                last_dt = datetime.fromisoformat(account["last_seen_at"].replace("Z", "+00:00"))
+                if last_dt.date() == date.today():
+                    last_seen_text = "Today"
+                else:
+                    last_seen_text = f"{calendar.month_abbr[last_dt.month]} {last_dt.day}"
+            except Exception:
+                last_seen_text = "Today"
+        else:
+            last_seen_text = "Today"
+
+        level = user.get("level", 1)
+        xp = user.get("total_xp", 0)
+        trust = user.get("trust_score", 100)
 
         await message.answer(
-            "✝️  YouThopia Profile\n\n"
-            "Beloved Child of God,\n"
-            "you are doing well in your walk.\n\n"
-            f"📖 Name: {name}\n"
-            f"⛰ Level: {user.get('level', 1)}  |  XP: {user.get('total_xp', 0)}\n"
-            f"🕊 Trust: {user.get('trust_score', 100)}\n"
-            f"🔤 {translation}\n"
-            f"🌅 Daily Verse: {subscribed}\n\n"
-            f"\"{verse_text}\"",
+            "✝ YOUTHOPIA  BIBLE PROFILE\n\n"
+            f"{name}  ·  Member since {join_date}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  Level {level}           {xp} XP\n"
+            f"  Trust Score {trust}    Bible: {translation}\n"
+            f"  Daily Verse: {subscribed_text}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  Last seen: {last_seen_text}",
             reply_markup=theo_menu(),
         )
 
