@@ -7,9 +7,10 @@ from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
 
 from core.telegram_runtime import build_router, register_group_chat
 from shared.services.container import ServiceContainer
+from bots.theo.handlers.messages import handle_bible_detection
 
 
-VALID_TRANSLATIONS = {"kjv", "asv", "niv", "nkjv"}
+VALID_TRANSLATIONS = {"kjv", "asv", "web", "bbe"}
 PROFILE_BUTTON = "My Profile"
 TRANSLATION_BUTTON = "Translation"
 
@@ -75,7 +76,7 @@ def build_theo_router(description: str) -> Router:
     @router.message(F.text == TRANSLATION_BUTTON)
     async def menu_translation(message: Message) -> None:
         await message.answer(
-            "Send /translation KJV, /translation ASV, /translation NIV, or /translation NKJV.",
+            "Send /translation KJV, /translation ASV, /translation WEB, or /translation BBE.",
             reply_markup=theo_menu(),
         )
 
@@ -93,19 +94,41 @@ def build_theo_router(description: str) -> Router:
             return
 
         chat = await register_group_chat(message, services, "theo")
-        if not chat:
-            await message.answer("Translation setting is currently only supported in groups.")
-            return
-
-        await services.chats.set_bot_settings(
-            bot_name="theo",
-            chat_id=chat["id"],
-            settings={"translation": translation},
-        )
-        await message.answer(
-            f"Theo will now use {translation.upper()} for this group.",
-            reply_markup=theo_menu(),
-        )
+        if chat:
+            # Group Chat
+            await services.chats.set_bot_settings(
+                bot_name="theo",
+                chat_id=chat["id"],
+                settings={"translation": translation},
+            )
+            await message.answer(
+                f"Theo will now use {translation.upper()} for this group.",
+                reply_markup=theo_menu(),
+            )
+        else:
+            # Private DM
+            user = await services.identity.resolve_telegram_user(message.from_user)
+            
+            existing_state = await services.supabase.find_one_multi(
+                "bot_user_state",
+                {"bot_name": "theo", "user_id": user["id"]}
+            )
+            state = existing_state.get("state", {}) if existing_state else {}
+            state["translation"] = translation
+            
+            await services.supabase.upsert(
+                "bot_user_state",
+                {
+                    "bot_name": "theo",
+                    "user_id": user["id"],
+                    "state": state
+                },
+                on_conflict="user_id,bot_name"
+            )
+            await message.answer(
+                f"Theo will now use {translation.upper()} for your personal messages.",
+                reply_markup=theo_menu(),
+            )
 
     @router.message(Command("subscribe"))
     async def subscribe(message: Message, services: ServiceContainer) -> None:
@@ -238,6 +261,13 @@ def build_theo_router(description: str) -> Router:
             parse_mode="Markdown",
             reply_markup=theo_menu(),
         )
+
+    # ------------------------------------------------------------------
+    # Bible reference auto-detection (catches remaining text messages)
+    # ------------------------------------------------------------------
+    @router.message(F.text)
+    async def bible_detection(message: Message, services: ServiceContainer) -> None:
+        await handle_bible_detection(message, services)
 
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:

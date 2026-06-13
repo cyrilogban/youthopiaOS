@@ -33,11 +33,15 @@ async def register_chat(
         username=chat_obj.username,
     )
     await services.chats.mark_bot_active(bot_name, chat["id"])
-    await services.chats.set_bot_settings(
-        bot_name,
-        chat["id"],
-        DEFAULT_BOT_SETTINGS.get(bot_name, {}),
+    existing_settings = await services.supabase.find_one_multi(
+        "chat_bot_settings", {"bot_name": bot_name, "chat_id": chat["id"]}
     )
+    if not existing_settings:
+        await services.chats.set_bot_settings(
+            bot_name,
+            chat["id"],
+            DEFAULT_BOT_SETTINGS.get(bot_name, {}),
+        )
     return chat
 
 

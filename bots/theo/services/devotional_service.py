@@ -41,7 +41,22 @@ class VOTDService:
                 async with session.get(url) as resp:
                     if resp.status == 200:
                         data = await resp.json()
-                        return data.get("text", "").strip()
+                        verses = data.get("verses", [])
+                        
+                        if not verses:
+                            return data.get("text", "").strip()
+                            
+                        if len(verses) == 1:
+                            return verses[0].get("text", "").strip()
+                            
+                        # Professional formatting for multiple verses
+                        formatted_lines = []
+                        for v in verses:
+                            verse_num = v.get("verse")
+                            verse_text = v.get("text", "").strip()
+                            formatted_lines.append(f"[{verse_num}] {verse_text}")
+                            
+                        return "\n".join(formatted_lines)
                     else:
                         return None
             except Exception:
