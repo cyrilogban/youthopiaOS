@@ -5,7 +5,14 @@ import random
 from aiogram import F
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+)
 
 from core.telegram_runtime import build_router, register_group_chat
 from shared.services.container import ServiceContainer
@@ -24,6 +31,21 @@ FOOTER_SCRIPTURES = [
     "The Lord is my shepherd; I shall not want. — Psalm 23:1",
     "Trust in the Lord with all your heart. — Proverbs 3:5",
 ]
+
+THEO_PHOTO: str | None = None
+
+
+def welcome_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📱 Telegram Community", url="https://t.me/youthopiabiblecommunity"),
+            InlineKeyboardButton(text="💬 WhatsApp Community", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
+        ],
+        [
+            InlineKeyboardButton(text="👤 My Profile", callback_data="profile"),
+            InlineKeyboardButton(text="🔤 Translation", callback_data="translation"),
+        ],
+    ])
 
 
 def theo_menu() -> ReplyKeyboardMarkup:
@@ -47,7 +69,6 @@ def build_theo_router(description: str) -> Router:
         await register_group_chat(message, services, "theo")
         
         welcome_text = (
-            "<blockquote>"
             "Hi there, I'm Theo. 🤍\n\n"
             "I serve <b>YOUTHOPIA BIBLE COMMUNITY</b> as your dedicated Bible companion bot. "
             "Every YouTopian in this community has me in their corner, keeping Scripture alive in their daily journey.\n\n"
@@ -56,21 +77,27 @@ def build_theo_router(description: str) -> Router:
             "🌅 Daily Verse every morning at 6 AM when you subscribe to daily verses\n"
             "📖 Instant Scripture lookup on demand in the chat e.g John 3:16\n"
             "👤 Community profile to track your growth\n\n"
-            "Welcome to the family, YouTopian. Use the menu below to get started. 💜\n\n"
+            "Welcome to the family, YouTopian. Use the buttons below to get started. 💜\n\n"
             "<b>Join our communities:</b>\n"
-            "📱 <a href=\"https://t.me/youthopiabiblecommunity\">Telegram Community</a>\n"
-            "💬 <a href=\"https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn\">WhatsApp Community</a>\n\n"
-            "<i>Sharing God's Love All The Way.</i>\n"
-            "#YouThopia #YouThopiaBibleCommunity"
-            "</blockquote>"
+            "📱 Telegram Community\n"
+            "💬 WhatsApp Community\n\n"
+            "<i>Sharing God's Love All The Way.</i>"
         )
         
-        await message.answer(
-            welcome_text,
-            parse_mode="HTML",
-            disable_web_page_preview=True,
-            reply_markup=theo_menu(),
-        )
+        if THEO_PHOTO:
+            await message.answer_photo(
+                photo=THEO_PHOTO,
+                caption=welcome_text,
+                parse_mode="HTML",
+                reply_markup=welcome_keyboard(),
+            )
+        else:
+            await message.answer(
+                welcome_text,
+                parse_mode="HTML",
+                disable_web_page_preview=True,
+                reply_markup=welcome_keyboard(),
+            )
 
     @router.message(Command("help"))
     async def help_command(message: Message, services: ServiceContainer) -> None:
@@ -93,6 +120,18 @@ def build_theo_router(description: str) -> Router:
     @router.message(Command("profile"))
     async def profile_command(message: Message, services: ServiceContainer) -> None:
         await send_profile(message, services)
+
+    @router.callback_query(F.data == "profile")
+    async def inline_profile(callback: CallbackQuery, services: ServiceContainer) -> None:
+        await callback.answer()
+        await send_profile(callback.message, services)
+
+    @router.callback_query(F.data == "translation")
+    async def inline_translation(callback: CallbackQuery) -> None:
+        await callback.answer()
+        await callback.message.answer(
+            "Send /translation KJV, /translation ASV, /translation WEB, or /translation BBE.",
+        )
 
     async def send_profile(message: Message, services: ServiceContainer) -> None:
         await register_group_chat(message, services, "theo")
@@ -328,6 +367,16 @@ def build_theo_router(description: str) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:
+        global THEO_PHOTO
+
+        # Fetch bot profile photo
+        try:
+            photos = await bot.get_user_profile_photos(bot.id)
+            if photos and photos.photos:
+                THEO_PHOTO = photos.photos[0][-1].file_id
+        except Exception:
+            pass
+
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from bots.theo.services.delivery_service import DeliveryService
         from zoneinfo import ZoneInfo
