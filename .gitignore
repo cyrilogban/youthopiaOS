@@ -20,3 +20,6 @@ setup.bat
 
 # Welcome messages
 theo_welcome_messages.md
+
+# Workspace files
+*.code-workspace
