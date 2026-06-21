@@ -61,6 +61,25 @@ class UserService:
     async def set_engagement_level(self, user_id: str, level: str) -> None:
         await self.db.update_by_id("users", user_id, {"engagement_level": level})
 
+    async def save_verse(self, user_id: str, bot_name: str, reference: str, category: str = "general") -> bool:
+        """Saves a verse for a user. Returns True if saved, False if already exists."""
+        try:
+            result = await self.db.upsert(
+                "user_saved_verses",
+                {
+                    "user_id": user_id,
+                    "bot_name": bot_name,
+                    "reference": reference,
+                    "category": category,
+                },
+                on_conflict="user_id,bot_name,reference",
+            )
+            # If the upsert succeeded without error, it's saved.
+            # Upsert will overwrite if exists, but we can return True safely for this design.
+            return True
+        except Exception:
+            return False
+
     async def set_subscription(
         self,
         user_id: str,

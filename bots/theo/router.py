@@ -140,6 +140,53 @@ def build_theo_router(description: str) -> Router:
             "Send /translation KJV, /translation ASV, /translation WEB, or /translation BBE.",
         )
 
+    from bots.theo.utils.keyboards import VerseAction
+
+    @router.callback_query(VerseAction.filter(F.action == "save"))
+    async def handle_save_verse(callback: CallbackQuery, callback_data: VerseAction, services: ServiceContainer):
+        user = await services.identity.resolve_telegram_user(callback.from_user)
+        # Re-add space to reference
+        reference = callback_data.reference.replace("_", " ")
+        saved = await services.users.save_verse(
+            user_id=user["id"], 
+            bot_name="theo", 
+            reference=reference, 
+            category=callback_data.category
+        )
+        if saved:
+            await callback.answer("Verse saved successfully.", show_alert=True)
+        else:
+            await callback.answer("This verse is already in your saved verses.", show_alert=True)
+
+    @router.callback_query(VerseAction.filter(F.action == "next"))
+    async def handle_next_verse(callback: CallbackQuery, callback_data: VerseAction, services: ServiceContainer):
+        from bots.theo.services.bible_service import BibleService
+        from bots.theo.services.devotional_service import VOTDService
+        from bots.theo.utils.keyboards import build_verse_actions_keyboard
+        
+        bible_service = BibleService(services.supabase)
+        votd_service = VOTDService(services.supabase)
+        
+        # Get a random verse reference using the Bible structure service
+        ref_data = await bible_service.get_random_verse_ref("kjv")
+        if not ref_data:
+            await callback.answer("Could not fetch a verse right now.", show_alert=True)
+            return
+            
+        new_ref = f"{ref_data['book_name']} {ref_data['chapter']}:{ref_data['verse']}"
+        text = await votd_service.fetch_bible_text(new_ref, "kjv")
+        
+        if text:
+            header = f"<b>{new_ref} (KJV)</b>"
+            blockquote = f"<blockquote>{text}</blockquote>"
+            reply_text = f"{header}\n{blockquote}"
+            
+            markup = build_verse_actions_keyboard(category=callback_data.category, reference=new_ref)
+            await callback.message.edit_text(reply_text, parse_mode="HTML", reply_markup=markup)
+            await callback.answer()
+        else:
+            await callback.answer("Failed to fetch text.", show_alert=True)
+
     async def send_profile(message: Message, services: ServiceContainer, telegram_user: Any | None = None) -> None:
         await register_group_chat(message, services, "theo")
         user_from = telegram_user or message.from_user

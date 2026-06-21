@@ -87,4 +87,10 @@ async def handle_bible_detection(message: Message, services: ServiceContainer) -
     # Reply — tags the original message so the verse appears under it
     # ------------------------------------------------------------------
     reply_text = "\n\n".join(parts)
-    await message.reply(reply_text, parse_mode="HTML")
+    
+    markup = None
+    if len(refs) == 1:
+        from bots.theo.utils.keyboards import build_verse_actions_keyboard
+        markup = build_verse_actions_keyboard(category="general", reference=refs[0].reference)
+        
+    await message.reply(reply_text, parse_mode="HTML", reply_markup=markup)
