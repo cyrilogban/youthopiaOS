@@ -58,6 +58,9 @@ class UserService:
         )
         return user
 
+    async def set_engagement_level(self, user_id: str, level: str) -> None:
+        await self.db.update_by_id("users", user_id, {"engagement_level": level})
+
     async def set_subscription(
         self,
         user_id: str,
@@ -108,3 +111,7 @@ async def create_user(*, display_name: str | None = None, **_: Any) -> dict[str,
 
 async def get_or_create_from_telegram(telegram: dict[str, Any]) -> dict[str, Any]:
     return await _service().get_or_create_from_telegram(telegram)
+
+
+async def set_engagement_level(user_id: str, level: str) -> None:
+    await _service().set_engagement_level(user_id, level)

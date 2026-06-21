@@ -62,18 +62,34 @@ def build_theo_router(description: str) -> Router:
     async def start(message: Message, services: ServiceContainer) -> None:
         await register_group_chat(message, services, "theo")
         
-        welcome_text = (
-            "I'm Theo.\n\n"
-            "The Bible bot that lives inside\n"
-            "<b>YOUTHOPIA BIBLE COMMUNITY</b>.\n\n"
-            "My job is simple: keep every YouTopian\n"
-            "connected to God's Word, every single day.\n\n"
-            "6 AM verse, daily\n"
-            "Any Scripture on demand\n"
-            "Your YouTopian profile and growth stats\n\n"
-            "Set up your experience below and let's go.\n\n"
-            "Sharing God's Love All The Way."
-        )
+        user = await services.identity.resolve_telegram_user(message.from_user)
+        first_name = message.from_user.first_name or "Friend"
+        
+        if user.get("engagement_level") == "new":
+            welcome_text = (
+                f"<blockquote>Hi there, I'm Theo. 🤍\n\n"
+                f"I serve YOUTHOPIA BIBLE COMMUNITY as your\n"
+                f"dedicated Bible companion bot. Every YouTopian\n"
+                f"in this community has me in their corner,\n"
+                f"keeping Scripture alive in their daily journey.\n\n"
+                f"Think of me as the community's digital\n"
+                f"anchor to God's Word.\n\n"
+                f"What I bring to you:\n"
+                f"🌅 Daily Verse every morning at 6 AM when you subscribe to daily verses\n"
+                f"📖 Instant Scripture lookup on demand in the chat e.g John 3:16\n"
+                f"👤 Community profile to track your growth\n\n"
+                f"Welcome to the family, {first_name}.\n"
+                f"Use the menu below to get started. 💜\n\n"
+                f"Sharing God's Love All The Way.\n"
+                f"#YouThopia #YouThopiaBibleCommunity</blockquote>"
+            )
+            await services.users.set_engagement_level(user["id"], "active")
+        else:
+            welcome_text = (
+                f"<blockquote>Welcome back, {first_name}! 💜\n\n"
+                f"I'm Theo, your scripture companion built for the YOUTHOPIA Bible Community.\n\n"
+                f"Use the menu below to check your profile, change your translation, or look up verses!</blockquote>"
+            )
         
         if THEO_PHOTO:
             await message.answer_photo(
