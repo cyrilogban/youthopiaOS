@@ -448,6 +448,66 @@ def build_theo_router(description: str) -> Router:
     async def bible_detection(message: Message, services: ServiceContainer) -> None:
         await handle_bible_detection(message, services)
 
+    # ------------------------------------------------------------------
+    # Inline Query Handler (for the Share button)
+    # ------------------------------------------------------------------
+    from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
+    import asyncio
+
+    @router.inline_query()
+    async def inline_query_handler(inline_query: InlineQuery, services: ServiceContainer) -> None:
+        query = inline_query.query.strip()
+        if not query:
+            return
+
+        from bots.theo.utils.bible_ref_parser import find_scripture_references
+        refs = find_scripture_references(query)
+        
+        if not refs:
+            return
+            
+        # Get user's preferred translation
+        translation = "kjv"
+        user = await services.identity.resolve_telegram_user(inline_query.from_user)
+        user_state = await services.supabase.find_one_multi(
+            "bot_user_state",
+            {"bot_name": "theo", "user_id": user["id"]}
+        )
+        if user_state and "state" in user_state:
+            translation = user_state["state"].get("translation", "kjv")
+
+        from bots.theo.services.devotional_service import VOTDService
+        votd_service = VOTDService(services.supabase)
+        
+        results = []
+        for ref in refs:
+            try:
+                # 3-second timeout protection per fetch so the inline menu doesn't hang
+                text = await asyncio.wait_for(
+                    votd_service.fetch_bible_text(ref.reference, translation),
+                    timeout=3.0
+                )
+                if text:
+                    header = f"<b>{ref.reference} ({translation.upper()})</b>"
+                    blockquote = f"<blockquote>{text}</blockquote>"
+                    full_message = f"{header}\n{blockquote}"
+                    
+                    result = InlineQueryResultArticle(
+                        id=f"ref_{ref.reference.replace(' ', '_').replace(':', '')}",
+                        title=f"{ref.reference} ({translation.upper()})",
+                        description=(text[:100] + "...") if len(text) > 100 else text,
+                        input_message_content=InputTextMessageContent(
+                            message_text=full_message,
+                            parse_mode="HTML"
+                        )
+                    )
+                    results.append(result)
+            except asyncio.TimeoutError:
+                continue
+                
+        if results:
+            await inline_query.answer(results, cache_time=3600)
+
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:
         global THEO_PHOTO
