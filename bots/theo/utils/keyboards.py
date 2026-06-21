@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-class VerseAction(CallbackData, prefix="verse"):
+class VerseAction(CallbackData, prefix="verse", sep="|"):
     action: str  # "save" or "next"
     category: str
     reference: str
