@@ -179,24 +179,32 @@ def build_theo_router(description: str) -> Router:
 
     @router.callback_query(VerseAction.filter(F.action == "next"))
     async def handle_next_verse(callback: CallbackQuery, callback_data: VerseAction, services: ServiceContainer):
-        from bots.theo.services.bible_service import BibleService
+        import random
         from bots.theo.services.devotional_service import VOTDService
         from bots.theo.utils.keyboards import build_verse_actions_keyboard
+        from bots.theo.utils.seed_votd import CURATED_REFERENCES
         
-        bible_service = BibleService(services.supabase)
         votd_service = VOTDService(services.supabase)
         
-        # Get a random verse reference using the Bible structure service
-        ref_data = await bible_service.get_random_verse_ref("kjv")
-        if not ref_data:
-            await callback.answer("Could not fetch a verse right now.", show_alert=True)
-            return
-            
-        new_ref = f"{ref_data['book_name']} {ref_data['chapter']}:{ref_data['verse']}"
-        text = await votd_service.fetch_bible_text(new_ref, "kjv")
+        # Get translation preference
+        translation = "kjv"
+        user = await services.identity.resolve_telegram_user(callback.from_user)
+        user_state = await services.supabase.find_one_multi(
+            "bot_user_state",
+            {"bot_name": "theo", "user_id": user["id"]}
+        )
+        if user_state and "state" in user_state:
+            translation = user_state["state"].get("translation", "kjv")
+        
+        # Pick a random curated verse, avoiding the current one
+        current_ref = callback_data.reference.replace("_", " ")
+        choices = [r for r in CURATED_REFERENCES if r != current_ref]
+        new_ref = random.choice(choices) if choices else current_ref
+        
+        text = await votd_service.fetch_bible_text(new_ref, translation)
         
         if text:
-            header = f"<b>{new_ref} (KJV)</b>"
+            header = f"<b>{new_ref} ({translation.upper()})</b>"
             blockquote = f"<blockquote>{text}</blockquote>"
             reply_text = f"{header}\n{blockquote}"
             
