@@ -112,15 +112,40 @@ def build_theo_router(description: str) -> Router:
 
     @router.message(Command("help"))
     async def help_command(message: Message, services: ServiceContainer) -> None:
+        first_name = message.from_user.first_name or "Friend"
+        help_text = (
+            f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n\n"
+            "We are a Cross platform Gen Z Christian community where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.\n\n"
+            "Sharing God's Love All The Way\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "You're currently talking to <b>Theo</b>\n"
+            "Theo is the devotional heart of the YouThopia bot family. He sends you daily Bible verses, helps you reflect on Scripture, and keeps you grounded in the Word every single day.\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "<b>Meet the YouThopia Bot Family</b>\n\n"
+            "Every bot in our community has a unique role. Here is who is here for you:\n\n"
+            "<b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
+            "Your daily Bible companion. Devotionals, verses, and spiritual reflection.\n\n"
+            "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
+            "Games, XP, and fun! Earn points and grow your YouTopian rank.\n\n"
+            "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
+            "Security and moderation. Keeping our community safe and in order.\n\n"
+            "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"
+            "Events and announcements. Never miss what is happening in YouThopia.\n\n"
+            "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
+            "Your first friend here. Welcomes new YouTopians and gets you settled in.\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "<b>How to Use Theo</b>\n\n"
+            "Use the menu buttons below to get started:\n"
+            "- My Profile: View your YouThopia community profile\n"
+            "- Translation: Set your preferred Bible translation\n\n"
+            "To manage your daily verse delivery:\n"
+            "/subscribe - Start receiving daily Bible verses\n"
+            "/unsubscribe - Pause your daily verses"
+        )
         await message.answer(
-            "<b>Theo - Devotional Bot</b>\n"
-            "\n"
-            "Use the menu buttons below for now:\n"
-            "\n"
-            "My Profile - View your Community profile\n"
-            "Translation - See how to set Bible translation\n\n"
-            "To manage daily verses, use the commands /subscribe and /unsubscribe.",
+            help_text,
             parse_mode="HTML",
+            disable_web_page_preview=True,
             reply_markup=theo_menu(),
         )
 
