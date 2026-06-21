@@ -6,6 +6,9 @@ class VerseAction(CallbackData, prefix="verse", sep="|"):
     category: str
     reference: str
 
+class SavedVersesPage(CallbackData, prefix="sv_page"):
+    page: int
+
 
 def build_verse_actions_keyboard(category: str, reference: str) -> InlineKeyboardMarkup:
     """Builds the 3-button keyboard for verse interaction (Save, Next, Share)."""

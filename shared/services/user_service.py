@@ -80,6 +80,22 @@ class UserService:
         except Exception:
             return False
 
+    async def get_saved_verses(self, user_id: str, bot_name: str) -> list[dict]:
+        """Returns the user's saved verses ordered by saved_at descending."""
+        import asyncio
+        def run() -> list[dict]:
+            response = (
+                self.db._client()
+                .table("user_saved_verses")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("bot_name", bot_name)
+                .order("saved_at", desc=True)
+                .execute()
+            )
+            return response.data or []
+        return await asyncio.to_thread(run)
+
     async def set_subscription(
         self,
         user_id: str,

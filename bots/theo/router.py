@@ -25,6 +25,7 @@ from bots.theo.handlers.messages import handle_bible_detection
 VALID_TRANSLATIONS = {"kjv", "asv", "web", "bbe"}
 PROFILE_BUTTON = "My Profile"
 TRANSLATION_BUTTON = "Translation"
+SAVED_VERSES_BUTTON = "My Saved Verses"
 
 THEO_PHOTO: str | None = None
 
@@ -47,8 +48,11 @@ def theo_menu() -> ReplyKeyboardMarkup:
         keyboard=[
             [
                 KeyboardButton(text=PROFILE_BUTTON),
-                KeyboardButton(text=TRANSLATION_BUTTON),
+                KeyboardButton(text=SAVED_VERSES_BUTTON),
             ],
+            [
+                KeyboardButton(text=TRANSLATION_BUTTON),
+            ]
         ],
         resize_keyboard=True,
         input_field_placeholder="Choose a Theo action",
@@ -127,6 +131,21 @@ def build_theo_router(description: str) -> Router:
     @router.message(Command("profile"))
     async def profile_command(message: Message, services: ServiceContainer) -> None:
         await send_profile(message, services)
+        
+    @router.message(F.text == SAVED_VERSES_BUTTON)
+    async def menu_saved_verses(message: Message, services: ServiceContainer) -> None:
+        await send_saved_verses_page(message, services, page=1)
+
+    from bots.theo.utils.keyboards import SavedVersesPage
+    
+    @router.callback_query(SavedVersesPage.filter())
+    async def inline_saved_verses_page(callback: CallbackQuery, callback_data: SavedVersesPage, services: ServiceContainer) -> None:
+        await callback.answer()
+        await send_saved_verses_page(callback, services, page=callback_data.page)
+        
+    @router.callback_query(F.data == "ignore")
+    async def inline_ignore(callback: CallbackQuery) -> None:
+        await callback.answer()
 
     @router.callback_query(F.data == "profile")
     async def inline_profile(callback: CallbackQuery, services: ServiceContainer) -> None:
@@ -258,6 +277,89 @@ def build_theo_router(description: str) -> Router:
             "Send /translation KJV, /translation ASV, /translation WEB, or /translation BBE.",
             reply_markup=theo_menu(),
         )
+
+    async def send_saved_verses_page(
+        message: Message | CallbackQuery, 
+        services: ServiceContainer, 
+        page: int = 1
+    ) -> None:
+        import asyncio
+        from bots.theo.services.devotional_service import VOTDService
+        
+        telegram_user = message.from_user
+        user = await services.identity.resolve_telegram_user(telegram_user)
+        
+        translation = "kjv"
+        user_state = await services.supabase.find_one_multi(
+            "bot_user_state",
+            {"bot_name": "theo", "user_id": user["id"]}
+        )
+        if user_state and "state" in user_state:
+            translation = user_state["state"].get("translation", "kjv")
+            
+        verses = await services.users.get_saved_verses(user["id"], "theo")
+        
+        is_callback = isinstance(message, CallbackQuery)
+        reply_target = message.message if is_callback else message
+        
+        if not verses:
+            msg = "You have no saved verses yet.\n\nTap <b>Save</b> on any verse to save it here."
+            if is_callback:
+                await reply_target.edit_text(msg, parse_mode="HTML")
+            else:
+                await reply_target.answer(msg, parse_mode="HTML")
+            return
+            
+        PER_PAGE = 3
+        total_pages = max(1, (len(verses) + PER_PAGE - 1) // PER_PAGE)
+        page = max(1, min(page, total_pages))
+        
+        start_idx = (page - 1) * PER_PAGE
+        page_verses = verses[start_idx : start_idx + PER_PAGE]
+        
+        votd_service = VOTDService(services.supabase)
+        
+        tasks = [
+            votd_service.fetch_bible_text(v["reference"], translation) 
+            for v in page_verses
+        ]
+        fetched_texts = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        parts = [f"<b>My Saved Verses</b> (Page {page} of {total_pages})"]
+        
+        for v, text in zip(page_verses, fetched_texts):
+            ref = v["reference"]
+            if isinstance(text, Exception) or not text:
+                text = "Could not fetch verse text."
+                
+            parts.append(f"<b>{ref}</b> ({translation.upper()})")
+            
+            if len(text) > 150:
+                parts.append(f"<blockquote expandable>{text}</blockquote>")
+            else:
+                parts.append(f"<blockquote>{text}</blockquote>")
+                
+        reply_text = "\n\n".join(parts)
+        
+        inline_kb = []
+        nav_row = []
+        if page > 1:
+            from bots.theo.utils.keyboards import SavedVersesPage
+            nav_row.append(InlineKeyboardButton(text="⬅️ Prev", callback_data=SavedVersesPage(page=page-1).pack()))
+        
+        nav_row.append(InlineKeyboardButton(text=f"• {page} / {total_pages} •", callback_data="ignore"))
+            
+        if page < total_pages:
+            from bots.theo.utils.keyboards import SavedVersesPage
+            nav_row.append(InlineKeyboardButton(text="Next ➡️", callback_data=SavedVersesPage(page=page+1).pack()))
+            
+        inline_kb.append(nav_row)
+        markup = InlineKeyboardMarkup(inline_keyboard=inline_kb)
+        
+        if is_callback:
+            await reply_target.edit_text(reply_text, parse_mode="HTML", reply_markup=markup)
+        else:
+            await reply_target.answer(reply_text, parse_mode="HTML", reply_markup=markup)
 
     @router.message(Command("translation"))
     async def set_translation(message: Message, services: ServiceContainer) -> None:
