@@ -141,12 +141,12 @@ def build_theo_router(description: str) -> Router:
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="Facebook Community", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
-                InlineKeyboardButton(text="Telegram Community", url="https://t.me/youthopiabiblecommunity"),
+                InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
+                InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
             ],
             [
-                InlineKeyboardButton(text="WhatsApp Community", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
-                InlineKeyboardButton(text="Threads (Coming Soon)", callback_data="ignore"),
+                InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
+                InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
             ]
         ])
 
