@@ -14,7 +14,7 @@ class ModerationService:
         self,
         offender_uuid: str,
         chat_uuid: str,
-        moderator_uuid: str,
+        moderator_uuid: str | None,
         action_type: str,
         reason: str | None = None,
         trust_delta: int = 0
