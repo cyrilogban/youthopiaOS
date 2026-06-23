@@ -6,6 +6,7 @@ from aiogram.exceptions import TelegramAPIError
 
 from shared.services.container import ServiceContainer
 from bots.theo.services.devotional_service import VOTDService
+from bots.theo.utils.keyboards import build_verse_actions_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,18 @@ class DeliveryService:
                         continue
                         
                 text = fetched_texts[translation]
-                message = f"**Verse of the Day: {reference} ({translation.upper()})**\n\n_{text}_"
+                header = f"<b>Verse of the Day: {reference} ({translation.upper()})</b>"
+                blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
+                message = f"{header}\n{blockquote}"
                 
-                await self.bot.send_message(chat_id=telegram_chat_id, text=message, parse_mode="Markdown")
+                markup = build_verse_actions_keyboard(category="daily", reference=reference)
+                
+                await self.bot.send_message(
+                    chat_id=telegram_chat_id, 
+                    text=message, 
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
                 success_count += 1
             except Exception as e:
                 logger.error("Failed to send VOTD to chat %s: %s", chat_id, e)
@@ -107,9 +117,18 @@ class DeliveryService:
                         continue
                         
                 text = fetched_texts[translation]
-                message = f"**Verse of the Day: {reference} ({translation.upper()})**\n\n_{text}_"
+                header = f"<b>Verse of the Day: {reference} ({translation.upper()})</b>"
+                blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
+                message = f"{header}\n{blockquote}"
                 
-                await self.bot.send_message(chat_id=telegram_user_id, text=message, parse_mode="Markdown")
+                markup = build_verse_actions_keyboard(category="daily", reference=reference)
+                
+                await self.bot.send_message(
+                    chat_id=telegram_user_id, 
+                    text=message, 
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
                 success_count += 1
             except Exception as e:
                 logger.error("Failed to send VOTD to user %s: %s", user_id, e)
