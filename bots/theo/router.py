@@ -114,39 +114,47 @@ def build_theo_router(description: str) -> Router:
     async def help_command(message: Message, services: ServiceContainer) -> None:
         first_name = message.from_user.first_name or "Friend"
         help_text = (
-            f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n\n"
-            "We are a Cross platform Gen Z Christian community where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.\n\n"
-            "Sharing God's Love All The Way\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "You're currently talking to <b>Theo</b>\n"
-            "Theo is the devotional heart of the YouThopia bot family. He sends you daily Bible verses, helps you reflect on Scripture, and keeps you grounded in the Word every single day.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "<b>Meet the YouThopia Bot Family</b>\n\n"
-            "Every bot in our community has a unique role. Here is who is here for you:\n\n"
-            "<b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
-            "Your daily Bible companion. Devotionals, verses, and spiritual reflection.\n\n"
+            f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n"
+            "<blockquote>We are a cross-platform Gen Z Christian community where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
+            "<b>You're currently talking to Theo</b>\n"
+            "<blockquote>Theo is the devotional heart of the YouThopia bot family. He sends you daily Bible verses, helps you reflect on Scripture, and keeps you grounded in the Word every single day.</blockquote>\n\n"
+            "<b>Meet the YouThopia Bot Family</b>\n"
+            "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
+            "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
             "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
-            "Games, XP, and fun! Earn points and grow your YouTopian rank.\n\n"
+            "Games, XP, and fun! Earn points and grow your rank.\n\n"
             "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
-            "Security and moderation. Keeping our community safe and in order.\n\n"
+            "Security and moderation. Keeping our community safe.\n\n"
             "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"
-            "Events and announcements. Never miss what is happening in YouThopia.\n\n"
+            "Events and announcements. Never miss what is happening.\n\n"
             "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
-            "Your first friend here. Welcomes new YouTopians and gets you settled in.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "<b>How to Use Theo</b>\n\n"
-            "Use the menu buttons below to get started:\n"
+            "Your first friend here. Welcomes new YouTopians.</blockquote>\n\n"
+            "<b>How to Use Theo</b>\n"
+            "<blockquote>Use the menu buttons below to get started:\n"
             "- My Profile: View your YouThopia community profile\n"
-            "- Translation: Set your preferred Bible translation\n\n"
+            "- Translation: Set your preferred Bible translation\n"
+            "- My Saved Verses: Read your bookmarked verses\n\n"
             "To manage your daily verse delivery:\n"
             "/subscribe - Start receiving daily Bible verses\n"
-            "/unsubscribe - Pause your daily verses"
+            "/unsubscribe - Pause your daily verses</blockquote>\n\n"
+            "Sharing God's Love All The Way 💜"
         )
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Facebook Community", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
+                InlineKeyboardButton(text="Telegram Community", url="https://t.me/youthopiabiblecommunity"),
+            ],
+            [
+                InlineKeyboardButton(text="WhatsApp Community", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
+                InlineKeyboardButton(text="Threads (Coming Soon)", callback_data="ignore"),
+            ]
+        ])
+
         await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
-            reply_markup=theo_menu(),
+            reply_markup=markup,
         )
 
     @router.message(F.text == PROFILE_BUTTON)
