@@ -5,7 +5,6 @@ from aiogram.types import Message, ChatPermissions
 from aiogram.filters import Command, CommandObject, Filter
 from shared.services.container import ServiceContainer
 from core.telegram_runtime import register_group_chat
-from bots.pete.services.moderation_service import ModerationService
 
 logger = logging.getLogger(__name__)
 
@@ -51,18 +50,17 @@ async def handle_warn(message: Message, command: CommandObject, services: Servic
         return
         
     # 2. Log Action & Apply Penalty (-10 Trust Points for a warning)
-    mod_service = ModerationService(services.supabase)
-    await mod_service.record_action(
-        offender_uuid=target_record["id"],
-        chat_uuid=chat_record["id"],
-        moderator_uuid=admin_record["id"],
+    await services.moderation.record_action(
+        user_id=target_record["id"],
+        chat_id=chat_record["id"],
+        moderator_user_id=admin_record["id"],
         action_type="warn",
         reason=reason,
         trust_delta=-10
     )
     
     # 3. Check threshold logic (Automated Justice)
-    warnings = await mod_service.get_user_warnings_count(target_record["id"], chat_record["id"])
+    warnings = await services.moderation.get_user_warnings_count(target_record["id"], chat_record["id"])
     
     response_text = f"⚠️ **{target_user.first_name}** has been warned.\n**Reason:** {reason}\n**Total Warnings:** {warnings}"
     
@@ -73,10 +71,10 @@ async def handle_warn(message: Message, command: CommandObject, services: Servic
             await message.chat.restrict(user_id=target_user.id, permissions=ChatPermissions(can_send_messages=False))
             response_text += "\n\n🔇 **Automated Justice:** User reached 3 warnings and has been muted."
             
-            await mod_service.record_action(
-                offender_uuid=target_record["id"],
-                chat_uuid=chat_record["id"],
-                moderator_uuid=admin_record["id"],
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
                 action_type="mute",
                 reason="Automated Justice: Reached 3 warnings.",
                 trust_delta=-20
@@ -106,11 +104,10 @@ async def handle_kick(message: Message, command: CommandObject, services: Servic
         target_record = await services.identity.resolve_telegram_user(target_user)
         
         if chat_record:
-            mod_service = ModerationService(services.supabase)
-            await mod_service.record_action(
-                offender_uuid=target_record["id"],
-                chat_uuid=chat_record["id"],
-                moderator_uuid=admin_record["id"],
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
                 action_type="kick",
                 reason=reason,
                 trust_delta=-30
@@ -144,11 +141,10 @@ async def handle_ban(message: Message, command: CommandObject, services: Service
         target_record = await services.identity.resolve_telegram_user(target_user)
         
         if chat_record:
-            mod_service = ModerationService(services.supabase)
-            await mod_service.record_action(
-                offender_uuid=target_record["id"],
-                chat_uuid=chat_record["id"],
-                moderator_uuid=admin_record["id"],
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
                 action_type="ban",
                 reason=reason,
                 trust_delta=-50
@@ -180,11 +176,10 @@ async def handle_mute(message: Message, command: CommandObject, services: Servic
         target_record = await services.identity.resolve_telegram_user(target_user)
         
         if chat_record:
-            mod_service = ModerationService(services.supabase)
-            await mod_service.record_action(
-                offender_uuid=target_record["id"],
-                chat_uuid=chat_record["id"],
-                moderator_uuid=admin_record["id"],
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
                 action_type="mute",
                 reason=reason,
                 trust_delta=-20
@@ -197,11 +192,133 @@ async def handle_mute(message: Message, command: CommandObject, services: Servic
         logger.error(f"Mute failed: {e}")
         await message.reply("❌ Failed to mute user. Make sure I have admin rights.")
 
+@router.message(Command("unban"), IsAdminFilter())
+async def handle_unban(message: Message, command: CommandObject, services: ServiceContainer) -> None:
+    if not message.reply_to_message:
+        await message.reply("🛡️ You must reply to the user's message to unban them.")
+        return
+        
+    target_user = message.reply_to_message.from_user
+    reason = command.args or "Forgiveness granted."
+        
+    try:
+        chat_record = await register_group_chat(message, services, "pete")
+        admin_record = await services.identity.resolve_telegram_user(message.from_user)
+        target_record = await services.identity.resolve_telegram_user(target_user)
+        
+        if chat_record:
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
+                action_type="unban",
+                reason=reason,
+                trust_delta=0
+            )
+
+        await message.chat.unban(user_id=target_user.id)
+        await message.reply(f"🕊️ {target_user.first_name} has been forgiven and unbanned.\n**Reason:** {reason}", parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Unban failed: {e}")
+        await message.reply("❌ Failed to unban user. Make sure I have admin rights.")
+
+@router.message(Command("unmute"), IsAdminFilter())
+async def handle_unmute(message: Message, command: CommandObject, services: ServiceContainer) -> None:
+    if not message.reply_to_message:
+        await message.reply("🛡️ You must reply to the user's message to unmute them.")
+        return
+        
+    target_user = message.reply_to_message.from_user
+    reason = command.args or "Forgiveness granted."
+        
+    try:
+        chat_record = await register_group_chat(message, services, "pete")
+        admin_record = await services.identity.resolve_telegram_user(message.from_user)
+        target_record = await services.identity.resolve_telegram_user(target_user)
+        
+        if chat_record:
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
+                action_type="unmute",
+                reason=reason,
+                trust_delta=0
+            )
+
+        permissions = ChatPermissions(
+            can_send_messages=True,
+            can_send_audios=True,
+            can_send_documents=True,
+            can_send_photos=True,
+            can_send_videos=True,
+            can_send_video_notes=True,
+            can_send_voice_notes=True,
+            can_send_polls=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True,
+            can_invite_users=True
+        )
+        await message.chat.restrict(user_id=target_user.id, permissions=permissions)
+        await message.reply(f"🕊️ {target_user.first_name} has been forgiven and unmuted.\n**Reason:** {reason}", parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Unmute failed: {e}")
+        await message.reply("❌ Failed to unmute user. Make sure I have admin rights.")
+
+# -----------------------------------------------------------------------------
+# CHAT FLOW CONTROL (LOCKDOWN COMMANDS)
+# -----------------------------------------------------------------------------
+
+@router.message(Command("lock"), IsAdminFilter())
+async def handle_lock(message: Message) -> None:
+    try:
+        await message.chat.set_permissions(ChatPermissions(can_send_messages=False))
+        await message.reply("🔒 **CHAT LOCKED**\n\nThe group has been temporarily locked by an admin. Only administrators can send messages right now.", parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Lock failed: {e}")
+        await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
+
+@router.message(Command("unlock"), IsAdminFilter())
+async def handle_unlock(message: Message) -> None:
+    try:
+        permissions = ChatPermissions(
+            can_send_messages=True,
+            can_send_audios=True,
+            can_send_documents=True,
+            can_send_photos=True,
+            can_send_videos=True,
+            can_send_video_notes=True,
+            can_send_voice_notes=True,
+            can_send_polls=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True,
+            can_invite_users=True
+        )
+        await message.chat.set_permissions(permissions)
+        await message.reply("🔓 **CHAT UNLOCKED**\n\nThe group is open again. You may now send messages.", parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Unlock failed: {e}")
+        await message.reply("❌ Failed to unlock the chat. Ensure I have the 'Change Group Info' permission.")
+
+@router.message(Command("biblestudy"), IsAdminFilter())
+async def handle_biblestudy(message: Message) -> None:
+    try:
+        await message.chat.set_permissions(ChatPermissions(can_send_messages=False))
+        study_banner = (
+            "📖 **BIBLE STUDY IN PROGRESS** 📖\n\n"
+            "<blockquote>The chat has been temporarily silenced so the teacher can minister without interruption.\n\n"
+            "Please listen attentively and take notes. The chat will be unlocked for questions when the session is over.</blockquote>"
+        )
+        await message.answer(study_banner, parse_mode="HTML")
+    except Exception as e:
+        logger.error(f"Bible study lock failed: {e}")
+        await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
+
 # -----------------------------------------------------------------------------
 # UNAUTHORIZED / FALLBACK HANDLERS
 # -----------------------------------------------------------------------------
 
-@router.message(Command("warn", "kick", "ban", "mute"))
+@router.message(Command("warn", "kick", "ban", "mute", "unban", "unmute", "lock", "unlock", "biblestudy"))
 async def handle_unauthorized(message: Message) -> None:
     """Catches anyone trying to run an admin command who failed the IsAdminFilter."""
     await message.reply("🛑 Only group administrators can wield the sword of justice.")
@@ -223,13 +340,54 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         return
 
     # Standard welcome for normal DMs or help commands
+    first_name = message.from_user.first_name or "Friend"
     welcome_text = (
-        "🛡️ **I am High King Peter.**\n\n"
-        "I am the security and moderation bot for the YouThopia Bible Community. "
-        "I monitor the borders and keep the chat spiritually clean.\n\n"
-        "My commands are strictly reserved for group administrators."
+        f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n"
+        "<blockquote>We are a cross-platform Gen Z Christian community where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
+        "<b>You're currently talking to Pete</b>\n"
+        "<blockquote>Pete (High King Peter) is the silent guardian of the YouThopia bot family. He protects the spiritual atmosphere by enforcing rules, filtering spam, and keeping our borders secure.</blockquote>\n\n"
+        "<b>Meet the YouThopia Bot Family</b>\n"
+        "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
+        "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
+        "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
+        "Games, XP, and fun! Earn points and grow your rank.\n\n"
+        "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
+        "Security and moderation. Keeping our community safe.\n\n"
+        "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"
+        "Events and announcements. Never miss what is happening.\n\n"
+        "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
+        "Your first friend here. Welcomes new YouTopians.</blockquote>\n\n"
+        "<b>How to Use Pete (Admins Only)</b>\n"
+        "<blockquote>Pete's commands are strictly reserved for group administrators:\n"
+        "/warn - Issue a warning (-10 Trust)\n"
+        "/mute - Revoke typing permissions (-20 Trust)\n"
+        "/kick - Remove user from group (-30 Trust)\n"
+        "/ban - Permanently ban user (-50 Trust)\n"
+        "/unban - Lift a ban\n"
+        "/unmute - Lift a mute\n"
+        "/lock - Lock the group chat\n"
+        "/unlock - Unlock the group chat\n"
+        "/biblestudy - Silence the chat for a teaching session</blockquote>\n\n"
+        "Sharing God's Love All The Way 💜"
     )
-    await message.answer(welcome_text, parse_mode="Markdown")
+    
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
+            InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
+        ],
+        [
+            InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
+            InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
+        ]
+    ])
+    
+    await message.answer(
+        welcome_text, 
+        parse_mode="HTML", 
+        disable_web_page_preview=True, 
+        reply_markup=markup
+    )
 
 # -----------------------------------------------------------------------------
 # AUTOMATED JUSTICE ENGINE (ACTIVE LISTENER)
@@ -414,12 +572,11 @@ async def execute_automated_justice(message: Message, services: ServiceContainer
         return
         
     target_record = await services.identity.resolve_telegram_user(message.from_user)
-    mod_service = ModerationService(services.supabase)
     
-    await mod_service.record_action(
-        offender_uuid=target_record["id"],
-        chat_uuid=chat_record["id"],
-        moderator_uuid=None,  # Automated action
+    await services.moderation.record_action(
+        user_id=target_record["id"],
+        chat_id=chat_record["id"],
+        moderator_user_id=None,  # Automated action
         action_type="warn",
         reason=reason,
         trust_delta=trust_delta

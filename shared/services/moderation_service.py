@@ -40,3 +40,19 @@ class ModerationService:
             await self.db.update_by_id("users", user_id, {"trust_score": trust_score})
 
         return action
+
+    async def get_user_warnings_count(self, user_id: str, chat_id: str) -> int:
+        """Counts how many warnings a user has received in a specific chat."""
+        import asyncio
+        def run() -> int:
+            response = (
+                self.db._client()
+                .table("moderation_actions")
+                .select("id", count="exact")
+                .eq("user_id", user_id)
+                .eq("chat_id", chat_id)
+                .eq("action_type", "warn")
+                .execute()
+            )
+            return response.count or 0
+        return await asyncio.to_thread(run)
