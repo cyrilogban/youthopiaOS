@@ -64,7 +64,22 @@ async def handle_warn(message: Message, command: CommandObject, services: Servic
     
     response_text = f"⚠️ **{target_user.first_name}** has been warned.\n**Reason:** {reason}\n**Total Warnings:** {warnings}"
     
-    if warnings >= 3:
+    if warnings >= 5:
+        try:
+            await message.chat.ban(user_id=target_user.id)
+            response_text += "\n\n🔨 **Automated Justice:** User reached 5 warnings and has been permanently banned."
+            
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=admin_record["id"],
+                action_type="ban",
+                reason="Automated Justice: Reached 5 warnings.",
+                trust_delta=-50
+            )
+        except Exception as e:
+            logger.error(f"Automated ban failed: {e}")
+    elif warnings >= 3:
         # Automated Mute on 3rd warning
         from aiogram.types import ChatPermissions
         try:
@@ -168,6 +183,26 @@ async def handle_mute(message: Message, command: CommandObject, services: Servic
         return
         
     reason = command.args or "No reason provided."
+    until_date = None
+    duration_str = ""
+    
+    if command.args:
+        args_parts = command.args.split(maxsplit=1)
+        import re
+        from datetime import datetime, timedelta
+        
+        match = re.match(r"^(\d+)([smhd])$", args_parts[0].lower())
+        if match:
+            val = int(match.group(1))
+            unit = match.group(2)
+            td = None
+            if unit == 's': td = timedelta(seconds=val); duration_str = f" for {val} seconds"
+            elif unit == 'm': td = timedelta(minutes=val); duration_str = f" for {val} minutes"
+            elif unit == 'h': td = timedelta(hours=val); duration_str = f" for {val} hours"
+            elif unit == 'd': td = timedelta(days=val); duration_str = f" for {val} days"
+            
+            until_date = datetime.now() + td
+            reason = args_parts[1] if len(args_parts) > 1 else "No reason provided."
         
     try:
         # Resolve Identities & Log (-20 Trust Points)
@@ -186,8 +221,8 @@ async def handle_mute(message: Message, command: CommandObject, services: Servic
             )
 
         permissions = ChatPermissions(can_send_messages=False)
-        await message.chat.restrict(user_id=target_user.id, permissions=permissions)
-        await message.reply(f"🔇 {target_user.first_name} has been muted.\n**Reason:** {reason}", parse_mode="Markdown")
+        await message.chat.restrict(user_id=target_user.id, permissions=permissions, until_date=until_date)
+        await message.reply(f"🔇 {target_user.first_name} has been muted{duration_str}.\n**Reason:** {reason}", parse_mode="Markdown")
     except Exception as e:
         logger.error(f"Mute failed: {e}")
         await message.reply("❌ Failed to mute user. Make sure I have admin rights.")
@@ -422,6 +457,7 @@ INVITE_LINK_PATTERN = re.compile(r'(?:t\.me/|telegram\.me/|chat\.whatsapp\.com/)
 
 # Flood Control Configuration
 USER_MESSAGE_TIMESTAMPS = defaultdict(list)
+USER_MESSAGE_CONTENT = defaultdict(list)
 FLOOD_LIMIT = 5   # Max messages allowed
 FLOOD_WINDOW = 4  # Within 4 seconds
 
@@ -538,7 +574,25 @@ async def automated_justice_filter(message: Message, services: ServiceContainer)
         
     text_lower = message.text.lower()
     
-    # Check 1: Forbidden Language
+    # Check 1.5: Repetitive Text Detection (Copy-Paste Spam)
+    history = USER_MESSAGE_CONTENT[user_id]
+    history[:] = [(ts, txt) for ts, txt in history if current_time - ts <= 60]
+    history.append((current_time, text_lower))
+    
+    same_text_count = sum(1 for _, txt in history if txt == text_lower)
+    if same_text_count >= 3:
+        try:
+            member = await message.chat.get_member(user_id)
+            if member.status in ("administrator", "creator"):
+                pass
+            else:
+                history.clear()
+                await execute_automated_justice(message, services, "Automated Justice: Repetitive copy-paste detected.", -15, "stop sending the exact same message")
+                return
+        except Exception:
+            pass
+    
+    # Check 2: Forbidden Language
     if FORBIDDEN_PATTERN.search(message.text):
         await execute_automated_justice(message, services, "Automated Justice: Profanity detected.", -5, "please watch your language")
         return
@@ -582,8 +636,42 @@ async def execute_automated_justice(message: Message, services: ServiceContainer
         trust_delta=trust_delta
     )
     
-    # 3. Publicly reprimand the user
+    # 3. Check threshold logic for Automated Warning
+    warnings = await services.moderation.get_user_warnings_count(target_record["id"], chat_record["id"])
+    
+    extra_msg = ""
+    if warnings >= 5:
+        try:
+            await message.chat.ban(user_id=message.from_user.id)
+            extra_msg = "\n\n🔨 You have reached 5 warnings and have been permanently banned."
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=None,
+                action_type="ban",
+                reason="Automated Justice: Reached 5 warnings.",
+                trust_delta=-50
+            )
+        except Exception as e:
+            logger.error(f"Automated ban failed: {e}")
+    elif warnings >= 3:
+        try:
+            from aiogram.types import ChatPermissions
+            await message.chat.restrict(user_id=message.from_user.id, permissions=ChatPermissions(can_send_messages=False))
+            extra_msg = "\n\n🔇 You have reached 3 warnings and have been automatically muted."
+            await services.moderation.record_action(
+                user_id=target_record["id"],
+                chat_id=chat_record["id"],
+                moderator_user_id=None,
+                action_type="mute",
+                reason="Automated Justice: Reached 3 warnings.",
+                trust_delta=-20
+            )
+        except Exception as e:
+            logger.error(f"Automated mute failed: {e}")
+    
+    # 4. Publicly reprimand the user
     await message.answer(
-        f"⚠️ **{message.from_user.first_name}**, {reprimand}! Your message was removed and your Trust Score has been penalized.",
+        f"⚠️ **{message.from_user.first_name}**, {reprimand}! Your message was removed and your Trust Score has been penalized.{extra_msg}",
         parse_mode="Markdown"
     )
