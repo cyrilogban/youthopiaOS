@@ -14,6 +14,12 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         response = {"status": "Theo is alive and running!"}
         self.wfile.write(json.dumps(response).encode("utf-8"))
 
+    def do_HEAD(self):
+        # UptimeRobot sends HEAD requests by default. We must reply 200 OK.
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+
     # This prevents the server from spamming your terminal logs on every ping
     def log_message(self, format, *args):
         pass
