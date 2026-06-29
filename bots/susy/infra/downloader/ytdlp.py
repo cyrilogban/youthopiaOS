@@ -43,6 +43,7 @@ class YtDlpDownloader:
             "retries": self._retries,
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
+            "extractor_args": {"youtube": ["client=ANDROID_MUSIC,MWEB", "player_skip=webpage,configs"]},
         }
 
         try:
