@@ -27,3 +27,10 @@ theo_welcome_messages.md
 
 # Workspace files
 *.code-workspace
+
+# Pyrogram Sessions
+*.session
+*.session-journal
+
+# Susy Music Downloads
+downloads/
