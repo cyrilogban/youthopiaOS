@@ -51,9 +51,12 @@ class MusicService:
             track = await self._audio_processor.prepare_for_stream(downloaded)
         except DownloadFailedError as error:
             return MusicResult(message=_friendly_download_error(error.reason))
-        except Exception:
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"MUSIC PREPARE ERROR: {error_trace}")
             return MusicResult(
-                message="I couldn't prepare that track right now. Please try again in a moment."
+                message=f"I couldn't prepare that track right now. Debug: {str(e)}"
             )
         self._queue.add(chat_id, track)
 

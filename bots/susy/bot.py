@@ -17,6 +17,11 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
 
     app_config = load_config()
     
+    # Inject Render static FFmpeg bin into system PATH
+    bin_dir = os.path.join(os.getcwd(), "bin")
+    if os.path.exists(bin_dir):
+        os.environ["PATH"] = f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"
+    
     # Initialize Music Subsystem
     pyrogram = PyrogramClientManager(config=app_config)
     calls = PyTgCallsClient(pyrogram_manager=pyrogram)
