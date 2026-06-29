@@ -344,7 +344,7 @@ async def handle_biblestudy(message: Message) -> None:
     try:
         await message.chat.set_permissions(ChatPermissions(can_send_messages=False))
         study_banner = (
-            "📖 **BIBLE STUDY IN PROGRESS** 📖\n\n"
+            "<b>BIBLE STUDY IN PROGRESS</b>\n\n"
             "<blockquote>The chat has been temporarily silenced so the teacher can minister without interruption.\n\n"
             "Please listen attentively and take notes. The chat will be unlocked for questions when the session is over.</blockquote>"
         )
@@ -371,7 +371,7 @@ async def handle_endbiblestudy(message: Message) -> None:
         )
         await message.chat.set_permissions(permissions)
         end_banner = (
-            "🕊️ **BIBLE STUDY HAS ENDED** 🕊️\n\n"
+            "<b>BIBLE STUDY HAS ENDED</b>\n\n"
             "<blockquote>The chat is now open! Feel free to ask questions, share your notes, or discuss what we just learned.</blockquote>"
         )
         await message.answer(end_banner, parse_mode="HTML")
