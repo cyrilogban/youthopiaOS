@@ -27,7 +27,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         commands = [
             BotCommand(command="start", description="Wake Up Susy"),
             BotCommand(command="help", description="Show help information"),
-            BotCommand(command="song", description="Download a song to the chat"),
+            BotCommand(command="download", description="Download a song"),
         ]
         
         # Apply them to DMs and Groups
@@ -252,14 +252,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
         except Exception as e:
             await status_msg.edit_text(f"Error: {e}")
 
-    @router.message(Command("song"))
-    async def handle_song(message: Message, command: CommandObject) -> None:
+    @router.message(Command("download"))
+    async def handle_download(message: Message, command: CommandObject) -> None:
         if not music_service:
             await message.answer("My music engine is currently offline!")
             return
             
         if not command.args:
-            await message.answer("Please provide a song name or YouTube link!\nExample: `/song Oceans Hillsong`", parse_mode="Markdown")
+            await message.answer("Please provide a song name or YouTube link!\nExample: `/download Oceans Hillsong`", parse_mode="Markdown")
             return
             
         status_msg = await message.answer("🔍 Searching and downloading... Give me a few seconds!")
