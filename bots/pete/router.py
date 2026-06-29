@@ -424,12 +424,13 @@ async def handle_youtopianstatus(message: Message, services: ServiceContainer) -
         title = "Restricted"
         
     status_card = (
-        "🛡️ **YOUTOPIAN STATUS** 🛡️\n\n"
-        f"👤 **User:** {message.from_user.first_name}\n"
-        f"📊 **Trust Score:** {trust_score} / 100\n"
-        f"🎖️ **Standing:** {title}\n"
-        f"⚠️ **Global Warnings:** {warnings} / 5\n\n"
-        "_'A good name is more desirable than great riches; to be esteemed is better than silver or gold.'_ - Proverbs 22:1"
+        "<b>YOUTOPIAN STATUS</b>\n\n"
+        "<blockquote>"
+        f"<b>YouTopian:</b> {message.from_user.first_name}\n"
+        f"<b>Trust Score:</b> {trust_score} / 100\n"
+        f"<b>Standing:</b> {title}\n"
+        f"<b>Warnings:</b> {warnings} / 5"
+        "</blockquote>"
     )
     
     markup = None
@@ -438,7 +439,7 @@ async def handle_youtopianstatus(message: Message, services: ServiceContainer) -
             [InlineKeyboardButton(text="📝 Submit Apology / Appeal", callback_data="appeal_init")]
         ])
         
-    sent_msg = await message.reply(status_card, parse_mode="Markdown", reply_markup=markup)
+    sent_msg = await message.reply(status_card, parse_mode="HTML", reply_markup=markup)
     
     # Auto-delete if invoked in a public group to keep chat clean
     if message.chat.type != "private":
