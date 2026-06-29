@@ -51,9 +51,11 @@ class YtDlpDownloader:
             with yt_dlp.YoutubeDL(options) as downloader:
                 info = downloader.extract_info(request, download=True)
         except DownloadError as error:
-            raise DownloadFailedError(reason=_map_download_error(str(error))) from error
+            print(f"YTDLP DOWNLOAD ERROR: {str(error)}")
+            raise DownloadFailedError(reason=str(error)) from error
         except Exception as error:
-            raise DownloadFailedError(reason="unknown") from error
+            print(f"YTDLP UNKNOWN ERROR: {str(error)}")
+            raise DownloadFailedError(reason=str(error)) from error
 
         if "entries" in info:
             info = info["entries"][0]

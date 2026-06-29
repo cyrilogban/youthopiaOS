@@ -113,4 +113,4 @@ def _friendly_download_error(reason: str) -> str:
         return "I couldn't fetch that track right now due to a network timeout. Please try again."
     if reason == "source_unavailable":
         return "I couldn't access that source right now. Please try another link or query."
-    return "I couldn't fetch that track right now. Please try again in a moment."
+    return f"Debug Fetch Error: {reason}"
