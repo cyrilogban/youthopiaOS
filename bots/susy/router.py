@@ -27,6 +27,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         commands = [
             BotCommand(command="start", description="Wake Up Susy"),
             BotCommand(command="help", description="Show help information"),
+            BotCommand(command="song", description="Download a song to the chat"),
         ]
         
         # Apply them to DMs and Groups
@@ -249,7 +250,63 @@ def build_susy_router(description: str, music_service=None) -> Router:
             result = await music_service.play(message.chat.id, command.args)
             await status_msg.edit_text(result.message)
         except Exception as e:
-            await status_msg.edit_text("❌ An error occurred while trying to play the track.")
+            await status_msg.edit_text(f"Error: {e}")
+
+    @router.message(Command("song"))
+    async def handle_song(message: Message, command: CommandObject) -> None:
+        if not music_service:
+            await message.answer("My music engine is currently offline!")
+            return
+            
+        if not command.args:
+            await message.answer("Please provide a song name or YouTube link!\nExample: `/song Oceans Hillsong`", parse_mode="Markdown")
+            return
+            
+        status_msg = await message.answer("🔍 Searching and downloading... Give me a few seconds!")
+        try:
+            result = await music_service.fetch_track(command.args)
+            if not result.track:
+                await status_msg.edit_text(result.message)
+                return
+            
+            track = result.track
+            minutes = track.duration // 60
+            seconds = track.duration % 60
+            
+            caption = (
+                "⚡️ <b>Successfully Downloaded:</b>\n\n"
+                f"🎶 <b>Title:</b> {track.title}\n"
+                f"⏱ <b>Duration:</b> {minutes}:{seconds:02d} minutes\n"
+                f"👤 <b>Requested by:</b> {message.from_user.first_name}\n"
+                "🕊️"
+            )
+            
+            if track.thumbnail_url:
+                await message.answer_photo(
+                    photo=track.thumbnail_url,
+                    caption=caption,
+                    parse_mode="HTML"
+                )
+            else:
+                await message.answer(caption, parse_mode="HTML")
+                
+            from aiogram.types import FSInputFile
+            import os
+            
+            audio_file = FSInputFile(track.file_path)
+            await message.answer_audio(
+                audio=audio_file,
+                title=track.title,
+                performer="YouThopia Music"
+            )
+            
+            # Clean up the file
+            if os.path.exists(track.file_path):
+                os.remove(track.file_path)
+                
+            await status_msg.delete()
+        except Exception as e:
+            await status_msg.edit_text(f"Error fetching song: {e}")
 
     @router.message(Command("stop"))
     async def handle_stop(message: Message) -> None:
