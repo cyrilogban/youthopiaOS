@@ -137,7 +137,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [
                     InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_2"),
-                    InlineKeyboardButton(text="Finish Orientation 🎉", callback_data="onboarding_finish")
+                    InlineKeyboardButton(text="Finish Exploring", callback_data="onboarding_finish")
                 ]
             ])
             
@@ -168,19 +168,19 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await services.users.set_engagement_level(user["id"], "onboarded")
                 
                 finish_text = (
-                    "<b>Orientation Complete! 🎉</b>\n"
-                    "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your orientation.</blockquote>\n\n"
-                    "Head back to the main group and say hi!"
+                    "<b>Exploration Complete! 🎉</b>\n"
+                    "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your exploration.</blockquote>\n\n"
+                    "Head back to the main group and start <a href=\"https://t.me/youthopiabiblecommunity\">fellowship!</a>"
                 )
-                await callback_query.answer("Orientation Complete! +50 Trust Points!")
+                await callback_query.answer("Exploration Complete! +50 Trust Points!")
             else:
                 # They already did it
                 finish_text = (
-                    "<b>Orientation Reviewed! 📚</b>\n"
-                    "<blockquote>It looks like you've already completed your official orientation! No extra points were granted, but it's always great to refresh your memory on the rules.</blockquote>\n\n"
-                    "Head back to the main group and say hi!"
+                    "<b>Exploration Reviewed!</b>\n"
+                    "<blockquote>It looks like you've already completed your official exploration! No extra points were granted, but it's always great to refresh your memory about the community.</blockquote>\n\n"
+                    "Head back to the main group and start <a href=\"https://t.me/youthopiabiblecommunity\">fellowship!</a>"
                 )
-                await callback_query.answer("Orientation Reviewed!")
+                await callback_query.answer("Exploration Reviewed!")
                 
             await callback_query.message.edit_text(finish_text, parse_mode="HTML")
 
