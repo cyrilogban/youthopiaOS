@@ -13,12 +13,12 @@ from aiogram.types import (
 )
 
 from core.telegram_runtime import build_router
-from shared.services.container import ServiceContainer
+from aiogram.filters import Command, CommandObject
 
 # Will add Susy's official photo URL here when available
 SUSY_PHOTO = None
 
-def build_susy_router(description: str) -> Router:
+def build_susy_router(description: str, music_service=None) -> Router:
     router = build_router("susy", description, include_base_commands=False)
 
     @router.startup()
@@ -233,5 +233,50 @@ def build_susy_router(description: str) -> Router:
                 await sent_msg.delete()
             except Exception:
                 pass
+
+    @router.message(Command("play"))
+    async def handle_play(message: Message, command: CommandObject) -> None:
+        if not music_service:
+            await message.answer("My music engine is currently offline!")
+            return
+            
+        if not command.args:
+            await message.answer("Please provide a song name or YouTube link!\nExample: `/play Oceans Hillsong`", parse_mode="Markdown")
+            return
+            
+        status_msg = await message.answer("🔍 Searching for your track...")
+        try:
+            result = await music_service.play(message.chat.id, command.args)
+            await status_msg.edit_text(result.message)
+        except Exception as e:
+            await status_msg.edit_text("❌ An error occurred while trying to play the track.")
+
+    @router.message(Command("stop"))
+    async def handle_stop(message: Message) -> None:
+        if not music_service:
+            return
+        result = await music_service.stop(message.chat.id)
+        await message.answer(result.message)
+
+    @router.message(Command("skip"))
+    async def handle_skip(message: Message) -> None:
+        if not music_service:
+            return
+        result = await music_service.skip(message.chat.id)
+        await message.answer(result.message)
+
+    @router.message(Command("pause"))
+    async def handle_pause(message: Message) -> None:
+        if not music_service:
+            return
+        result = await music_service.pause(message.chat.id)
+        await message.answer(result.message)
+        
+    @router.message(Command("resume"))
+    async def handle_resume(message: Message) -> None:
+        if not music_service:
+            return
+        result = await music_service.resume(message.chat.id)
+        await message.answer(result.message)
 
     return router

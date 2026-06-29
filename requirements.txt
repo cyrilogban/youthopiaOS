@@ -8,3 +8,10 @@ apscheduler>=3.10.4
 pymongo>=4.6.1
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+
+# Susy Music Dependencies
+pyrogram==2.0.106
+py-tgcalls==2.2.11
+yt-dlp
+tgcrypto
+ffmpeg-python
