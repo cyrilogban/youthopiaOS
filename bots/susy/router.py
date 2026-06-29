@@ -43,6 +43,11 @@ def build_susy_router(description: str) -> Router:
             except Exception:
                 pass
                 
+        # Check if deep link from Pete
+        if message.text and "onboarding" in message.text:
+            await send_onboarding_page(message, 1)
+            return
+
         user = await services.identity.resolve_telegram_user(message.from_user)
         first_name = message.from_user.first_name or "Friend"
         
@@ -57,6 +62,9 @@ def build_susy_router(description: str) -> Router:
         )
         
         markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🎓 Start Orientation", callback_data="onboarding_1")
+            ],
             [
                 InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
                 InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
@@ -89,6 +97,74 @@ def build_susy_router(description: str) -> Router:
                 await sent_msg.delete()
             except Exception:
                 pass
+
+    # --- ONBOARDING PAGINATION LOGIC ---
+    
+    async def send_onboarding_page(message: Message | Any, page: int, edit: bool = False) -> None:
+        if page == 1:
+            text = (
+                "<b>Welcome to YOUTHOPIA! 🤍 (1/3)</b>\n"
+                "<blockquote>We are a cross-platform Gen Z Christian community. This is a space where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
+                "<i>Click Next to read our community guidelines.</i>"
+            )
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_2")]
+            ])
+        elif page == 2:
+            text = (
+                "<b>The Core Rules 📜 (2/3)</b>\n"
+                "<blockquote><b>1. Love & Respect:</b> Treat everyone with Christ-like love.\n"
+                "<b>2. No Spam:</b> Keep the chat clean and focused on growth.\n"
+                "<b>3. Guard the Vibe:</b> Keep conversations edifying and uplifting.</blockquote>\n\n"
+                "<i>Click Next to meet the YouThopia Bot Family!</i>"
+            )
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_1"),
+                    InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_3")
+                ]
+            ])
+        elif page == 3:
+            text = (
+                "<b>Meet the Bot Family 🤖 (3/3)</b>\n"
+                "<blockquote><b>Theo</b> (@iamtheobot) - Your daily devotional companion.\n"
+                "<b>Lusy</b> (@iamlusybot) - Play games and earn XP!\n"
+                "<b>Pete</b> (@iampetebot) - The security guard.\n"
+                "<b>Ed</b> (@iamedyybot) - Announcements and events.\n"
+                "<b>Susy</b> (Me!) - Your guide and friend.</blockquote>\n\n"
+                "<i>Click Finish to complete your orientation!</i>"
+            )
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_2"),
+                    InlineKeyboardButton(text="Finish Orientation 🎉", callback_data="onboarding_finish")
+                ]
+            ])
+            
+        if edit:
+            await message.edit_text(text, parse_mode="HTML", reply_markup=markup)
+        else:
+            await message.answer(text, parse_mode="HTML", reply_markup=markup)
+
+    @router.callback_query(F.data.startswith("onboarding_"))
+    async def handle_onboarding_callbacks(callback_query: Any, services: ServiceContainer) -> None:
+        action = callback_query.data.split("_")[1]
+        
+        if action in ["1", "2", "3"]:
+            await send_onboarding_page(callback_query.message, int(action), edit=True)
+            await callback_query.answer()
+        elif action == "finish":
+            user = await services.identity.resolve_telegram_user(callback_query.from_user)
+            # Grant 50 initial points for completing orientation
+            await services.users.add_trust_points(user["id"], 50)
+            
+            finish_text = (
+                "<b>Orientation Complete! 🎉</b>\n"
+                "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your orientation.</blockquote>\n\n"
+                "Head back to the main group and say hi!"
+            )
+            await callback_query.message.edit_text(finish_text, parse_mode="HTML")
+            await callback_query.answer("Orientation Complete! +50 Trust Points!")
 
     @router.message(Command("help"))
     async def handle_help(message: Message, services: ServiceContainer) -> None:

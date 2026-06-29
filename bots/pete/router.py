@@ -721,11 +721,31 @@ async def captcha_callback_handler(callback_query: CallbackQuery) -> None:
                 pass
                 
         # 4. Drop the public confirmation in the group
-        await callback_query.bot.send_message(
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="👋 Meet Susy (Your Guide)", url="https://t.me/iamsusiebot?start=onboarding")]
+        ])
+        success_msg = await callback_query.bot.send_message(
             chat_id=chat_id, 
             text=f"✅ **{callback_query.from_user.first_name}** has passed verification and been granted entry!", 
-            parse_mode="Markdown"
+            parse_mode="Markdown",
+            reply_markup=markup
         )
+        
+        async def auto_delete_msg(msg, delay: int) -> None:
+            import asyncio
+            await asyncio.sleep(delay)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+                
+        import asyncio
+        asyncio.create_task(auto_delete_msg(success_msg, 60))
+        
+        try:
+            await callback_query.answer("Verification successful!")
+        except Exception:
+            pass
         
     except Exception as e:
         logger.error(f"Failed to unlock user {user_id} after Captcha: {e}")
