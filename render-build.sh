@@ -10,6 +10,11 @@ tar xf ffmpeg-release-amd64-static.tar.xz
 mv ffmpeg-*-amd64-static/ffmpeg .
 mv ffmpeg-*-amd64-static/ffprobe .
 rm -rf ffmpeg-*-amd64-static*
+echo "Downloading Node.js (for yt-dlp signature extraction)..."
+wget -q https://nodejs.org/dist/v20.10.0/node-v20.10.0-linux-x64.tar.xz
+tar xf node-v20.10.0-linux-x64.tar.xz
+mv node-v20.10.0-linux-x64/bin/node .
+rm -rf node-v20.10.0-linux-x64*
 cd ..
 
 echo "Installing Python dependencies..."
