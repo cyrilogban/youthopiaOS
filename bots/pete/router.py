@@ -353,11 +353,37 @@ async def handle_biblestudy(message: Message) -> None:
         logger.error(f"Bible study lock failed: {e}")
         await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
 
+@router.message(Command("endbiblestudy"), IsAdminFilter())
+async def handle_endbiblestudy(message: Message) -> None:
+    try:
+        permissions = ChatPermissions(
+            can_send_messages=True,
+            can_send_audios=True,
+            can_send_documents=True,
+            can_send_photos=True,
+            can_send_videos=True,
+            can_send_video_notes=True,
+            can_send_voice_notes=True,
+            can_send_polls=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True,
+            can_invite_users=True
+        )
+        await message.chat.set_permissions(permissions)
+        end_banner = (
+            "🕊️ **BIBLE STUDY HAS ENDED** 🕊️\n\n"
+            "<blockquote>The chat is now open! Feel free to ask questions, share your notes, or discuss what we just learned.</blockquote>"
+        )
+        await message.answer(end_banner, parse_mode="HTML")
+    except Exception as e:
+        logger.error(f"Bible study unlock failed: {e}")
+        await message.reply("❌ Failed to unlock the chat. Ensure I have the 'Change Group Info' permission.")
+
 # -----------------------------------------------------------------------------
 # UNAUTHORIZED / FALLBACK HANDLERS
 # -----------------------------------------------------------------------------
 
-@router.message(Command("warn", "kick", "ban", "mute", "unban", "unmute", "lock", "unlock", "biblestudy"))
+@router.message(Command("warn", "kick", "ban", "mute", "unban", "unmute", "lock", "unlock", "biblestudy", "endbiblestudy"))
 async def handle_unauthorized(message: Message) -> None:
     """Catches anyone trying to run an admin command who failed the IsAdminFilter."""
     await message.reply("🛑 Only group administrators can wield the sword of justice.")
@@ -545,17 +571,9 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         "Events and announcements. Never miss what is happening.\n\n"
         "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
         "Your first friend here. Welcomes new YouTopians.</blockquote>\n\n"
-        "<b>How to Use Pete (Admins Only)</b>\n"
-        "<blockquote>Pete's commands are strictly reserved for group administrators:\n"
-        "/warn - Issue a warning (-10 Trust)\n"
-        "/mute - Revoke typing permissions (-20 Trust)\n"
-        "/kick - Remove user from group (-30 Trust)\n"
-        "/ban - Permanently ban user (-50 Trust)\n"
-        "/unban - Lift a ban\n"
-        "/unmute - Lift a mute\n"
-        "/lock - Lock the group chat\n"
-        "/unlock - Unlock the group chat\n"
-        "/biblestudy - Silence the chat for a teaching session</blockquote>\n\n"
+        "<b>How to Use Pete</b>\n"
+        "<blockquote>Pete operates silently in the background to keep the community safe. You can check your YouTopian Status and submit appeals using the menu below.\n\n"
+        "If you are an administrator, Pete provides a suite of moderation commands to maintain order.</blockquote>\n\n"
         "Sharing God's Love All The Way 💜"
     )
     
