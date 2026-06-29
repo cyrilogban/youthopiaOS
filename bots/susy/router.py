@@ -155,8 +155,13 @@ def build_susy_router(description: str) -> Router:
             await callback_query.answer()
         elif action == "finish":
             user = await services.identity.resolve_telegram_user(callback_query.from_user)
-            # Grant 50 initial points for completing orientation
-            await services.users.add_trust_points(user["id"], 50)
+            # Grant 50 initial points for completing orientation via moderation service
+            await services.moderation.record_action(
+                user_id=user["id"],
+                action_type="orientation_completed",
+                reason="Completed the Susy onboarding guide.",
+                trust_delta=50
+            )
             
             finish_text = (
                 "<b>Orientation Complete! 🎉</b>\n"
