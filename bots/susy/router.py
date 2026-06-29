@@ -155,21 +155,34 @@ def build_susy_router(description: str) -> Router:
             await callback_query.answer()
         elif action == "finish":
             user = await services.identity.resolve_telegram_user(callback_query.from_user)
-            # Grant 50 initial points for completing orientation via moderation service
-            await services.moderation.record_action(
-                user_id=user["id"],
-                action_type="orientation_completed",
-                reason="Completed the Susy onboarding guide.",
-                trust_delta=50
-            )
             
-            finish_text = (
-                "<b>Orientation Complete! 🎉</b>\n"
-                "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your orientation.</blockquote>\n\n"
-                "Head back to the main group and say hi!"
-            )
+            # Check if they have already completed orientation
+            if user.get("engagement_level") in ["new", None]:
+                # Grant 50 initial points for completing orientation via moderation service
+                await services.moderation.record_action(
+                    user_id=user["id"],
+                    action_type="orientation_completed",
+                    reason="Completed the Susy onboarding guide.",
+                    trust_delta=50
+                )
+                await services.users.set_engagement_level(user["id"], "onboarded")
+                
+                finish_text = (
+                    "<b>Orientation Complete! 🎉</b>\n"
+                    "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your orientation.</blockquote>\n\n"
+                    "Head back to the main group and say hi!"
+                )
+                await callback_query.answer("Orientation Complete! +50 Trust Points!")
+            else:
+                # They already did it
+                finish_text = (
+                    "<b>Orientation Reviewed! 📚</b>\n"
+                    "<blockquote>It looks like you've already completed your official orientation! No extra points were granted, but it's always great to refresh your memory on the rules.</blockquote>\n\n"
+                    "Head back to the main group and say hi!"
+                )
+                await callback_query.answer("Orientation Reviewed!")
+                
             await callback_query.message.edit_text(finish_text, parse_mode="HTML")
-            await callback_query.answer("Orientation Complete! +50 Trust Points!")
 
     @router.message(Command("help"))
     async def handle_help(message: Message, services: ServiceContainer) -> None:
