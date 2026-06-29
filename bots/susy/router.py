@@ -12,7 +12,7 @@ from aiogram.types import (
     InlineKeyboardButton
 )
 
-from core.router_builder import build_router
+from core.telegram_runtime import build_router
 from shared.services.container import ServiceContainer
 
 # Will add Susy's official photo URL here when available
