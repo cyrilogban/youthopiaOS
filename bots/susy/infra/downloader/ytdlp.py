@@ -44,8 +44,6 @@ class YtDlpDownloader:
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
         }
-        if self._js_runtimes:
-            options["js_runtimes"] = [item.strip() for item in self._js_runtimes.split(",") if item.strip()]
 
         try:
             with yt_dlp.YoutubeDL(options) as downloader:
