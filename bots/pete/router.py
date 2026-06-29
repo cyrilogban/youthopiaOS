@@ -869,6 +869,7 @@ async def on_startup(bot: Bot) -> None:
     ]
     
     user_commands = [
+        BotCommand(command="start", description="Wake up pete"),
         BotCommand(command="youtopianstatus", description="Check your Trust Score"),
         BotCommand(command="help", description="Show Pete's instructions")
     ]
