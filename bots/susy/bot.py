@@ -36,7 +36,7 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
             retries=3,
             socket_timeout=15,
             extractor_retries=3,
-            js_runtimes=["node"],
+            js_runtimes="node",
         ),
         audio_processor=FFmpegAudioProcessor(output_dir=processed_dir),
         stream_client=calls,
