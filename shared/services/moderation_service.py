@@ -41,18 +41,19 @@ class ModerationService:
 
         return action
 
-    async def get_user_warnings_count(self, user_id: str, chat_id: str) -> int:
-        """Counts how many warnings a user has received in a specific chat."""
+    async def get_user_warnings_count(self, user_id: str, chat_id: str | None = None) -> int:
+        """Counts how many warnings a user has received. If chat_id is provided, filters by chat."""
         import asyncio
         def run() -> int:
-            response = (
+            query = (
                 self.db._client()
                 .table("moderation_actions")
                 .select("id", count="exact")
                 .eq("user_id", user_id)
-                .eq("chat_id", chat_id)
                 .eq("action_type", "warn")
-                .execute()
             )
+            if chat_id:
+                query = query.eq("chat_id", chat_id)
+            response = query.execute()
             return response.count or 0
         return await asyncio.to_thread(run)

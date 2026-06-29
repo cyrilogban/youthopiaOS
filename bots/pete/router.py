@@ -1,8 +1,12 @@
 import logging
 from typing import Any
 from aiogram import Router, F
-from aiogram.types import Message, ChatPermissions
+from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import Command, CommandObject, Filter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+import asyncio
+import os
 from shared.services.container import ServiceContainer
 from core.telegram_runtime import register_group_chat
 
@@ -357,6 +361,130 @@ async def handle_biblestudy(message: Message) -> None:
 async def handle_unauthorized(message: Message) -> None:
     """Catches anyone trying to run an admin command who failed the IsAdminFilter."""
     await message.reply("🛑 Only group administrators can wield the sword of justice.")
+
+# -----------------------------------------------------------------------------
+# YOUTOPIAN STATUS & APPEALS
+# -----------------------------------------------------------------------------
+
+class AppealState(StatesGroup):
+    waiting_for_appeal = State()
+
+@router.message(Command("youtopianstatus"))
+async def handle_youtopianstatus(message: Message, services: ServiceContainer) -> None:
+    target_record = await services.identity.resolve_telegram_user(message.from_user)
+    
+    trust_score = int(target_record.get("trust_score", 100))
+    warnings = await services.moderation.get_user_warnings_count(target_record["id"])
+    
+    if trust_score == 100 and warnings == 0:
+        title = "Exemplary Citizen"
+    elif trust_score >= 80:
+        title = "In Good Standing"
+    elif trust_score >= 50:
+        title = "On Probation"
+    else:
+        title = "Restricted"
+        
+    status_card = (
+        "🛡️ **YOUTOPIAN STATUS** 🛡️\n\n"
+        f"👤 **User:** {message.from_user.first_name}\n"
+        f"📊 **Trust Score:** {trust_score} / 100\n"
+        f"🎖️ **Standing:** {title}\n"
+        f"⚠️ **Global Warnings:** {warnings} / 5\n\n"
+        "_'A good name is more desirable than great riches; to be esteemed is better than silver or gold.'_ - Proverbs 22:1"
+    )
+    
+    markup = None
+    if trust_score < 100 or warnings > 0:
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📝 Submit Apology / Appeal", callback_data="appeal_init")]
+        ])
+        
+    sent_msg = await message.reply(status_card, parse_mode="Markdown", reply_markup=markup)
+    
+    # Auto-delete if invoked in a public group to keep chat clean
+    if message.chat.type != "private":
+        await asyncio.sleep(15)
+        try:
+            await sent_msg.delete()
+        except Exception:
+            pass
+
+@router.callback_query(F.data == "appeal_init")
+async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -> None:
+    # Ensure they are appealing in DMs so they don't spam the group with their appeal text
+    if callback_query.message.chat.type != "private":
+        await callback_query.answer("Please DM me to submit your appeal.", show_alert=True)
+        return
+        
+    await state.set_state(AppealState.waiting_for_appeal)
+    await callback_query.message.reply("Please type out your appeal or apology in a single message. Tell the admins what happened and why your Trust Score should be restored.")
+    await callback_query.answer()
+
+@router.message(AppealState.waiting_for_appeal)
+async def process_appeal_message(message: Message, state: FSMContext, services: ServiceContainer) -> None:
+    await state.clear()
+    
+    owner_id_str = os.environ.get("ADMIN_OWNER_ID")
+    if not owner_id_str or owner_id_str == "YOUR_TELEGRAM_ID_HERE":
+        await message.reply("❌ The community owner has not configured their Telegram ID to receive appeals yet. Please contact an admin manually.")
+        return
+        
+    target_record = await services.identity.resolve_telegram_user(message.from_user)
+    db_id = target_record["id"]
+    
+    appeal_card = (
+        "📝 **YOUTOPIAN APPEAL RECEIVED**\n\n"
+        f"**From:** {message.from_user.first_name} (@{message.from_user.username or 'No Username'})\n"
+        f"**Message:** \"{message.text}\""
+    )
+    
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Accept", callback_data=f"appeal_accept|{db_id}|{message.from_user.id}"),
+            InlineKeyboardButton(text="❌ Reject", callback_data=f"appeal_reject|{db_id}|{message.from_user.id}")
+        ]
+    ])
+    
+    try:
+        await message.bot.send_message(chat_id=owner_id_str, text=appeal_card, parse_mode="Markdown", reply_markup=markup)
+        await message.reply("✅ Your appeal has been submitted directly to the administration. We will review it shortly.")
+    except Exception as e:
+        logger.error(f"Failed to forward appeal to owner: {e}")
+        await message.reply("❌ Failed to send appeal. The owner might need to start a conversation with me first.")
+
+@router.callback_query(F.data.startswith("appeal_accept|"))
+async def handle_appeal_accept(callback_query: CallbackQuery, services: ServiceContainer) -> None:
+    parts = callback_query.data.split("|")
+    db_id = parts[1]
+    tg_user_id = int(parts[2])
+    
+    # Restore trust score via a +100 delta (it automatically caps at 100)
+    await services.moderation.record_action(
+        user_id=db_id,
+        chat_id=None,
+        moderator_user_id=None,
+        action_type="appeal_accepted",
+        reason="Owner accepted appeal.",
+        trust_delta=100
+    )
+    
+    await callback_query.message.edit_text(callback_query.message.text + "\n\n✅ **STATUS: ACCEPTED**")
+    try:
+        await callback_query.bot.send_message(chat_id=tg_user_id, text="Rejoice! Your appeal was accepted by the admins and your Trust Score has been fully restored.")
+    except Exception:
+        pass
+
+@router.callback_query(F.data.startswith("appeal_reject|"))
+async def handle_appeal_reject(callback_query: CallbackQuery) -> None:
+    parts = callback_query.data.split("|")
+    tg_user_id = int(parts[2])
+    
+    await callback_query.message.edit_text(callback_query.message.text + "\n\n❌ **STATUS: REJECTED**")
+    try:
+        await callback_query.bot.send_message(chat_id=tg_user_id, text="Your appeal was reviewed but denied at this time.")
+    except Exception:
+        pass
 
 # Captcha Memory Store: {user_id: {"chat_id": int, "msg_id": int}}
 PENDING_CAPTCHAS = {}
