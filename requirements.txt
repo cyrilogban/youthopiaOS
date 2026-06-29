@@ -1,7 +1,7 @@
 aiogram>=3.4.0
 python-dotenv>=1.0.0
 supabase==2.31.0
-imageio-ffmpeg==0.5.14
+imageio-ffmpeg==0.6.0
 fastapi>=0.110.0
 uvicorn>=0.28.0
 requests>=2.31.0
