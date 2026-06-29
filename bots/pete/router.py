@@ -849,3 +849,38 @@ async def execute_automated_justice(message: Message, services: ServiceContainer
         f"⚠️ **{message.from_user.first_name}**, {reprimand}! Your message was removed and your Trust Score has been penalized.{extra_msg}",
         parse_mode="Markdown"
     )
+
+from aiogram import Bot
+from aiogram.types import BotCommand, BotCommandScopeAllChatAdministrators, BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats
+
+@router.startup()
+async def on_startup(bot: Bot) -> None:
+    admin_commands = [
+        BotCommand(command="warn", description="Issue a warning"),
+        BotCommand(command="mute", description="Revoke typing permissions"),
+        BotCommand(command="kick", description="Remove user from group"),
+        BotCommand(command="ban", description="Permanently ban user"),
+        BotCommand(command="unban", description="Lift a ban"),
+        BotCommand(command="unmute", description="Lift a mute"),
+        BotCommand(command="lock", description="Lock the group chat"),
+        BotCommand(command="unlock", description="Unlock the group chat"),
+        BotCommand(command="biblestudy", description="Silence chat for a teaching session"),
+        BotCommand(command="endbiblestudy", description="Unlock chat after teaching session")
+    ]
+    
+    user_commands = [
+        BotCommand(command="youtopianstatus", description="Check your Trust Score"),
+        BotCommand(command="help", description="Show Pete's instructions")
+    ]
+    
+    try:
+        await bot.delete_my_commands()
+    except Exception:
+        pass
+        
+    # Set public commands for DMs and general Group Members
+    await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
+    await bot.set_my_commands(user_commands, scope=BotCommandScopeAllGroupChats())
+    
+    # Set admin commands for Group Administrators (Combines public + admin)
+    await bot.set_my_commands(user_commands + admin_commands, scope=BotCommandScopeAllChatAdministrators())
