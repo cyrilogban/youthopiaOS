@@ -396,7 +396,7 @@ def pete_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="🛡️ My YouTopian Status"),
+                KeyboardButton(text="YouTopian Status"),
                 KeyboardButton(text="📝 Submit Appeal")
             ]
         ],
@@ -458,7 +458,7 @@ async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -
     await start_appeal_flow(callback_query.message, state)
     await callback_query.answer()
 
-@router.message(F.text == "🛡️ My YouTopian Status")
+@router.message(F.text == "YouTopian Status")
 async def handle_youtopianstatus_menu(message: Message, services: ServiceContainer) -> None:
     await handle_youtopianstatus(message, services)
 
