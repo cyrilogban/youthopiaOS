@@ -64,6 +64,11 @@ def build_theo_router(description: str) -> Router:
 
     @router.message(Command("start"))
     async def start(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
         await register_group_chat(message, services, "theo")
         
         user = await services.identity.resolve_telegram_user(message.from_user)
@@ -96,22 +101,35 @@ def build_theo_router(description: str) -> Router:
             )
         
         if THEO_PHOTO:
-            await message.answer_photo(
+            sent_msg = await message.answer_photo(
                 photo=THEO_PHOTO,
                 caption=welcome_text,
                 parse_mode="HTML",
                 reply_markup=welcome_keyboard(),
             )
         else:
-            await message.answer(
+            sent_msg = await message.answer(
                 welcome_text,
                 parse_mode="HTML",
                 disable_web_page_preview=True,
                 reply_markup=welcome_keyboard(),
             )
+            
+        if message.chat.type != "private":
+            import asyncio
+            await asyncio.sleep(15)
+            try:
+                await sent_msg.delete()
+            except Exception:
+                pass
 
     @router.message(Command("help"))
     async def help_command(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
         first_name = message.from_user.first_name or "Friend"
         help_text = (
             f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n"
@@ -150,12 +168,19 @@ def build_theo_router(description: str) -> Router:
             ]
         ])
 
-        await message.answer(
+        sent_msg = await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
             reply_markup=markup,
         )
+        if message.chat.type != "private":
+            import asyncio
+            await asyncio.sleep(15)
+            try:
+                await sent_msg.delete()
+            except Exception:
+                pass
 
     @router.message(F.text == PROFILE_BUTTON)
     async def menu_profile(message: Message, services: ServiceContainer) -> None:

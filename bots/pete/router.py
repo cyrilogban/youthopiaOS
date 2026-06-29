@@ -543,6 +543,12 @@ PENDING_CAPTCHAS = {}
 
 @router.message(Command("start", "help"))
 async def handle_start(message: Message, services: ServiceContainer) -> None:
+    if message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+            
     # Check if this is a Deep Link Captcha verification
     if message.text and message.text.startswith("/start verify_"):
         chat_id_str = message.text.split("_")[1]
@@ -589,7 +595,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         ]
     ])
     
-    await message.answer(
+    sent_msg = await message.answer(
         welcome_text, 
         parse_mode="HTML", 
         disable_web_page_preview=True, 
@@ -598,6 +604,12 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
     
     if message.chat.type == "private":
         await message.answer("Use the menu below to navigate my features:", reply_markup=pete_menu())
+    else:
+        await asyncio.sleep(15)
+        try:
+            await sent_msg.delete()
+        except Exception:
+            pass
 
 # -----------------------------------------------------------------------------
 # AUTOMATED JUSTICE ENGINE (ACTIVE LISTENER)
