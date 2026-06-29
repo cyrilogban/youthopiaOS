@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 from aiogram import Router, F
-from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command, CommandObject, Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -366,6 +366,18 @@ async def handle_unauthorized(message: Message) -> None:
 # YOUTOPIAN STATUS & APPEALS
 # -----------------------------------------------------------------------------
 
+def pete_menu() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text="🛡️ My YouTopian Status"),
+                KeyboardButton(text="📝 Submit Appeal")
+            ]
+        ],
+        resize_keyboard=True,
+        input_field_placeholder="Choose an action"
+    )
+
 class AppealState(StatesGroup):
     waiting_for_appeal = State()
 
@@ -417,9 +429,22 @@ async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -
         await callback_query.answer("Please DM me to submit your appeal.", show_alert=True)
         return
         
-    await state.set_state(AppealState.waiting_for_appeal)
-    await callback_query.message.reply("Please type out your appeal or apology in a single message. Tell the admins what happened and why your Trust Score should be restored.")
+    await start_appeal_flow(callback_query.message, state)
     await callback_query.answer()
+
+@router.message(F.text == "🛡️ My YouTopian Status")
+async def handle_youtopianstatus_menu(message: Message, services: ServiceContainer) -> None:
+    await handle_youtopianstatus(message, services)
+
+@router.message(F.text == "📝 Submit Appeal")
+async def handle_submit_appeal_menu(message: Message, state: FSMContext) -> None:
+    if message.chat.type != "private":
+        return
+    await start_appeal_flow(message, state)
+
+async def start_appeal_flow(message: Message, state: FSMContext) -> None:
+    await state.set_state(AppealState.waiting_for_appeal)
+    await message.reply("Please type out your appeal or apology in a single message. Tell the admins what happened and why your Trust Score should be restored.")
 
 @router.message(AppealState.waiting_for_appeal)
 async def process_appeal_message(message: Message, state: FSMContext, services: ServiceContainer) -> None:
@@ -551,6 +576,9 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         disable_web_page_preview=True, 
         reply_markup=markup
     )
+    
+    if message.chat.type == "private":
+        await message.answer("Use the menu below to navigate my features:", reply_markup=pete_menu())
 
 # -----------------------------------------------------------------------------
 # AUTOMATED JUSTICE ENGINE (ACTIVE LISTENER)
