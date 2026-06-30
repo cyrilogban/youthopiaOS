@@ -1,9 +1,13 @@
 from aiogram import Router, F
+from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, PollAnswer
 from shared.services.container import ServiceContainer
 import random
 
 quiz_router = Router()
+
+# In-memory tracking for active quiz polls (so we can support group chats and instant resolution)
+ACTIVE_POLLS = {}
 
 
 
@@ -78,6 +82,13 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         on_conflict="user_id, bot_name"
     )
     
+    # Track globally in memory too
+    ACTIVE_POLLS[sent_poll.poll.id] = {
+        "question_id": q_id,
+        "base_xp": question_record.get("base_xp", 10),
+        "is_group": False
+    }
+    
     await callback.answer()
 
 from aiogram import Bot
@@ -88,18 +99,27 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     user = await services.identity.resolve_telegram_user(poll_answer.user)
     user_id = user["id"]
     
-    # Find the tracked poll data
-    state_record = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "lusy_poll_tracking"})
-    if not state_record:
-        return
-        
-    state = state_record.get("state", {})
-    if state.get("poll_id") != poll_answer.poll_id:
-        return # Not a poll we are currently tracking
-        
-    question_id = state.get("question_id")
-    base_xp = state.get("base_xp", 10)
+    # 1. Find the tracked poll data (check memory first, then DB fallback)
+    poll_id = poll_answer.poll_id
+    poll_info = ACTIVE_POLLS.get(poll_id)
     
+    if poll_info:
+        question_id = poll_info["question_id"]
+        base_xp = poll_info["base_xp"]
+        is_group = poll_info.get("is_group", False)
+    else:
+        state_record = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "lusy_poll_tracking"})
+        if not state_record:
+            return
+            
+        state = state_record.get("state", {})
+        if state.get("poll_id") != poll_id:
+            return # Not a poll we are currently tracking
+            
+        question_id = state.get("question_id")
+        base_xp = state.get("base_xp", 10)
+        is_group = False
+        
     # Fetch the original question to check the correct answer index
     q_resp = await services.supabase.find_one("lusy_questions", "id", question_id)
     if not q_resp:
@@ -110,7 +130,7 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     correct_text = q_resp.get("correct_answer")
     correct_idx = options.index(correct_text) if correct_text in options else 0
     
-    # Did they get it right? (poll_answer.option_ids is a list of selected indexes)
+    # Did they get it right?
     is_correct = correct_idx in poll_answer.option_ids
     xp_awarded = base_xp if is_correct else 0
     
@@ -128,24 +148,92 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     if is_correct:
         await services.xp.award_xp(user_id, xp_awarded, "lusy", f"Bible Quiz: {question_id}")
         
-    # Clear the tracking state so they can't double answer
-    import asyncio
-    def _delete_state():
-        services.supabase.client.table("bot_user_state").delete().eq("user_id", user_id).eq("bot_name", "lusy_poll_tracking").execute()
-    await asyncio.to_thread(_delete_state)
+    # Clear the tracking state so they can't double answer (only for private polls)
+    if not is_group:
+        import asyncio
+        def _delete_state():
+            services.supabase.client.table("bot_user_state").delete().eq("user_id", user_id).eq("bot_name", "lusy_poll_tracking").execute()
+        await asyncio.to_thread(_delete_state)
+        
+        if poll_id in ACTIVE_POLLS:
+            del ACTIVE_POLLS[poll_id]
 
-    # Send the "Next Question" prompt!
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
-    ])
+    result_text = f"Correct! 🎉 +{xp_awarded} YP!" if is_correct else "Incorrect! ❌"
     
-    result_text = f"<b>Correct! 🎉 +{xp_awarded} YP!</b>" if is_correct else "<b>Incorrect! ❌</b>"
-    
-    # We don't have access to the original chat easily inside poll_answer, so we send it directly to the user
-    await bot.send_message(
-        chat_id=poll_answer.user.id,
-        text=f"{result_text}\n\nDo you want to play another one?",
-        parse_mode="HTML",
-        reply_markup=markup
-    )
+    if not is_group:
+        # Private poll flow: send the next question button
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
+        ])
+        
+        await bot.send_message(
+            chat_id=poll_answer.user.id,
+            text=f"<b>{result_text}</b>\n\nDo you want to play another one?",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+    else:
+        # Group poll flow: send a direct message notification
+        try:
+            await bot.send_message(
+                chat_id=poll_answer.user.id,
+                text=f"<b>{result_text}</b> (from the group quiz)",
+                parse_mode="HTML"
+            )
+        except Exception:
+            pass
+
+
+@quiz_router.message(Command("quiz"))
+@quiz_router.message(Command("play"))
+async def on_quiz_command(message: Message, services: ServiceContainer):
+    if message.chat.type == "private":
+        # Show difficulty selection menu
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
+                InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+            ],
+            [
+                InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+            ]
+        ])
+        await message.answer("<b>Choose your Difficulty Level!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
+    else:
+        # In a group, pick a random active question of ANY difficulty and send it as a poll!
+        questions_resp = await services.supabase.find_many("lusy_questions", {"is_active": True})
+        if not questions_resp:
+            await message.answer("No quiz questions found in the database!")
+            return
+            
+        question_record = random.choice(questions_resp)
+        q_id = question_record["id"]
+        content = question_record.get("content", {})
+        text = content.get("text", "Unknown Question")
+        options = content.get("options", [])
+        correct_text = question_record.get("correct_answer")
+        explanation = question_record.get("explanation", "")
+        difficulty = question_record.get("difficulty", "easy").upper()
+        
+        correct_idx = 0
+        if correct_text in options:
+            correct_idx = options.index(correct_text)
+            
+        # Send native Telegram poll in the group!
+        sent_poll = await message.answer_poll(
+            question=f"[{difficulty}] {text}",
+            options=options,
+            type="quiz",
+            correct_option_id=correct_idx,
+            explanation=explanation if explanation else None,
+            is_anonymous=False  # Crucial! If anonymous, we can't see who answered!
+        )
+        
+        # Save to ACTIVE_POLLS map
+        ACTIVE_POLLS[sent_poll.poll.id] = {
+            "question_id": q_id,
+            "base_xp": question_record.get("base_xp", 10),
+            "is_group": True
+        }

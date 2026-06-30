@@ -23,11 +23,12 @@ def _router() -> Router:
     async def on_startup(bot: Bot) -> None:
         private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
+            BotCommand(command="quiz", description="Start a Bible Quiz"),
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="yp", description="Check your current YP and Level"),
         ]
         group_commands = [
-            BotCommand(command="play", description="Drop a Bible Quiz for the group!"),
+            BotCommand(command="quiz", description="Drop a Bible Quiz for the group!"),
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         await bot.delete_my_commands()
