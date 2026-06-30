@@ -129,7 +129,10 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
         await services.xp.award_xp(user_id, xp_awarded, "lusy", f"Bible Quiz: {question_id}")
         
     # Clear the tracking state so they can't double answer
-    await services.supabase.client.table("bot_user_state").delete().eq("user_id", user_id).eq("bot_name", "lusy_poll_tracking").execute()
+    import asyncio
+    def _delete_state():
+        services.supabase.client.table("bot_user_state").delete().eq("user_id", user_id).eq("bot_name", "lusy_poll_tracking").execute()
+    await asyncio.to_thread(_delete_state)
 
     # Send the "Next Question" prompt!
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
