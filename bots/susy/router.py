@@ -129,7 +129,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             text = (
                 "<b>Meet the Bot Family 🤖 (3/3)</b>\n"
                 "<blockquote><b>Theo</b> (@iamtheobot) - Your daily devotional companion.\n"
-                "<b>Lusy</b> (@iamlusybot) - Play games and earn XP!\n"
+                "<b>Lusy</b> (@iamlusybot) - Play games and earn YP!\n"
                 "<b>Pete</b> (@iampetebot) - The security guard.\n"
                 "<b>Ed</b> (@iamedyybot) - Announcements and events.\n"
                 "<b>Susy</b> (Me!) - Your guide and friend.</blockquote>\n\n"
@@ -202,7 +202,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
             "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
             "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
-            "Games, XP, and fun! Earn points and grow your rank.\n\n"
+            "Games, YP, and fun! Earn points and grow your rank.\n\n"
             "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
             "Security and moderation. Keeping our community safe.\n\n"
             "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"

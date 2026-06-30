@@ -571,7 +571,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
         "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
         "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
-        "Games, XP, and fun! Earn points and grow your rank.\n\n"
+        "Games, YP, and fun! Earn points and grow your rank.\n\n"
         "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
         "Security and moderation. Keeping our community safe.\n\n"
         "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"
