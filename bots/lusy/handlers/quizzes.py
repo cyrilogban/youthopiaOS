@@ -95,7 +95,9 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     ACTIVE_POLLS[sent_poll.poll.id] = {
         "question_id": q_id,
         "base_xp": question_record.get("base_xp", 10),
-        "is_group": is_group
+        "is_group": is_group,
+        "chat_id": callback.message.chat.id,
+        "next_sent": False
     }
     
     await callback.answer()
@@ -183,7 +185,8 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
             reply_markup=markup
         )
     else:
-        # Group poll flow: send a direct message notification
+        # Group poll flow:
+        # 1. Send the player a direct message notification
         try:
             await bot.send_message(
                 chat_id=poll_answer.user.id,
@@ -192,6 +195,25 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
             )
         except Exception:
             pass
+
+        # 2. Send a "Next Question" button to the group chat (only ONCE per poll)
+        if poll_info and not poll_info.get("next_sent", False):
+            poll_info["next_sent"] = True
+            group_chat_id = poll_info.get("chat_id")
+            if group_chat_id:
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
+                ])
+                try:
+                    await bot.send_message(
+                        chat_id=group_chat_id,
+                        text="<b>Ready for the next round?</b>\nTap below to select the difficulty!",
+                        parse_mode="HTML",
+                        reply_markup=markup
+                    )
+                except Exception:
+                    pass
 
 
 async def on_quiz_command(message: Message, services: ServiceContainer):
