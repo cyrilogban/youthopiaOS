@@ -58,6 +58,7 @@ class BotManager:
 
     async def _run_bot(self, bot_name: str, bot_config: BotConfig) -> None:
         module = import_module(f"bots.{bot_name}.bot")
+        print(f"DEBUG: Loaded bot '{bot_name}' from: {module.__file__}")
         run_bot: BotRunner | None = getattr(module, "run_bot", None)
         if run_bot is None:
             raise RuntimeError(f"bots.{bot_name}.bot must expose run_bot(config, services).")

@@ -8,89 +8,11 @@ from core.config import BotConfig
 from core.telegram_runtime import build_router, run_polling_bot
 from shared.services.container import ServiceContainer
 
-
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram import Bot
 
 from bots.lusy.handlers.quizzes import quiz_router
 
-def _router() -> Router:
-    router = build_router("lusy", "Lusy games and XP bot", include_base_commands=False)
-    
-    router.include_router(quiz_router)
-
-    @router.startup()
-    async def on_startup(bot: Bot) -> None:
-        private_commands = [
-            BotCommand(command="start", description="Open the Game Dashboard"),
-            BotCommand(command="quiz", description="Start a Bible Quiz"),
-            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
-            BotCommand(command="help", description="How to play and earn YP"),
-            BotCommand(command="yp", description="Check your current YP and Level"),
-        ]
-        group_commands = [
-            BotCommand(command="quiz", description="Drop a Bible Quiz for the group!"),
-            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
-            BotCommand(command="help", description="How to play and earn YP"),
-        ]
-        await bot.delete_my_commands()
-        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
-        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
-
-    @router.message(Command("start"))
-    async def handle_start(message: Message) -> None:
-        if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
-            return
-
-        welcome_text = (
-            "<b>Welcome to the YouThopia Bible Quiz!</b>\n"
-            "<blockquote>I am Lusy! Think you know the Bible? Let's put your knowledge to the test, learn the Word, and earn some YP!</blockquote>"
-        )
-        
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Play Games", callback_data="lusy_menu_play"),
-                InlineKeyboardButton(text="Leaderboard", callback_data="lusy_menu_leaderboard")
-            ],
-            [
-                InlineKeyboardButton(text="My YP & Stats", callback_data="lusy_menu_stats"),
-                InlineKeyboardButton(text="About Lusy", callback_data="lusy_menu_about")
-            ]
-        ])
-        await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
-
-    async def handle_help(message: Message) -> None:
-        help_text = (
-            "<b>About Lusy & Bible Quizzes</b>\n\n"
-            "Welcome to the Quiz Room! Here is how it works:\n"
-            "• <b>Play Games</b>: Test your Bible knowledge with solo or group quizzes.\n"
-            "• <b>My YP & Stats</b>: Track your YouTopian Points and current Level.\n"
-            "• <b>Leaderboard</b>: See the Top 10 YouTopians!\n\n"
-            "<i>More quizzes and games are being added soon!</i>\n\n"
-            "<b>Explore other bots in the community:</b>"
-        )
-        
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Theo 📖", url="https://t.me/iamtheobot"),
-                InlineKeyboardButton(text="Pete 🛡️", url="https://t.me/iampetebot")
-            ],
-            [
-                InlineKeyboardButton(text="Eddy 📅", url="https://t.me/iamedyybot"),
-                InlineKeyboardButton(text="Susy 💬", url="https://t.me/iamsusiebot")
-            ]
-        ])
-        await message.answer(help_text, parse_mode="HTML", reply_markup=markup)
-
-    @router.message(Command("help"))
-    @router.message(F.text == "About Lusy")
-    async def on_help_command(message: Message):
-        await handle_help(message)
 
 async def render_user_stats(message: Message, telegram_user, services: ServiceContainer) -> None:
     user = await services.identity.resolve_telegram_user(telegram_user)
@@ -149,6 +71,78 @@ async def render_user_stats(message: Message, telegram_user, services: ServiceCo
     
     await message.answer(card_text, parse_mode="HTML")
 
+
+def _router() -> Router:
+    router = build_router("lusy", "Lusy games and XP bot", include_base_commands=False)
+    
+    router.include_router(quiz_router)
+
+    @router.startup()
+    async def on_startup(bot: Bot) -> None:
+        private_commands = [
+            BotCommand(command="start", description="Open the Game Dashboard"),
+            BotCommand(command="quiz", description="Start a Bible Quiz"),
+            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
+            BotCommand(command="help", description="How to play and earn YP"),
+            BotCommand(command="yp", description="Check your current YP and Level"),
+        ]
+        group_commands = [
+            BotCommand(command="quiz", description="Drop a Bible Quiz for the group!"),
+            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
+            BotCommand(command="help", description="How to play and earn YP"),
+        ]
+        await bot.delete_my_commands()
+        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+
+    @router.message(Command("start"))
+    async def handle_start(message: Message) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
+
+        welcome_text = (
+            "<b>Welcome to the YouThopia Bible Quiz!</b>\n"
+            "<blockquote>I am Lusy! Think you know the Bible? Let's put your knowledge to the test, learn the Word, and earn some YP!</blockquote>"
+        )
+        
+        markup = ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="🎮 Play Games"), KeyboardButton(text="Leaderboard")],
+            [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
+        ], resize_keyboard=True)
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
+
+    async def handle_help(message: Message) -> None:
+        help_text = (
+            "<b>About Lusy & Bible Quizzes</b>\n\n"
+            "Welcome to the Quiz Room! Here is how it works:\n"
+            "• <b>Play Games</b>: Test your Bible knowledge with solo or group quizzes.\n"
+            "• <b>My YP & Stats</b>: Track your YouTopian Points and current Level.\n"
+            "• <b>Leaderboard</b>: See the Top 10 YouTopians!\n\n"
+            "<i>More quizzes and games are being added soon!</i>\n\n"
+            "<b>Explore other bots in the community:</b>"
+        )
+        
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Theo 📖", url="https://t.me/iamtheobot"),
+                InlineKeyboardButton(text="Pete 🛡️", url="https://t.me/iampetebot")
+            ],
+            [
+                InlineKeyboardButton(text="Eddy 📅", url="https://t.me/iamedyybot"),
+                InlineKeyboardButton(text="Susy 💬", url="https://t.me/iamsusiebot")
+            ]
+        ])
+        await message.answer(help_text, parse_mode="HTML", reply_markup=markup)
+
+    @router.message(Command("help"))
+    @router.message(F.text == "About Lusy")
+    async def on_help_command(message: Message):
+        await handle_help(message)
 
     @router.message(F.text == "My YP & Stats")
     @router.message(Command("yp"))
@@ -240,6 +234,7 @@ async def render_user_stats(message: Message, telegram_user, services: ServiceCo
         )
 
     return router
+
 
 async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     await run_polling_bot(config, services, description="Lusy games and XP bot", router=_router())

@@ -114,6 +114,7 @@ async def run_polling_bot(
     bot = Bot(token=config.token)
     dispatcher = Dispatcher()
     dispatcher["services"] = services
+    print(f"DEBUG: run_polling_bot for '{config.name}' received router: {router}")
     dispatcher.include_router(router or build_router(config.name, description))
 
     if commands:
