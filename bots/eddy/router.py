@@ -49,13 +49,17 @@ def build_eddy_router(description: str) -> Router:
         # ----------------------------------------------------
         # THE INVISIBLE ADMIN COMMAND
         # ----------------------------------------------------
-        admin_id_str = os.getenv("ADMIN_TELEGRAM_ID")
-        if admin_id_str and admin_id_str.isdigit():
-            admin_id = int(admin_id_str)
+        admin_ids_str = os.getenv("ADMIN_IDS")
+        if admin_ids_str:
+            # ADMIN_IDS could be multiple IDs separated by commas (e.g. "123,456")
+            admin_ids = [aid.strip() for aid in admin_ids_str.split(",") if aid.strip().isdigit()]
+            
+            # Register the new_event command for EVERY admin in the list
             admin_commands = commands + [
                 BotCommand(command="new_event", description="[Admin] Create a pop-up event")
             ]
-            await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=admin_id))
+            for admin_id in admin_ids:
+                await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=int(admin_id)))
 
         # Start the background scheduler
         from bots.eddy.services.scheduler import setup_eddy_scheduler
@@ -307,8 +311,9 @@ def build_eddy_router(description: str) -> Router:
     # MILESTONE 4: AD-HOC ADMIN EVENT CREATOR (FSM)
     # ----------------------------------------------------------------------
     def is_admin(user_id: int) -> bool:
-        admin_id = os.getenv("ADMIN_TELEGRAM_ID")
-        return str(user_id) == admin_id
+        admin_ids_str = os.getenv("ADMIN_IDS", "")
+        admin_ids = [aid.strip() for aid in admin_ids_str.split(",") if aid.strip()]
+        return str(user_id) in admin_ids
 
     @router.message(Command("new_event"))
     async def start_event_creation(message: Message, state: FSMContext):
