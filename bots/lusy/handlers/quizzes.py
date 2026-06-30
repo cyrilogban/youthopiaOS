@@ -19,7 +19,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     # 1. Fetch all multiple choice questions
     # In a production app, we would do a complex SQL query to exclude already answered questions.
     # For now, let's fetch all active MCQs.
-    questions_resp = await services.supabase.find_all("lusy_questions", {"game_type": "multiple_choice", "is_active": True})
+    questions_resp = await services.supabase.find_many("lusy_questions", {"game_type": "multiple_choice", "is_active": True})
     
     if not questions_resp:
         await callback.message.answer("No quiz questions found in the database yet!")

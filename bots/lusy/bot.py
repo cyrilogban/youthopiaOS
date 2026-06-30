@@ -99,10 +99,9 @@ def _router() -> Router:
     async def on_play_games(message: Message):
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🧠 Bible Quiz", callback_data="lusy_play_quiz")],
-            [InlineKeyboardButton(text="🔠 Verse Completion (Soon)", callback_data="lusy_soon")]
+            [InlineKeyboardButton(text="Bible Quiz", callback_data="lusy_play_quiz")]
         ])
-        await message.answer("<b>🎮 Choose a Game Mode!</b>\nWhat would you like to play today?", parse_mode="HTML", reply_markup=markup)
+        await message.answer("<b>Choose a Game Mode!</b>\nWhat would you like to play today?", parse_mode="HTML", reply_markup=markup)
 
     @router.message(F.text == "Leaderboard")
     async def on_leaderboard(message: Message):
