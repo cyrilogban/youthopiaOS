@@ -7,6 +7,8 @@ from aiogram.types import (
     BotCommand,
     BotCommandScopeAllPrivateChats,
     BotCommandScopeAllGroupChats,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery
@@ -52,16 +54,20 @@ def build_eddy_router(description: str) -> Router:
             "<blockquote>I am Ed, your community manager. Click a button below to check your schedule!</blockquote>"
         )
 
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="📅 View Calendar", callback_data="eddy_view_calendar"),
-                InlineKeyboardButton(text="🎫 Events I'm Attending", callback_data="eddy_my_rsvps")
+        markup = ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text="📅 View Calendar"),
+                    KeyboardButton(text="🎫 My Events")
+                ],
+                [
+                    KeyboardButton(text="🔔 Reminders"),
+                    KeyboardButton(text="About Community")
+                ]
             ],
-            [
-                InlineKeyboardButton(text="🔔 Reminders", callback_data="eddy_reminders"),
-                InlineKeyboardButton(text="About the Community", callback_data="eddy_about")
-            ]
-        ])
+            resize_keyboard=True,
+            persistent=True
+        )
 
         sent_msg = await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
         
@@ -73,6 +79,11 @@ def build_eddy_router(description: str) -> Router:
                 await sent_msg.delete()
             except Exception:
                 pass
+
+    @router.message(F.text == "About Community")
+    async def on_about_text(message: Message):
+        # When they click About Community, we just show the help text
+        await handle_help(message)
 
     @router.message(Command("help"))
     async def handle_help(message: Message) -> None:
