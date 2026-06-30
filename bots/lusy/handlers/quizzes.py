@@ -80,8 +80,10 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     
     await callback.answer()
 
+from aiogram import Bot
+
 @quiz_router.poll_answer()
-async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer):
+async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer, bot: Bot):
     # This triggers when a user selects an option in the poll!
     user = await services.identity.resolve_telegram_user(poll_answer.user)
     user_id = user["id"]
@@ -138,7 +140,7 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     result_text = f"<b>Correct! 🎉 +{xp_awarded} YP!</b>" if is_correct else "<b>Incorrect! ❌</b>"
     
     # We don't have access to the original chat easily inside poll_answer, so we send it directly to the user
-    await services.bot.send_message(
+    await bot.send_message(
         chat_id=user["telegram_id"],
         text=f"{result_text}\n\nDo you want to play another one?",
         parse_mode="HTML",
