@@ -126,7 +126,7 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     
     # Award actual XP if correct
     if is_correct:
-        await services.xp.add_xp(user_id, xp_awarded, "lusy", f"Bible Quiz: {question_id}")
+        await services.xp.award_xp(user_id, xp_awarded, "lusy", f"Bible Quiz: {question_id}")
         
     # Clear the tracking state so they can't double answer
     await services.supabase.client.table("bot_user_state").delete().eq("user_id", user_id).eq("bot_name", "lusy_poll_tracking").execute()
