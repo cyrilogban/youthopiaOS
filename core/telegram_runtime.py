@@ -130,4 +130,4 @@ async def run_polling_bot(
         logger.info("Registered %d menu commands for %s.", len(commands), config.name)
 
     logger.info("Starting %s bot polling.", config.name)
-    await dispatcher.start_polling(bot)
+    await dispatcher.start_polling(bot, allowed_updates=dispatcher.resolve_used_update_types())
