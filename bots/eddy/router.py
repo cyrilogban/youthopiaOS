@@ -50,7 +50,7 @@ def build_eddy_router(description: str) -> Router:
                 pass
 
         welcome_text = (
-            "<b>Welcome to the YouThopia Operations Center! 📅</b>\n"
+            "<b>Welcome to the YouThopia Weekly Calendar! 📅</b>\n"
             "<blockquote>I am Ed, your community manager. Click a button below to check your schedule!</blockquote>"
         )
 
@@ -80,6 +80,7 @@ def build_eddy_router(description: str) -> Router:
             except Exception:
                 pass
 
+    @router.message(Command("calendar"))
     @router.message(F.text == "📅 View Calendar")
     async def on_view_calendar(message: Message, services: ServiceContainer):
         # Fetch upcoming events from the daily schedule dictionary for now
@@ -90,8 +91,20 @@ def build_eddy_router(description: str) -> Router:
             cal_text += f"<b>{day}:</b> {data['title']}\n"
             
         cal_text += "\n<i>All events start at 9:00 PM WAT!</i>"
-        await message.answer(cal_text, parse_mode="HTML")
+        
+        sent_msg = await message.answer(cal_text, parse_mode="HTML")
+        
+        # In groups, delete the calendar after 30 seconds to avoid spam
+        if message.chat.type != "private":
+            import asyncio
+            await asyncio.sleep(30)
+            try:
+                await sent_msg.delete()
+                await message.delete()
+            except Exception:
+                pass
 
+    @router.message(Command("my_events"))
     @router.message(F.text == "🎫 My Events")
     async def on_my_events(message: Message, services: ServiceContainer):
         # Placeholder for querying Supabase
