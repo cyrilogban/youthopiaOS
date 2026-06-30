@@ -11,12 +11,22 @@ from aiogram.types import (
     KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
-    CallbackQuery
+    CallbackQuery,
+    BotCommandScopeChat
 )
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+import os
 
 from core.telegram_runtime import build_router
 from shared.services.container import ServiceContainer
 
+
+class EventCreation(StatesGroup):
+    waiting_for_title = State()
+    waiting_for_time = State()
+    waiting_for_description = State()
+    waiting_for_broadcast = State()
 
 def build_eddy_router(description: str) -> Router:
     router = build_router("eddy", description, include_base_commands=False)
@@ -35,6 +45,17 @@ def build_eddy_router(description: str) -> Router:
         await bot.delete_my_commands()
         await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
+
+        # ----------------------------------------------------
+        # THE INVISIBLE ADMIN COMMAND
+        # ----------------------------------------------------
+        admin_id_str = os.getenv("ADMIN_TELEGRAM_ID")
+        if admin_id_str and admin_id_str.isdigit():
+            admin_id = int(admin_id_str)
+            admin_commands = commands + [
+                BotCommand(command="new_event", description="[Admin] Create a pop-up event")
+            ]
+            await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=admin_id))
 
         # Start the background scheduler
         from bots.eddy.services.scheduler import setup_eddy_scheduler
@@ -281,5 +302,120 @@ def build_eddy_router(description: str) -> Router:
         # When they click About Community, we just show the help text
         await handle_help(callback.message)
         await callback.answer()
+
+    # ----------------------------------------------------------------------
+    # MILESTONE 4: AD-HOC ADMIN EVENT CREATOR (FSM)
+    # ----------------------------------------------------------------------
+    def is_admin(user_id: int) -> bool:
+        admin_id = os.getenv("ADMIN_TELEGRAM_ID")
+        return str(user_id) == admin_id
+
+    @router.message(Command("new_event"))
+    async def start_event_creation(message: Message, state: FSMContext):
+        if message.chat.type != "private":
+            await message.delete()
+            try:
+                await message.bot.send_message(message.from_user.id, "Let's keep event creation in our private DM! Type /new_event here.")
+            except Exception:
+                pass
+            return
+            
+        if not is_admin(message.from_user.id):
+            return # Silent ignore for non-admins
+            
+        await state.set_state(EventCreation.waiting_for_title)
+        await message.answer("Let's create a custom event! 🛠️\n\nFirst, what is the <b>Title</b> of the event?", parse_mode="HTML")
+
+    @router.message(EventCreation.waiting_for_title)
+    async def process_title(message: Message, state: FSMContext):
+        await state.update_data(title=message.text)
+        await state.set_state(EventCreation.waiting_for_time)
+        await message.answer(f"Great title! ({message.text})\n\nNow, what <b>Date and Time</b> is this happening?\n<i>(e.g., 'Tomorrow at 10:00 AM' or 'July 15th at 4 PM WAT')</i>", parse_mode="HTML")
+
+    @router.message(EventCreation.waiting_for_time)
+    async def process_time(message: Message, state: FSMContext):
+        await state.update_data(starts_at=message.text)
+        await state.set_state(EventCreation.waiting_for_description)
+        await message.answer("Got it! Finally, give me a short <b>Description</b> for this event.", parse_mode="HTML")
+
+    @router.message(EventCreation.waiting_for_description)
+    async def process_description(message: Message, state: FSMContext, services: ServiceContainer):
+        await state.update_data(description=message.text)
+        data = await state.get_data()
+        
+        # We will save it directly using EventService
+        try:
+            # We will use the starts_at string directly for now, or map it.
+            # In a true prod app, we'd parse this to ISO datetime. Here we'll just save it as the description header.
+            from datetime import datetime
+            
+            event_payload = {
+                "title": data["title"],
+                "description": f"🕒 {data['starts_at']}\n\n{data['description']}",
+                "starts_at": datetime.now().isoformat(), # Dummy ISO for DB constraint
+                "status": "scheduled"
+            }
+            
+            created_event = await services.event_service.create_event(event_payload)
+            event_id = created_event[0]["id"] if isinstance(created_event, list) else created_event["id"]
+            
+            await state.update_data(event_id=event_id)
+            await state.set_state(EventCreation.waiting_for_broadcast)
+            
+            markup = ReplyKeyboardMarkup(
+                keyboard=[
+                    [KeyboardButton(text="📢 Yes, Broadcast It!")],
+                    [KeyboardButton(text="🤫 No, just save it")]
+                ],
+                resize_keyboard=True,
+                one_time_keyboard=True
+            )
+            
+            await message.answer("<b>Event Saved to Supabase! ✅</b>\n\nDo you want me to broadcast this to the Main Group right now?", parse_mode="HTML", reply_markup=markup)
+            
+        except Exception as e:
+            await message.answer(f"Error saving to DB: {e}")
+            await state.clear()
+
+    @router.message(EventCreation.waiting_for_broadcast)
+    async def process_broadcast(message: Message, state: FSMContext, bot: Bot):
+        data = await state.get_data()
+        event_id = data.get("event_id")
+        
+        if message.text == "📢 Yes, Broadcast It!":
+            main_group_id = os.getenv("MAIN_GROUP_ID")
+            if not main_group_id:
+                await message.answer("MAIN_GROUP_ID not set in .env! Cannot broadcast.")
+            else:
+                announcement = (
+                    f"<b>🚨 SPECIAL ANNOUNCEMENT 🚨</b>\n\n"
+                    f"<b>Event:</b> {data['title']}\n"
+                    f"<blockquote>{data['description']}</blockquote>\n\n"
+                    "Click below to RSVP!"
+                )
+                
+                markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="✅ Coming", callback_data=f"rsvp_coming:{event_id}"),
+                        InlineKeyboardButton(text="❓ Maybe", callback_data=f"rsvp_maybe:{event_id}"),
+                        InlineKeyboardButton(text="❌ Can't Attend", callback_data=f"rsvp_no:{event_id}")
+                    ]
+                ])
+                
+                try:
+                    await bot.send_message(chat_id=main_group_id, text=announcement, parse_mode="HTML", reply_markup=markup)
+                    await message.answer("Broadcast sent successfully to the Main Group! 🚀", reply_markup=ReplyKeyboardMarkup(
+                        keyboard=[[KeyboardButton(text="📅 View Calendar"), KeyboardButton(text="🎫 My Events")], [KeyboardButton(text="🔔 Reminders"), KeyboardButton(text="About Community")]],
+                        resize_keyboard=True, persistent=True
+                    ))
+                except Exception as e:
+                    await message.answer(f"Failed to broadcast: {e}")
+        else:
+            await message.answer("Okay, event saved silently! 🤫", reply_markup=ReplyKeyboardMarkup(
+                        keyboard=[[KeyboardButton(text="📅 View Calendar"), KeyboardButton(text="🎫 My Events")], [KeyboardButton(text="🔔 Reminders"), KeyboardButton(text="About Community")]],
+                        resize_keyboard=True, persistent=True
+                    ))
+            
+        await state.clear()
 
     return router
