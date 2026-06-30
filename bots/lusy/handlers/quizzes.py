@@ -16,6 +16,9 @@ ACTIVE_POLLS = {}
 # In-memory tracking for active group quizzes: chat_id (int) -> poll_id (str)
 ACTIVE_GROUP_QUIZZES = {}
 
+# In-memory tracking for recently posted group questions: chat_id (int) -> list of question_id (str)
+RECENT_GROUP_QUESTIONS = {}
+
 
 @quiz_router.callback_query(F.data == "lusy_soon")
 async def on_soon(callback: CallbackQuery):
@@ -63,9 +66,44 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         await callback.message.edit_text(f"No {difficulty} quiz questions found in the database yet! Please try another difficulty.")
         await callback.answer()
         return
+
+    # 1b. Filter out already answered questions
+    if not is_group:
+        # Check private game history
+        history = await services.supabase.find_many("lusy_game_history", {"user_id": user_id})
+        answered_ids = { h["question_id"] for h in history }
+    else:
+        # Check group's recently posted questions
+        answered_ids = set(RECENT_GROUP_QUESTIONS.get(chat_id, []))
+
+    eligible_questions = [q for q in questions_resp if q["id"] not in answered_ids]
+
+    if not eligible_questions:
+        if not is_group:
+            # Tell the DM user they finished the difficulty!
+            difficulty_markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
+                    InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+                ],
+                [
+                    InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+                ]
+            ])
+            await callback.message.edit_text(
+                f"🏆 <b>Difficulty Completed!</b>\n\nWow! You have successfully answered all <b>{difficulty.capitalize()}</b> questions in YouThopia!\n\nTry another difficulty level to continue earning YP.",
+                parse_mode="HTML",
+                reply_markup=difficulty_markup
+            )
+            await callback.answer()
+            return
+        else:
+            # In group, if all questions were shown recently, reset group history so they can replay them!
+            RECENT_GROUP_QUESTIONS[chat_id] = []
+            eligible_questions = questions_resp
         
-    # 2. Pick a random question
-    question_record = random.choice(questions_resp)
+    # 2. Pick a random question from eligible list
+    question_record = random.choice(eligible_questions)
     q_id = question_record["id"]
     content = question_record.get("content", {})
     text = content.get("text", "Unknown Question")
@@ -111,6 +149,13 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     else:
         # Set active group quiz status
         ACTIVE_GROUP_QUIZZES[chat_id] = sent_poll.poll.id
+        
+        # Add to recently posted questions in this group
+        if chat_id not in RECENT_GROUP_QUESTIONS:
+            RECENT_GROUP_QUESTIONS[chat_id] = []
+        RECENT_GROUP_QUESTIONS[chat_id].append(q_id)
+        if len(RECENT_GROUP_QUESTIONS[chat_id]) > 15:
+            RECENT_GROUP_QUESTIONS[chat_id].pop(0)
     
     # Track globally in memory
     ACTIVE_POLLS[sent_poll.poll.id] = {
