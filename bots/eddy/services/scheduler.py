@@ -43,6 +43,9 @@ DAILY_SCHEDULE = {
     }
 }
 
+from shared.db.supabase import SupabaseGateway
+import os
+
 async def post_daily_announcement(bot: Bot, group_chat_id: int):
     """Runs every day at 8:00 PM WAT to announce the 9:00 PM event."""
     today_name = datetime.now().strftime("%A")
@@ -60,6 +63,26 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
             event_data["title"] = "Wisdom Wednesday (Monthly Book Review!)"
             event_data["description"] = "It's the last Wednesday of the month! Join us for our deep-dive Monthly Book review."
 
+    # Initialize Supabase and EventService
+    supabase = SupabaseGateway(os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_KEY", ""))
+    event_service = EventService(supabase)
+    
+    # 1. Create the event in the database
+    event_payload = {
+        "title": event_data["title"],
+        "description": event_data["description"],
+        "starts_at": datetime.now().replace(hour=21, minute=0, second=0, microsecond=0).isoformat(),
+        "status": "scheduled"
+    }
+    
+    try:
+        created_event = await event_service.create_event(event_payload)
+        event_id = created_event[0]["id"] if isinstance(created_event, list) else created_event["id"]
+    except Exception as e:
+        logger.error(f"Failed to create event in Supabase: {e}")
+        return
+
+    # 2. Format the message
     announcement = (
         f"<b>Happy {today_name}, YouTopians!</b> 🚀\n\n"
         f"<b>Tonight's Event:</b> {event_data['title']}\n"
@@ -67,11 +90,12 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
         "We are starting in exactly 1 hour (9:00 PM WAT). Click below to RSVP!"
     )
     
+    # 3. Attach the specific event_id to the callback data
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Coming", callback_data=f"rsvp_yes"),
-            InlineKeyboardButton(text="❓ Maybe", callback_data=f"rsvp_maybe"),
-            InlineKeyboardButton(text="❌ Can't Attend", callback_data=f"rsvp_no")
+            InlineKeyboardButton(text="✅ Coming", callback_data=f"rsvp_coming:{event_id}"),
+            InlineKeyboardButton(text="❓ Maybe", callback_data=f"rsvp_maybe:{event_id}"),
+            InlineKeyboardButton(text="❌ Can't Attend", callback_data=f"rsvp_no:{event_id}")
         ]
     ])
     

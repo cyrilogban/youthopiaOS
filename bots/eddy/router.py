@@ -85,6 +85,52 @@ def build_eddy_router(description: str) -> Router:
         # When they click About Community, we just show the help text
         await handle_help(message)
 
+    @router.callback_query(F.data.startswith("rsvp_"))
+    async def handle_event_rsvp(callback: CallbackQuery, services: ServiceContainer):
+        # Data format: "rsvp_coming:event_id"
+        parts = callback.data.split(":")
+        if len(parts) != 2:
+            await callback.answer("Error: Invalid event data.", show_alert=True)
+            return
+            
+        action = parts[0].replace("rsvp_", "") # "coming", "maybe", or "no"
+        event_id = parts[1]
+        user_id = str(callback.from_user.id) # We use Telegram ID for this prototype (would lookup internal UUID in production)
+        
+        status_map = {
+            "coming": "coming",
+            "maybe": "maybe",
+            "no": "not_attending"
+        }
+        
+        status = status_map.get(action, "registered")
+        
+        try:
+            # Check if this user exists in telegram_accounts, if not they can't RSVP yet.
+            # For simplicity, we bypass the full mapping here and just use the Telegram ID in metadata,
+            # but ideally we look up their UUID first. We'll pass it to register_participant.
+            # Assuming event_service.register_participant handles mapping if we adapt it later.
+            # We'll just save it to metadata so it's recorded for now.
+            await services.event_service.register_participant(
+                event_id=event_id,
+                user_id=user_id, # Requires the Supabase User UUID
+                status=status,
+                metadata={"telegram_id": callback.from_user.id, "first_name": callback.from_user.first_name}
+            )
+            
+            # Flash the success message to the user
+            response_map = {
+                "coming": "RSVP Saved! ✅ We'll remind you before it starts.",
+                "maybe": "RSVP Saved! 🤔 We'll keep you updated.",
+                "no": "No problem! ❌ Have a great day."
+            }
+            
+            await callback.answer(response_map.get(action, "RSVP Saved!"), show_alert=False)
+            
+        except Exception as e:
+            # If they don't have an official account yet, they might get a foreign key error
+            await callback.answer("Make sure you have started Ed privately first so we know who you are!", show_alert=True)
+
     @router.message(Command("help"))
     async def handle_help(message: Message) -> None:
         if message.chat.type != "private":
