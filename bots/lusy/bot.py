@@ -9,7 +9,7 @@ from core.telegram_runtime import build_router, run_polling_bot
 from shared.services.container import ServiceContainer
 
 
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram import Bot
 
 from bots.lusy.handlers.quizzes import quiz_router
@@ -41,20 +41,23 @@ def _router() -> Router:
                 await message.delete()
             except Exception:
                 pass
+            return
 
         welcome_text = (
             "<b>Welcome to the YouThopia Bible Quiz!</b>\n"
             "<blockquote>I am Lusy! Think you know the Bible? Let's put your knowledge to the test, learn the Word, and earn some YP!</blockquote>"
         )
         
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [KeyboardButton(text="Play Games"), KeyboardButton(text="Leaderboard")],
-                [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Play Games", callback_data="lusy_menu_play"),
+                InlineKeyboardButton(text="Leaderboard", callback_data="lusy_menu_leaderboard")
             ],
-            resize_keyboard=True,
-            is_persistent=True
-        )
+            [
+                InlineKeyboardButton(text="My YP & Stats", callback_data="lusy_menu_stats"),
+                InlineKeyboardButton(text="About Lusy", callback_data="lusy_menu_about")
+            ]
+        ])
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
 
     async def handle_help(message: Message) -> None:
@@ -110,6 +113,33 @@ def _router() -> Router:
     @router.message(F.text == "Leaderboard")
     async def on_leaderboard(message: Message):
         await message.answer("Leaderboard is coming soon!")
+
+    @router.callback_query(F.data == "lusy_menu_play")
+    async def on_play_games_callback(callback: CallbackQuery):
+        await callback.answer()
+        await on_play_games(callback.message)
+
+    @router.callback_query(F.data == "lusy_menu_leaderboard")
+    async def on_leaderboard_callback(callback: CallbackQuery):
+        await callback.answer()
+        await on_leaderboard(callback.message)
+
+    @router.callback_query(F.data == "lusy_menu_stats")
+    async def on_stats_callback(callback: CallbackQuery, services: ServiceContainer):
+        await callback.answer()
+        user = await services.identity.resolve_telegram_user(callback.from_user)
+        level = await services.xp.get_level(user["id"])
+        await callback.message.answer(
+            f"<b>Your Profile</b>\n\n"
+            f"<b>Total YP:</b> {level['total_xp']}\n"
+            f"<b>Current Level:</b> {level['level']}",
+            parse_mode="HTML"
+        )
+
+    @router.callback_query(F.data == "lusy_menu_about")
+    async def on_about_callback(callback: CallbackQuery):
+        await callback.answer()
+        await handle_help(callback.message)
 
     @router.message(lambda message: message.text and "Over to you, @iamlusybot!" in message.text)
     async def respond_to_eddy(message: Message):
