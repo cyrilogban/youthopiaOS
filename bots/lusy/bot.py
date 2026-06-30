@@ -18,6 +18,20 @@ def _router() -> Router:
         level = await services.xp.get_level(user["id"])
         await message.answer(f"XP: {level['total_xp']} | Level: {level['level']}")
 
+    @router.message(lambda message: message.text and "Over to you, @iamlusybot!" in message.text)
+    async def respond_to_eddy(message: Message):
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🧠 Bible Trivia (Coming Soon)", callback_data="lusy_trivia")],
+            [InlineKeyboardButton(text="🔠 Word Scramble (Coming Soon)", callback_data="lusy_scramble")]
+        ])
+        
+        await message.reply(
+            "Thanks Ed! 🎤\n\nAlright YouTopians, the weekend is here! What are we playing tonight?",
+            reply_markup=markup
+        )
+
     return router
 
 
