@@ -35,14 +35,14 @@ def _router() -> Router:
                 pass
 
         welcome_text = (
-            "<b>Welcome to the YouThopia Arcade! 🎮</b>\n"
-            "<blockquote>I am Lusy, your game master! Ready to earn some YP?</blockquote>"
+            "<b>Welcome to the YouThopia Bible Quiz!</b>\n"
+            "<blockquote>I am Lusy! Think you know the Bible? Let's put your knowledge to the test, learn the Word, and earn some YP!</blockquote>"
         )
         
         markup = ReplyKeyboardMarkup(
             keyboard=[
-                [KeyboardButton(text="🎮 Play Games"), KeyboardButton(text="🏆 Leaderboard")],
-                [KeyboardButton(text="👤 My YP & Stats"), KeyboardButton(text="About Lusy")]
+                [KeyboardButton(text="Play Games"), KeyboardButton(text="Leaderboard")],
+                [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
             ],
             resize_keyboard=True,
             persistent=True
@@ -51,12 +51,12 @@ def _router() -> Router:
 
     async def handle_help(message: Message) -> None:
         help_text = (
-            "<b>ℹ️ About Lusy & Game Rules</b>\n\n"
-            "Welcome to the Arcade! Here is how you play:\n"
-            "• <b>Play Games</b>: Choose solo or group games to test your knowledge.\n"
+            "<b>About Lusy & Bible Quizzes</b>\n\n"
+            "Welcome to the Quiz Room! Here is how it works:\n"
+            "• <b>Play Games</b>: Test your Bible knowledge with solo or group quizzes.\n"
             "• <b>My YP & Stats</b>: Track your YouTopian Points and current Level.\n"
-            "• <b>Leaderboard</b>: See the Top 10 YouThopians!\n\n"
-            "<i>More games are being added soon!</i>"
+            "• <b>Leaderboard</b>: See the Top 10 YouTopians!\n\n"
+            "<i>More quizzes and games are being added soon!</i>"
         )
         await message.answer(help_text, parse_mode="HTML")
 
@@ -65,26 +65,26 @@ def _router() -> Router:
     async def on_help_command(message: Message):
         await handle_help(message)
 
-    @router.message(F.text == "👤 My YP & Stats")
+    @router.message(F.text == "My YP & Stats")
     @router.message(Command("yp"))
     @router.message(Command("xp")) # Keeping /xp just in case someone is used to it
     async def xp(message: Message, services: ServiceContainer) -> None:
         user = await services.identity.resolve_telegram_user(message.from_user)
         level = await services.xp.get_level(user["id"])
         await message.answer(
-            f"<b>👤 Your Profile</b>\n\n"
-            f"<b>Total YP:</b> {level['total_xp']} ⭐\n"
-            f"<b>Current Level:</b> {level['level']} 🏆",
+            f"<b>Your Profile</b>\n\n"
+            f"<b>Total YP:</b> {level['total_xp']}\n"
+            f"<b>Current Level:</b> {level['level']}",
             parse_mode="HTML"
         )
 
-    @router.message(F.text == "🎮 Play Games")
+    @router.message(F.text == "Play Games")
     async def on_play_games(message: Message):
-        await message.answer("Games menu is coming soon! 🛠️")
+        await message.answer("Games menu is coming soon!")
 
-    @router.message(F.text == "🏆 Leaderboard")
+    @router.message(F.text == "Leaderboard")
     async def on_leaderboard(message: Message):
-        await message.answer("Leaderboard is coming soon! 🛠️")
+        await message.answer("Leaderboard is coming soon!")
 
     @router.message(lambda message: message.text and "Over to you, @iamlusybot!" in message.text)
     async def respond_to_eddy(message: Message):
