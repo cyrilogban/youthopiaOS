@@ -17,8 +17,10 @@ env/
 # Local setup script
 setup.bat
 
-# Database Seed Scripts (Keep content secret)
+# Database Seed & Scratch Scripts (Keep content secret)
 seed_*.py
+*_scratch.py
+check_users_scratch.py
 
 # Welcome messages
 theo_welcome_messages.md

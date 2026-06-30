@@ -24,11 +24,13 @@ def _router() -> Router:
         private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
             BotCommand(command="quiz", description="Start a Bible Quiz"),
+            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="yp", description="Check your current YP and Level"),
         ]
         group_commands = [
             BotCommand(command="quiz", description="Drop a Bible Quiz for the group!"),
+            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         await bot.delete_my_commands()
@@ -112,6 +114,7 @@ def _router() -> Router:
         await message.answer("<b>Choose a Game Mode!</b>\nWhat would you like to play today?", parse_mode="HTML", reply_markup=markup)
 
     @router.message(F.text == "Leaderboard")
+    @router.message(Command("leaderboard"))
     async def on_leaderboard(message: Message, services: ServiceContainer):
         import asyncio
         def run_query():
