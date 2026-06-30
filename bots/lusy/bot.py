@@ -60,9 +60,22 @@ def _router() -> Router:
             "• <b>Play Games</b>: Test your Bible knowledge with solo or group quizzes.\n"
             "• <b>My YP & Stats</b>: Track your YouTopian Points and current Level.\n"
             "• <b>Leaderboard</b>: See the Top 10 YouTopians!\n\n"
-            "<i>More quizzes and games are being added soon!</i>"
+            "<i>More quizzes and games are being added soon!</i>\n\n"
+            "<b>Explore other bots in the community:</b>"
         )
-        await message.answer(help_text, parse_mode="HTML")
+        
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Theo 📖", url="https://t.me/iamtheobot"),
+                InlineKeyboardButton(text="Pete 🛡️", url="https://t.me/iampetebot")
+            ],
+            [
+                InlineKeyboardButton(text="Eddy 📅", url="https://t.me/iamedyybot"),
+                InlineKeyboardButton(text="Susy 💬", url="https://t.me/iamsusiebot")
+            ]
+        ])
+        await message.answer(help_text, parse_mode="HTML", reply_markup=markup)
 
     @router.message(Command("help"))
     @router.message(F.text == "About Lusy")
