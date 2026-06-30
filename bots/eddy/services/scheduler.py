@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -105,47 +106,97 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
         logger.error(f"Failed to send 8PM announcement: {e}")
 
 
-async def trigger_event_start(bot: Bot, group_chat_id: int):
-    """Runs every day at 9:00 PM WAT to start the event."""
+async def send_event_reminders(bot: Bot):
+    """Runs at 8:45 PM WAT to send a private DM reminder to everyone who RSVP'd."""
     today_name = datetime.now().strftime("%A")
+    event_data = DAILY_SCHEDULE.get(today_name)
     
-    start_message = (
-        f"🚨 <b>{today_name} Event Starting NOW!</b> 🚨\n\n"
-        "Get in here! We are officially starting."
-    )
-    
+    if not event_data:
+        return
+        
     try:
-        await bot.send_message(group_chat_id, start_message, parse_mode="HTML")
+        supabase = SupabaseGateway(os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_KEY", ""))
+        
+        # 1. Find today's event from the database (filtering by today's date)
+        # For simplicity in this prototype, we'll find the most recent event created today with this title.
+        today_start = datetime.now().replace(hour=0, minute=0, second=0).isoformat()
+        events_resp = supabase.client.table("events").select("id").eq("title", event_data["title"]).gte("created_at", today_start).execute()
+        
+        if not events_resp.data:
+            return
+            
+        event_id = events_resp.data[0]["id"]
+        
+        # 2. Get all users who RSVP'd coming
+        participants_resp = supabase.client.table("event_participants").select("metadata").eq("event_id", event_id).eq("status", "coming").execute()
+        
+        if not participants_resp.data:
+            return
+            
+        # 3. Send them a DM!
+        for p in participants_resp.data:
+            telegram_id = p["metadata"].get("telegram_id")
+            first_name = p["metadata"].get("first_name", "YouTopian")
+            if telegram_id:
+                try:
+                    await bot.send_message(
+                        chat_id=telegram_id,
+                        text=f"⏰ <b>Wake up, {first_name}!</b>\n\n<b>{event_data['title']}</b> is starting in exactly 15 minutes in the Main Group! Grab your notes and get ready. 🚀",
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send DM to {telegram_id}: {e}")
+                    
     except Exception as e:
-        logger.error(f"Failed to send 9PM start trigger: {e}")
+        logger.error(f"Error in send_event_reminders: {e}")
 
-
-import os
+async def trigger_live_event(bot: Bot, group_chat_id: int):
+    """Runs every day at 9:00 PM WAT."""
+    today_name = datetime.now().strftime("%A")
+    event_data = DAILY_SCHEDULE.get(today_name)
+    
+    if not event_data:
+        return
+        
+    if today_name == "Friday":
+        # LUSY SYNC: Tell Lusy to take over!
+        message = (
+            f"🚨 <b>{event_data['title']} IS LIVE!</b> 🚨\n\n"
+            "The weekend is here! Let's get to it. Over to you, @iamlusybot! 🎮"
+        )
+    else:
+        message = f"🚨 <b>{event_data['title']} IS STARTING NOW!</b> 🚨\n\nHead to the main chat and let's go!"
+        
+    try:
+        await bot.send_message(group_chat_id, message, parse_mode="HTML")
+    except Exception as e:
+        logger.error(f"Failed to send 9PM trigger: {e}")
 
 def setup_eddy_scheduler(bot: Bot):
-    # APScheduler needs timezone "Africa/Lagos" for West Africa Time (WAT)
+    """Initializes the APScheduler for Eddy's cron jobs."""
     scheduler = AsyncIOScheduler(timezone="Africa/Lagos")
-    
-    # Get the Main Group ID from .env
     main_group_id = int(os.getenv("MAIN_GROUP_ID", "0"))
     
-    # Run at 20:00 (8:00 PM) WAT
+    # 1. Announce the event at 8:00 PM
     scheduler.add_job(
-        post_daily_announcement, 
-        trigger="cron", 
-        hour=20, 
-        minute=0, 
+        post_daily_announcement,
+        CronTrigger(hour=20, minute=0),
         args=[bot, main_group_id]
     )
     
-    # Run at 21:00 (9:00 PM) WAT
+    # 2. Send private DM Reminders at 8:45 PM
     scheduler.add_job(
-        trigger_event_start, 
-        trigger="cron", 
-        hour=21, 
-        minute=0, 
+        send_event_reminders,
+        CronTrigger(hour=20, minute=45),
+        args=[bot]
+    )
+    
+    # 3. Trigger the actual event at 9:00 PM
+    scheduler.add_job(
+        trigger_live_event,
+        CronTrigger(hour=21, minute=0),
         args=[bot, main_group_id]
     )
     
     scheduler.start()
-    return scheduler
+    logger.info("Eddy's timezone-aware scheduler has started (Africa/Lagos)")
