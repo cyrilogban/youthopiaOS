@@ -58,8 +58,14 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     if correct_text in options:
         correct_idx = options.index(correct_text)
         
-    # Delete the difficulty menu message
-    await callback.message.delete()
+    # Delete the difficulty menu message safely
+    try:
+        await callback.message.delete()
+    except Exception:
+        try:
+            await callback.message.edit_text("<b>Quiz started! Check the poll below.</b>", parse_mode="HTML")
+        except Exception:
+            pass
         
     # Send a native Telegram Quiz Poll!
     sent_poll = await callback.message.answer_poll(
@@ -71,22 +77,25 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         is_anonymous=False # Must be false so we know WHO answered it!
     )
     
-    # Save the mapping of poll_id -> question_id so we can award XP when they answer
-    await services.supabase.upsert(
-        "bot_user_state",
-        {
-            "user_id": user_id,
-            "bot_name": "lusy_poll_tracking",
-            "state": {"poll_id": sent_poll.poll.id, "question_id": q_id, "base_xp": question_record.get("base_xp", 10)}
-        },
-        on_conflict="user_id, bot_name"
-    )
+    is_group = callback.message.chat.type != "private"
+    
+    if not is_group:
+        # Save the mapping of poll_id -> question_id so we can award XP when they answer (only for DMs)
+        await services.supabase.upsert(
+            "bot_user_state",
+            {
+                "user_id": user_id,
+                "bot_name": "lusy_poll_tracking",
+                "state": {"poll_id": sent_poll.poll.id, "question_id": q_id, "base_xp": question_record.get("base_xp", 10)}
+            },
+            on_conflict="user_id, bot_name"
+        )
     
     # Track globally in memory too
     ACTIVE_POLLS[sent_poll.poll.id] = {
         "question_id": q_id,
         "base_xp": question_record.get("base_xp", 10),
-        "is_group": False
+        "is_group": is_group
     }
     
     await callback.answer()
@@ -186,52 +195,15 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
 
 
 async def on_quiz_command(message: Message, services: ServiceContainer):
-    if message.chat.type == "private":
-        # Show difficulty selection menu
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
-                InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
-            ],
-            [
-                InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
-            ]
-        ])
-        await message.answer("<b>Choose your Difficulty Level!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
-    else:
-        # In a group, pick a random active question of ANY difficulty and send it as a poll!
-        questions_resp = await services.supabase.find_many("lusy_questions", {"is_active": True})
-        if not questions_resp:
-            await message.answer("No quiz questions found in the database!")
-            return
-            
-        question_record = random.choice(questions_resp)
-        q_id = question_record["id"]
-        content = question_record.get("content", {})
-        text = content.get("text", "Unknown Question")
-        options = content.get("options", [])
-        correct_text = question_record.get("correct_answer")
-        explanation = question_record.get("explanation", "")
-        difficulty = question_record.get("difficulty", "easy").upper()
-        
-        correct_idx = 0
-        if correct_text in options:
-            correct_idx = options.index(correct_text)
-            
-        # Send native Telegram poll in the group!
-        sent_poll = await message.answer_poll(
-            question=f"[{difficulty}] {text}",
-            options=options,
-            type="quiz",
-            correct_option_id=correct_idx,
-            explanation=explanation if explanation else None,
-            is_anonymous=False  # Crucial! If anonymous, we can't see who answered!
-        )
-        
-        # Save to ACTIVE_POLLS map
-        ACTIVE_POLLS[sent_poll.poll.id] = {
-            "question_id": q_id,
-            "base_xp": question_record.get("base_xp", 10),
-            "is_group": True
-        }
+    # Show difficulty selection menu
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
+            InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+        ],
+        [
+            InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+        ]
+    ])
+    await message.answer("<b>Choose your Difficulty Level!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
