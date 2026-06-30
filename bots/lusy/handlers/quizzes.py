@@ -5,7 +5,7 @@ import random
 
 quiz_router = Router()
 
-@quiz_router.message(F.text == "Play Games")
+@quiz_router.message(F.text.in_({"Play Games", "🎮 Play Games"}))
 async def on_play_games(message: Message):
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🧠 Bible Quiz", callback_data="lusy_play_quiz")],
