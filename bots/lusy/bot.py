@@ -115,7 +115,7 @@ def _router() -> Router:
     async def on_leaderboard(message: Message, services: ServiceContainer):
         import asyncio
         def run_query():
-            return services.supabase.client.table("users").select("display_name, total_xp, level").order("total_xp", desc=True).limit(10).execute()
+            return services.supabase.client.table("users").select("display_name, total_xp, level").gt("total_xp", 0).order("total_xp", desc=True).limit(10).execute()
             
         try:
             res = await asyncio.to_thread(run_query)
