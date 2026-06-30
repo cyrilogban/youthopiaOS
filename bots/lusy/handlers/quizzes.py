@@ -135,6 +135,21 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         is_anonymous=False # Must be false so we know WHO answered it!
     )
     
+    if is_group:
+        # Send a self-destructing instruction message
+        guide_text = (
+            "⚡ <b>Quiz Started!</b>\n"
+            "• Tap your answer to vote.\n"
+            "• The poll closes after 5 votes or 5 minutes.\n"
+            "• Winners will get their YP added automatically!\n\n"
+            "<i>🧹 This guide will self-destruct in 20 seconds...</i>"
+        )
+        try:
+            guide_msg = await callback.message.answer(text=guide_text, parse_mode="HTML")
+            asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, 20))
+        except Exception:
+            pass
+    
     if not is_group:
         # Save the mapping of poll_id -> question_id so we can award XP when they answer (only for DMs)
         await services.supabase.upsert(
@@ -174,6 +189,14 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         asyncio.create_task(group_poll_timeout(sent_poll.poll.id, chat_id, sent_poll.message_id, services, callback.bot))
         
     await callback.answer()
+
+
+async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay: int):
+    await asyncio.sleep(delay)
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception:
+        pass
 
 
 async def group_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot):
