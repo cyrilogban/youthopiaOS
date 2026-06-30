@@ -112,8 +112,33 @@ def _router() -> Router:
         await message.answer("<b>Choose a Game Mode!</b>\nWhat would you like to play today?", parse_mode="HTML", reply_markup=markup)
 
     @router.message(F.text == "Leaderboard")
-    async def on_leaderboard(message: Message):
-        await message.answer("Leaderboard is coming soon!")
+    async def on_leaderboard(message: Message, services: ServiceContainer):
+        import asyncio
+        def run_query():
+            return services.supabase.client.table("users").select("display_name, total_xp, level").order("total_xp", desc=True).limit(10).execute()
+            
+        try:
+            res = await asyncio.to_thread(run_query)
+            users_list = res.data or []
+        except Exception:
+            await message.answer("⚠️ Failed to retrieve the leaderboard. Please try again later.")
+            return
+
+        if not users_list:
+            await message.answer("No scores recorded yet. Be the first to play and earn YP!")
+            return
+
+        leaderboard_text = "<b>🏆 Top YouTopians (Global Leaderboard)</b>\n\n"
+        medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+        
+        for idx, user in enumerate(users_list):
+            display_name = user.get("display_name") or "Anonymous"
+            xp = user.get("total_xp", 0)
+            level = user.get("level", 1)
+            medal = medals[idx] if idx < len(medals) else f"#{idx+1}"
+            leaderboard_text += f"{medal} <b>{display_name}</b> (Lvl {level}) — <code>{xp} YP</code>\n"
+            
+        await message.answer(leaderboard_text, parse_mode="HTML")
 
     from bots.lusy.handlers.quizzes import on_quiz_command
     @router.message(Command("quiz"))
@@ -127,9 +152,9 @@ def _router() -> Router:
         await on_play_games(callback.message)
 
     @router.callback_query(F.data == "lusy_menu_leaderboard")
-    async def on_leaderboard_callback(callback: CallbackQuery):
+    async def on_leaderboard_callback(callback: CallbackQuery, services: ServiceContainer):
         await callback.answer()
-        await on_leaderboard(callback.message)
+        await on_leaderboard(callback.message, services)
 
     @router.callback_query(F.data == "lusy_menu_stats")
     async def on_stats_callback(callback: CallbackQuery, services: ServiceContainer):
