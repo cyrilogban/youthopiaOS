@@ -111,7 +111,12 @@ def _router() -> Router:
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Bible Quiz", callback_data="lusy_play_quiz")]
         ])
-        await message.answer("<b>Choose a Game Mode!</b>\nWhat would you like to play today?", parse_mode="HTML", reply_markup=markup)
+        await message.answer(
+            "<b>Welcome to the Quiz Arena!</b> Ready to test your knowledge and grow in the Word?\n\n"
+            "Choose a quiz mode below to get started:",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
 
     @router.message(F.text == "Leaderboard")
     @router.message(Command("leaderboard"))
