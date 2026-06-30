@@ -12,8 +12,12 @@ from shared.services.container import ServiceContainer
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats
 from aiogram import Bot
 
+from bots.lusy.handlers.quizzes import quiz_router
+
 def _router() -> Router:
     router = build_router("lusy", "Lusy games and XP bot", include_base_commands=False)
+    
+    router.include_router(quiz_router)
 
     @router.startup()
     async def on_startup(bot: Bot) -> None:
@@ -77,10 +81,6 @@ def _router() -> Router:
             f"<b>Current Level:</b> {level['level']}",
             parse_mode="HTML"
         )
-
-    @router.message(F.text == "Play Games")
-    async def on_play_games(message: Message):
-        await message.answer("Games menu is coming soon!")
 
     @router.message(F.text == "Leaderboard")
     async def on_leaderboard(message: Message):

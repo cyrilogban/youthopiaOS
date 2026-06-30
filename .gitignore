@@ -15,6 +15,9 @@ env/
 # Local setup script
 setup.bat
 
+# Database Seed Scripts (Keep content secret)
+seed_*.py
+
 # Welcome messages
 theo_welcome_messages.md
 
