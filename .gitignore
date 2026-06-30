@@ -11,6 +11,7 @@ env/
 *.pdf
 *-ROADMAP.md
 *-PROGRESS.md
+*-DECISION.md
 !README.md
 
 # Local setup script

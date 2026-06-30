@@ -12,17 +12,31 @@ async def on_soon(callback: CallbackQuery):
     await callback.answer("This game mode is coming soon!", show_alert=True)
 
 @quiz_router.callback_query(F.data == "lusy_play_quiz")
+async def choose_difficulty(callback: CallbackQuery):
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
+            InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+        ],
+        [
+            InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+        ]
+    ])
+    await callback.message.edit_text("<b>Choose your Difficulty Level!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
+    await callback.answer()
+
+@quiz_router.callback_query(F.data.startswith("lusy_quiz_diff_"))
 async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
+    difficulty = callback.data.split("_")[-1] # easy, medium, or hard
+    
     user = await services.identity.resolve_telegram_user(callback.from_user)
     user_id = user["id"]
     
-    # 1. Fetch all multiple choice questions
-    # In a production app, we would do a complex SQL query to exclude already answered questions.
-    # For now, let's fetch all active MCQs.
-    questions_resp = await services.supabase.find_many("lusy_questions", {"game_type": "multiple_choice", "is_active": True})
+    # 1. Fetch questions matching this difficulty
+    questions_resp = await services.supabase.find_many("lusy_questions", {"game_type": "multiple_choice", "difficulty": difficulty, "is_active": True})
     
     if not questions_resp:
-        await callback.message.answer("No quiz questions found in the database yet!")
+        await callback.message.edit_text(f"No {difficulty} quiz questions found in the database yet! Please try another difficulty.")
         await callback.answer()
         return
         
@@ -40,9 +54,12 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     if correct_text in options:
         correct_idx = options.index(correct_text)
         
+    # Delete the difficulty menu message
+    await callback.message.delete()
+        
     # Send a native Telegram Quiz Poll!
     sent_poll = await callback.message.answer_poll(
-        question=f"[{question_record.get('difficulty').upper()}] {text}",
+        question=f"[{difficulty.upper()}] {text}",
         options=options,
         type="quiz",
         correct_option_id=correct_idx,
@@ -111,3 +128,19 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
         
     # Clear the tracking state so they can't double answer
     await services.supabase.client.table("bot_user_state").delete().eq("user_id", user_id).eq("bot_name", "lusy_poll_tracking").execute()
+
+    # Send the "Next Question" prompt!
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
+    ])
+    
+    result_text = f"<b>Correct! 🎉 +{xp_awarded} YP!</b>" if is_correct else "<b>Incorrect! ❌</b>"
+    
+    # We don't have access to the original chat easily inside poll_answer, so we send it directly to the user
+    await services.bot.send_message(
+        chat_id=user["telegram_id"],
+        text=f"{result_text}\n\nDo you want to play another one?",
+        parse_mode="HTML",
+        reply_markup=markup
+    )
