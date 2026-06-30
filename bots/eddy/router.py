@@ -146,40 +146,45 @@ def build_eddy_router(description: str) -> Router:
 
     @router.message(F.text == "🔔 Reminders")
     async def on_reminders(message: Message, services: ServiceContainer):
-        # 1. Fetch current user data
-        user_response = services.event_service.db.client.table("telegram_accounts").select("id, metadata").eq("telegram_id", message.from_user.id).execute()
-        
-        if not user_response.data:
-            await message.answer("I couldn't find your account. Please type /start to register!")
-            return
+        try:
+            # 1. Fetch current user data using the async wrapper
+            account = await services.supabase.find_one("telegram_accounts", "telegram_id", message.from_user.id)
             
-        account = user_response.data[0]
-        metadata = account.get("metadata") or {}
-        
-        # Default is True if not set
-        current_status = metadata.get("reminders_enabled", True)
-        
-        # 2. Toggle the status
-        new_status = not current_status
-        metadata["reminders_enabled"] = new_status
-        
-        # 3. Save back to Supabase
-        services.event_service.db.client.table("telegram_accounts").update({"metadata": metadata}).eq("id", account["id"]).execute()
-        
-        # 4. Tell the user
-        status_text = "<b>ON</b> ✅" if new_status else "<b>OFF</b> 🔕"
-        explanation = (
-            "I will DM you 15 minutes before any event you RSVP to!" 
-            if new_status 
-            else "I will no longer send you automated event DMs. You will need to check the group!"
-        )
-        
-        await message.answer(
-            f"<b>🔔 Reminder Settings Updated!</b>\n\n"
-            f"Your event reminders are now: {status_text}\n\n"
-            f"<i>{explanation}</i>",
-            parse_mode="HTML"
-        )
+            if not account:
+                await message.answer("I couldn't find your account. Please type /start to register!")
+                return
+                
+            metadata = account.get("metadata") or {}
+            
+            # Default is True if not set
+            current_status = metadata.get("reminders_enabled", True)
+            
+            # 2. Toggle the status
+            new_status = not current_status
+            metadata["reminders_enabled"] = new_status
+            
+            # 3. Save back to Supabase using the async wrapper
+            def run_update():
+                services.supabase._client().table("telegram_accounts").update({"metadata": metadata}).eq("id", account["id"]).execute()
+            import asyncio
+            await asyncio.to_thread(run_update)
+            
+            # 4. Tell the user
+            status_text = "<b>ON</b> ✅" if new_status else "<b>OFF</b> 🔕"
+            explanation = (
+                "I will DM you 15 minutes before any event you RSVP to!" 
+                if new_status 
+                else "I will no longer send you automated event DMs. You will need to check the group!"
+            )
+            
+            await message.answer(
+                f"<b>🔔 Reminder Settings Updated!</b>\n\n"
+                f"Your event reminders are now: {status_text}\n\n"
+                f"<i>{explanation}</i>",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            await message.answer(f"Whoops! Something went wrong trying to update your settings: {e}")
 
     @router.message(F.text == "About Community")
     async def on_about_text(message: Message):
