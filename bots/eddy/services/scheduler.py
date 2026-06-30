@@ -138,6 +138,14 @@ async def send_event_reminders(bot: Bot):
             telegram_id = p["metadata"].get("telegram_id")
             first_name = p["metadata"].get("first_name", "YouTopian")
             if telegram_id:
+                # 3a. Check if the user has reminders turned OFF
+                user_resp = supabase.client.table("telegram_accounts").select("metadata").eq("telegram_id", telegram_id).execute()
+                if user_resp.data:
+                    user_meta = user_resp.data[0].get("metadata") or {}
+                    # If reminders_enabled is explicitly False, skip them
+                    if user_meta.get("reminders_enabled", True) is False:
+                        continue
+                        
                 try:
                     await bot.send_message(
                         chat_id=telegram_id,
