@@ -65,6 +65,7 @@ class YtDlpDownloader:
             file_path=str(file_path),
             duration=int(info.get("duration") or 0),
             source_url=info.get("webpage_url"),
+            thumbnail_url=info.get("thumbnail"),
         )
 
 

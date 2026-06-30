@@ -5,5 +5,9 @@ from core.telegram_runtime import run_polling_bot
 from shared.services.container import ServiceContainer
 
 
+from bots.eddy.router import build_eddy_router
+
+
 async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
-    await run_polling_bot(config, services, description="Eddy events and scheduling bot")
+    router = build_eddy_router("Eddy events and scheduling bot")
+    await run_polling_bot(config, services, description="Eddy events and scheduling bot", router=router)

@@ -60,6 +60,15 @@ class MusicService:
             )
         self._queue.add(chat_id, track)
 
+    async def fetch_track(self, query: str) -> MusicResult:
+        try:
+            downloaded = await self._downloader.download(query)
+            return MusicResult(message="Success", track=downloaded)
+        except DownloadFailedError as error:
+            return MusicResult(message=_friendly_download_error(error.reason))
+        except Exception as e:
+            return MusicResult(message=f"Debug Fetch Error: {str(e)}")
+
         if chat_id not in self._playing_chats:
             await self._start_next(chat_id)
             return MusicResult(message=f"Now playing: {track.title}", track=track)

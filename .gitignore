@@ -7,17 +7,10 @@ venv/
 env/
 .vscode/
 
-# Local Architecture Documentation
-ARCHITECTURE.md
-STACK.md
-DECISIONS.md
-ROADMAP.md
-THEO-ROADMAP.md
-THEO-PROGRESS.md
-SUSY-ROADMAP.md
-SUSY-PROGRESS.md
-PETE-ROADMAP.md
-PETE-DECISIONS.md
+# Local Documents & Documentation (Do not commit)
+*.pdf
+*.md
+!README.md
 
 # Local setup script
 setup.bat

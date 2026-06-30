@@ -7,6 +7,7 @@ class Track:
     file_path: str
     duration: int
     source_url: str | None = None
+    thumbnail_url: str | None = None
 
 
 @dataclass(frozen=True)
