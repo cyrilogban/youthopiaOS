@@ -92,18 +92,69 @@ def _router() -> Router:
     async def on_help_command(message: Message):
         await handle_help(message)
 
+async def render_user_stats(message: Message, telegram_user, services: ServiceContainer) -> None:
+    user = await services.identity.resolve_telegram_user(telegram_user)
+    user_id = user["id"]
+    
+    # 1. Fetch level and YP
+    level_info = await services.xp.get_level(user_id)
+    total_xp = level_info["total_xp"]
+    level = level_info["level"]
+    
+    # Calculate progress bar (10 blocks)
+    progress_xp = total_xp % 100
+    percentage = progress_xp
+    filled_blocks = int(progress_xp // 10)
+    empty_blocks = 10 - filled_blocks
+    progress_bar = "█" * filled_blocks + "░" * empty_blocks
+    
+    xp_to_next = 100 - progress_xp
+    next_level = level + 1
+    
+    # Define rank title based on level
+    if level < 2:
+        title = "Novice"
+    elif level < 5:
+        title = "Scripture Sage"
+    elif level < 10:
+        title = "Wisdom Warrior"
+    else:
+        title = "High Priest"
+        
+    # 2. Fetch stats from game history
+    history = await services.supabase.find_many("lusy_game_history", {"user_id": user_id})
+    total_quizzes = len(history)
+    correct_answers = len([h for h in history if h.get("is_correct", False)])
+    
+    if total_quizzes > 0:
+        accuracy = (correct_answers / total_quizzes) * 100
+    else:
+        accuracy = 0.0
+        
+    display_name = user.get("display_name") or telegram_user.first_name or "Anonymous"
+    
+    card_text = (
+        f"👤 <b>PLAYER PROFILE: {display_name}</b>\n"
+        f"───────────────────────────\n"
+        f"🌟 <b>LEVEL {level} ({title})</b>\n"
+        f"📈 Progress: <code>[{progress_bar}] {percentage}%</code>\n"
+        f"✨ YP Balance: <code>{total_xp} / {level * 100} YP</code>\n"
+        f"🎯 ({xp_to_next} YP to Level {next_level})\n\n"
+        f"📊 <b>GAME STATISTICS:</b>\n"
+        f"├─ Total Quizzes: <code>{total_quizzes} played</code>\n"
+        f"├─ Correct Answers: <code>{correct_answers}</code>\n"
+        f"└─ Accuracy Rate: <code>{accuracy:.1f}%</code>\n"
+        f"───────────────────────────"
+    )
+    
+    await message.answer(card_text, parse_mode="HTML")
+
+
     @router.message(F.text == "My YP & Stats")
     @router.message(Command("yp"))
     @router.message(Command("xp")) # Keeping /xp just in case someone is used to it
     async def xp(message: Message, services: ServiceContainer) -> None:
-        user = await services.identity.resolve_telegram_user(message.from_user)
-        level = await services.xp.get_level(user["id"])
-        await message.answer(
-            f"<b>Your Profile</b>\n\n"
-            f"<b>Total YP:</b> {level['total_xp']}\n"
-            f"<b>Current Level:</b> {level['level']}",
-            parse_mode="HTML"
-        )
+        await render_user_stats(message, message.from_user, services)
 
     @router.message(F.text.in_({"Play Games", "🎮 Play Games"}))
     async def on_play_games(message: Message):
@@ -167,14 +218,7 @@ def _router() -> Router:
     @router.callback_query(F.data == "lusy_menu_stats")
     async def on_stats_callback(callback: CallbackQuery, services: ServiceContainer):
         await callback.answer()
-        user = await services.identity.resolve_telegram_user(callback.from_user)
-        level = await services.xp.get_level(user["id"])
-        await callback.message.answer(
-            f"<b>Your Profile</b>\n\n"
-            f"<b>Total YP:</b> {level['total_xp']}\n"
-            f"<b>Current Level:</b> {level['level']}",
-            parse_mode="HTML"
-        )
+        await render_user_stats(callback.message, callback.from_user, services)
 
     @router.callback_query(F.data == "lusy_menu_about")
     async def on_about_callback(callback: CallbackQuery):
