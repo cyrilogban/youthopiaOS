@@ -34,6 +34,10 @@ def build_eddy_router(description: str) -> Router:
         await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
 
+        # Start the background scheduler
+        from bots.eddy.services.scheduler import setup_eddy_scheduler
+        setup_eddy_scheduler(bot)
+
     @router.message(Command("start"))
     async def handle_start(message: Message) -> None:
         # Temporary cleanup if in a group
