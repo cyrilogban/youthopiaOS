@@ -141,7 +141,14 @@ def build_eddy_router(description: str) -> Router:
             
         action = parts[0].replace("rsvp_", "") # "coming", "maybe", or "no"
         event_id = parts[1]
-        user_id = str(callback.from_user.id) # We use Telegram ID for this prototype (would lookup internal UUID in production)
+        
+        # 1. Lookup the official UUID using their Telegram ID
+        user_response = services.event_service.db.client.table("telegram_accounts").select("user_id").eq("telegram_id", callback.from_user.id).execute()
+        if not user_response.data:
+            await callback.answer("Make sure you have started Ed privately first so we know who you are!", show_alert=True)
+            return
+            
+        user_uuid = user_response.data[0]["user_id"]
         
         status_map = {
             "coming": "coming",
@@ -152,19 +159,13 @@ def build_eddy_router(description: str) -> Router:
         status = status_map.get(action, "registered")
         
         try:
-            # Check if this user exists in telegram_accounts, if not they can't RSVP yet.
-            # For simplicity, we bypass the full mapping here and just use the Telegram ID in metadata,
-            # but ideally we look up their UUID first. We'll pass it to register_participant.
-            # Assuming event_service.register_participant handles mapping if we adapt it later.
-            # We'll just save it to metadata so it's recorded for now.
             await services.event_service.register_participant(
                 event_id=event_id,
-                user_id=user_id, # Requires the Supabase User UUID
+                user_id=user_uuid,
                 status=status,
                 metadata={"telegram_id": callback.from_user.id, "first_name": callback.from_user.first_name}
             )
             
-            # Flash the success message to the user
             response_map = {
                 "coming": "RSVP Saved! ✅ We'll remind you before it starts.",
                 "maybe": "RSVP Saved! 🤔 We'll keep you updated.",
@@ -174,8 +175,56 @@ def build_eddy_router(description: str) -> Router:
             await callback.answer(response_map.get(action, "RSVP Saved!"), show_alert=False)
             
         except Exception as e:
-            # If they don't have an official account yet, they might get a foreign key error
-            await callback.answer("Make sure you have started Ed privately first so we know who you are!", show_alert=True)
+            await callback.answer("An error occurred while saving your RSVP.", show_alert=True)
+
+    @router.message(Command("my_events"))
+    @router.message(F.text == "🎫 My Events")
+    async def on_my_events(message: Message, services: ServiceContainer):
+        # 1. Lookup the official UUID
+        user_response = services.event_service.db.client.table("telegram_accounts").select("user_id").eq("telegram_id", message.from_user.id).execute()
+        if not user_response.data:
+            await message.answer("I couldn't find your account. Please type /start to register!")
+            return
+            
+        user_uuid = user_response.data[0]["user_id"]
+        
+        # 2. Get all RSVPs where status is 'coming'
+        participant_response = services.event_service.db.client.table("event_participants").select("event_id").eq("user_id", user_uuid).eq("status", "coming").execute()
+        
+        if not participant_response.data:
+            await message.answer(
+                "<b>🎫 Your Upcoming RSVPs</b>\n\n"
+                "- <i>No upcoming events found.</i>\n\n"
+                "Keep an eye out for Ed's daily announcements at 8:00 PM to secure your spot!",
+                parse_mode="HTML"
+            )
+            return
+            
+        # 3. Get the event details
+        event_ids = [p["event_id"] for p in participant_response.data]
+        events_response = services.event_service.db.client.table("events").select("title, starts_at").in_("id", event_ids).execute()
+        
+        events = events_response.data
+        if not events:
+            await message.answer("You have RSVP'd to events, but they seem to have passed!")
+            return
+            
+        # 4. Format the output
+        reply_text = f"<b>🎫 Your Upcoming RSVPs, {message.from_user.first_name}!</b>\n\n"
+        for idx, event in enumerate(events, 1):
+            # Parse the ISO datetime for nicer formatting (e.g. 2026-06-30T21:00:00 -> 21:00)
+            from datetime import datetime
+            try:
+                dt = datetime.fromisoformat(event["starts_at"])
+                time_str = dt.strftime("%I:%M %p")
+            except:
+                time_str = event["starts_at"]
+                
+            reply_text += f"{idx}. <b>{event['title']}</b> (at {time_str})\n"
+            
+        reply_text += "\n<i>I will send you a DM reminder 1 hour before these start!</i>"
+        
+        await message.answer(reply_text, parse_mode="HTML")
 
     @router.message(Command("help"))
     async def handle_help(message: Message) -> None:
