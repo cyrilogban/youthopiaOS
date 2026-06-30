@@ -147,29 +147,32 @@ def build_eddy_router(description: str) -> Router:
     @router.message(F.text == "🔔 Reminders")
     async def on_reminders(message: Message, services: ServiceContainer):
         try:
-            # 1. Fetch current user data using the async wrapper
-            account = await services.supabase.find_one("telegram_accounts", "telegram_id", message.from_user.id)
+            # 1. Resolve the official User UUID
+            user = await services.identity.resolve_telegram_user(message.from_user)
+            user_id = user["id"]
             
-            if not account:
-                await message.answer("I couldn't find your account. Please type /start to register!")
-                return
+            # 2. Fetch current bot state
+            state_record = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
+            
+            state = {}
+            if state_record:
+                state = state_record.get("state") or {}
                 
-            metadata = account.get("metadata") or {}
-            
             # Default is True if not set
-            current_status = metadata.get("reminders_enabled", True)
+            current_status = state.get("reminders_enabled", True)
             
-            # 2. Toggle the status
+            # 3. Toggle the status
             new_status = not current_status
-            metadata["reminders_enabled"] = new_status
+            state["reminders_enabled"] = new_status
             
-            # 3. Save back to Supabase using the async wrapper
-            def run_update():
-                services.supabase._client().table("telegram_accounts").update({"metadata": metadata}).eq("id", account["id"]).execute()
-            import asyncio
-            await asyncio.to_thread(run_update)
+            # 4. Save back to Supabase
+            await services.supabase.upsert(
+                "bot_user_state", 
+                {"user_id": user_id, "bot_name": "eddy", "state": state},
+                on_conflict="user_id, bot_name"
+            )
             
-            # 4. Tell the user
+            # 5. Tell the user
             status_text = "<b>ON</b> ✅" if new_status else "<b>OFF</b> 🔕"
             explanation = (
                 "I will DM you 15 minutes before any event you RSVP to!" 
