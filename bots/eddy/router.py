@@ -80,6 +80,39 @@ def build_eddy_router(description: str) -> Router:
             except Exception:
                 pass
 
+    @router.message(F.text == "📅 View Calendar")
+    async def on_view_calendar(message: Message, services: ServiceContainer):
+        # Fetch upcoming events from the daily schedule dictionary for now
+        from bots.eddy.services.scheduler import DAILY_SCHEDULE
+        
+        cal_text = "<b>📅 This Week's Official Schedule</b>\n\n"
+        for day, data in DAILY_SCHEDULE.items():
+            cal_text += f"<b>{day}:</b> {data['title']}\n"
+            
+        cal_text += "\n<i>All events start at 9:00 PM WAT!</i>"
+        await message.answer(cal_text, parse_mode="HTML")
+
+    @router.message(F.text == "🎫 My Events")
+    async def on_my_events(message: Message, services: ServiceContainer):
+        # Placeholder for querying Supabase
+        await message.answer(
+            "<b>🎫 Your RSVPs</b>\n\n"
+            "You are currently RSVP'd to:\n"
+            "- <i>No upcoming events found.</i>\n\n"
+            "Keep an eye out for Ed's daily announcements at 8:00 PM to secure your spot!",
+            parse_mode="HTML"
+        )
+
+    @router.message(F.text == "🔔 Reminders")
+    async def on_reminders(message: Message):
+        # Toggle functionality placeholder
+        await message.answer(
+            "<b>🔔 Reminder Settings</b>\n\n"
+            "Your event reminders are currently: <b>ON</b> ✅\n"
+            "I will DM you 1 hour before any event you RSVP to!",
+            parse_mode="HTML"
+        )
+
     @router.message(F.text == "About Community")
     async def on_about_text(message: Message):
         # When they click About Community, we just show the help text
