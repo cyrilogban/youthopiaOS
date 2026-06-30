@@ -5,13 +5,7 @@ import random
 
 quiz_router = Router()
 
-@quiz_router.message(F.text.in_({"Play Games", "🎮 Play Games"}))
-async def on_play_games(message: Message):
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🧠 Bible Quiz", callback_data="lusy_play_quiz")],
-        [InlineKeyboardButton(text="🔠 Verse Completion (Soon)", callback_data="lusy_soon")]
-    ])
-    await message.answer("<b>🎮 Choose a Game Mode!</b>\nWhat would you like to play today?", parse_mode="HTML", reply_markup=markup)
+
 
 @quiz_router.callback_query(F.data == "lusy_soon")
 async def on_soon(callback: CallbackQuery):

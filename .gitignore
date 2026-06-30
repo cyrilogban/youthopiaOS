@@ -9,7 +9,8 @@ env/
 
 # Local Documents & Documentation (Do not commit)
 *.pdf
-*.md
+*-ROADMAP.md
+*-PROGRESS.md
 !README.md
 
 # Local setup script
