@@ -42,7 +42,7 @@ def _router() -> Router:
         markup = ReplyKeyboardMarkup(
             keyboard=[
                 [KeyboardButton(text="🎮 Play Games"), KeyboardButton(text="🏆 Leaderboard")],
-                [KeyboardButton(text="👤 My YP & Stats"), KeyboardButton(text="📜 Game Rules")]
+                [KeyboardButton(text="👤 My YP & Stats"), KeyboardButton(text="About Lusy")]
             ],
             resize_keyboard=True,
             persistent=True
@@ -51,7 +51,7 @@ def _router() -> Router:
 
     async def handle_help(message: Message) -> None:
         help_text = (
-            "<b>📜 Game Rules & Help</b>\n\n"
+            "<b>ℹ️ About Lusy & Game Rules</b>\n\n"
             "Welcome to the Arcade! Here is how you play:\n"
             "• <b>Play Games</b>: Choose solo or group games to test your knowledge.\n"
             "• <b>My YP & Stats</b>: Track your YouTopian Points and current Level.\n"
@@ -61,7 +61,7 @@ def _router() -> Router:
         await message.answer(help_text, parse_mode="HTML")
 
     @router.message(Command("help"))
-    @router.message(F.text == "📜 Game Rules")
+    @router.message(F.text == "About Lusy")
     async def on_help_command(message: Message):
         await handle_help(message)
 
