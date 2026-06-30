@@ -23,6 +23,7 @@ class UserService:
         return await self.db.insert("users", {"display_name": display_name})
 
     async def get_or_create_from_telegram(self, telegram: dict[str, Any]) -> dict[str, Any]:
+        from datetime import datetime, timezone
         telegram_id = int(telegram["telegram_id"])
         account = await self.db.find_one("telegram_accounts", "telegram_id", telegram_id)
         if account:
@@ -34,6 +35,7 @@ class UserService:
                     "first_name": telegram.get("first_name"),
                     "last_name": telegram.get("last_name"),
                     "is_bot": bool(telegram.get("is_bot", False)),
+                    "last_seen_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
             return await self.db.get_by_id("users", account["user_id"])
@@ -49,6 +51,7 @@ class UserService:
                 "first_name": telegram.get("first_name"),
                 "last_name": telegram.get("last_name"),
                 "is_bot": bool(telegram.get("is_bot", False)),
+                "last_seen_at": datetime.now(timezone.utc).isoformat(),
             },
         )
         await self.db.upsert(
