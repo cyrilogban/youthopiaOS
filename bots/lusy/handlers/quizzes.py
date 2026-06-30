@@ -144,7 +144,7 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     
     # We don't have access to the original chat easily inside poll_answer, so we send it directly to the user
     await bot.send_message(
-        chat_id=user["telegram_id"],
+        chat_id=poll_answer.user.id,
         text=f"{result_text}\n\nDo you want to play another one?",
         parse_mode="HTML",
         reply_markup=markup
