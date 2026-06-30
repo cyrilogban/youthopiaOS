@@ -109,11 +109,24 @@ def _router() -> Router:
             "<blockquote>I am Lusy! Think you know the Bible? Let's put your knowledge to the test, learn the Word, and earn some YP!</blockquote>"
         )
         
-        markup = ReplyKeyboardMarkup(keyboard=[
-            [KeyboardButton(text="🎮 Play Games"), KeyboardButton(text="Leaderboard")],
+        inline_markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Start Bible Quiz", callback_data="lusy_play_quiz"),
+                InlineKeyboardButton(text="Leaderboard", callback_data="lusy_menu_leaderboard")
+            ],
+            [
+                InlineKeyboardButton(text="My YP & Stats", callback_data="lusy_menu_stats"),
+                InlineKeyboardButton(text="About Lusy", callback_data="lusy_menu_about")
+            ]
+        ])
+        
+        reply_markup = ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="Start Bible Quiz"), KeyboardButton(text="Leaderboard")],
             [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
         ], resize_keyboard=True)
-        await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
+        
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
+        await message.answer("Use the quick-access menu below anytime:", reply_markup=reply_markup)
 
     async def handle_help(message: Message) -> None:
         help_text = (
@@ -150,7 +163,7 @@ def _router() -> Router:
     async def xp(message: Message, services: ServiceContainer) -> None:
         await render_user_stats(message, message.from_user, services)
 
-    @router.message(F.text.in_({"Play Games", "🎮 Play Games"}))
+    @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games"}))
     async def on_play_games(message: Message):
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         markup = InlineKeyboardMarkup(inline_keyboard=[
