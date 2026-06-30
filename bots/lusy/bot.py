@@ -21,14 +21,18 @@ def _router() -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot) -> None:
-        commands = [
+        private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="yp", description="Check your current YP and Level"),
         ]
+        group_commands = [
+            BotCommand(command="play", description="Drop a Bible Quiz for the group!"),
+            BotCommand(command="help", description="How to play and earn YP"),
+        ]
         await bot.delete_my_commands()
-        await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
-        await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
     @router.message(Command("start"))
     async def handle_start(message: Message) -> None:
@@ -49,7 +53,7 @@ def _router() -> Router:
                 [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
             ],
             resize_keyboard=True,
-            persistent=True
+            is_persistent=True
         )
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
 
