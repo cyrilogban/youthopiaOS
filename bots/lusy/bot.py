@@ -126,7 +126,6 @@ def _router() -> Router:
         ], resize_keyboard=True)
         
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
-        await message.answer("Use the quick-access menu below anytime:", reply_markup=reply_markup)
 
     async def handle_help(message: Message) -> None:
         help_text = (
