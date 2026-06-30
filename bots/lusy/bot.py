@@ -115,6 +115,12 @@ def _router() -> Router:
     async def on_leaderboard(message: Message):
         await message.answer("Leaderboard is coming soon!")
 
+    from bots.lusy.handlers.quizzes import on_quiz_command
+    @router.message(Command("quiz"))
+    @router.message(Command("play"))
+    async def handle_quiz_cmd(message: Message, services: ServiceContainer):
+        await on_quiz_command(message, services)
+
     @router.callback_query(F.data == "lusy_menu_play")
     async def on_play_games_callback(callback: CallbackQuery):
         await callback.answer()

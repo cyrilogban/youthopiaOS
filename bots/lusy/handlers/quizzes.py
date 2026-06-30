@@ -185,8 +185,6 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
             pass
 
 
-@quiz_router.message(Command("quiz"))
-@quiz_router.message(Command("play"))
 async def on_quiz_command(message: Message, services: ServiceContainer):
     if message.chat.type == "private":
         # Show difficulty selection menu
