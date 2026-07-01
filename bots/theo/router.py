@@ -247,12 +247,9 @@ def build_theo_router(description: str) -> Router:
         # Get translation preference
         translation = "kjv"
         user = await services.identity.resolve_telegram_user(callback.from_user)
-        user_state = await services.supabase.find_one_multi(
-            "bot_user_state",
-            {"bot_name": "theo", "user_id": user["id"]}
-        )
-        if user_state and "state" in user_state:
-            translation = user_state["state"].get("translation", "kjv")
+        user_state = await services.users.get_user_state(user["id"], "theo")
+        if user_state:
+            translation = user_state.get("translation", "kjv")
         
         # Pick a random curated verse, avoiding the current one
         current_ref = callback_data.reference.replace("_", " ")
@@ -279,18 +276,11 @@ def build_theo_router(description: str) -> Router:
         name = user_from.first_name or user.get("display_name", "Beloved")
 
         # Check daily devotional subscription
-        sub = await services.supabase.find_one_multi(
-            "user_subscriptions",
-            {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
-        )
+        sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
         subscribed_text = "Subscribed" if (sub and sub.get("enabled")) else "Not subscribed"
 
         # Check translation preference
-        state_row = await services.supabase.find_one_multi(
-            "bot_user_state",
-            {"bot_name": "theo", "user_id": user["id"]}
-        )
-        state = (state_row.get("state", {}) or {}) if state_row else {}
+        state = await services.users.get_user_state(user["id"], "theo")
         translation = state.get("translation", "KJV").upper()
 
         # Format join date from users.created_at
@@ -305,7 +295,7 @@ def build_theo_router(description: str) -> Router:
             join_date = "Unknown"
 
         # Get last_seen_at from telegram_accounts
-        account = await services.supabase.find_one("telegram_accounts", "telegram_id", user_from.id)
+        account = await services.users.get_telegram_account(user_from.id)
         if account and account.get("last_seen_at"):
             try:
                 last_dt = datetime.fromisoformat(account["last_seen_at"].replace("Z", "+00:00"))
@@ -356,12 +346,9 @@ def build_theo_router(description: str) -> Router:
         user = await services.identity.resolve_telegram_user(telegram_user)
         
         translation = "kjv"
-        user_state = await services.supabase.find_one_multi(
-            "bot_user_state",
-            {"bot_name": "theo", "user_id": user["id"]}
-        )
-        if user_state and "state" in user_state:
-            translation = user_state["state"].get("translation", "kjv")
+        user_state = await services.users.get_user_state(user["id"], "theo")
+        if user_state:
+            translation = user_state.get("translation", "kjv")
             
         verses = await services.users.get_saved_verses(user["id"], "theo")
         
@@ -455,23 +442,9 @@ def build_theo_router(description: str) -> Router:
         else:
             # Private DM
             user = await services.identity.resolve_telegram_user(message.from_user)
-            
-            existing_state = await services.supabase.find_one_multi(
-                "bot_user_state",
-                {"bot_name": "theo", "user_id": user["id"]}
-            )
-            state = existing_state.get("state", {}) if existing_state else {}
+            state = await services.users.get_user_state(user["id"], "theo")
             state["translation"] = translation
-            
-            await services.supabase.upsert(
-                "bot_user_state",
-                {
-                    "bot_name": "theo",
-                    "user_id": user["id"],
-                    "state": state
-                },
-                on_conflict="user_id,bot_name"
-            )
+            await services.users.set_user_state(user["id"], "theo", state)
             await message.answer(
                 f"Theo will now use {translation.upper()} for your personal messages.",
                 reply_markup=theo_menu(),
@@ -482,10 +455,7 @@ def build_theo_router(description: str) -> Router:
         if message.chat.type == "private":
             user = await services.identity.resolve_telegram_user(message.from_user)
             
-            existing_sub = await services.supabase.find_one_multi(
-                "user_subscriptions",
-                {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
-            )
+            existing_sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
             if existing_sub and existing_sub.get("enabled"):
                 await message.answer(
                     "ℹ️ You are already subscribed to Theo's Bible verse of the day.",
@@ -519,10 +489,7 @@ def build_theo_router(description: str) -> Router:
         except Exception:
             pass
 
-        existing_sub = await services.supabase.find_one_multi(
-            "chat_subscriptions",
-            {"chat_id": chat["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
-        )
+        existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
         if existing_sub and existing_sub.get("enabled"):
             await message.answer(
                 f"ℹ️ **{message.chat.title}** is already subscribed to Theo's Bible verse of the day.",
@@ -548,10 +515,7 @@ def build_theo_router(description: str) -> Router:
         if message.chat.type == "private":
             user = await services.identity.resolve_telegram_user(message.from_user)
             
-            existing_sub = await services.supabase.find_one_multi(
-                "user_subscriptions",
-                {"user_id": user["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
-            )
+            existing_sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
             if not existing_sub or not existing_sub.get("enabled"):
                 await message.answer(
                     "ℹ️ You are not currently subscribed to Theo's Bible verse of the day.",
@@ -585,10 +549,7 @@ def build_theo_router(description: str) -> Router:
         except Exception:
             pass
 
-        existing_sub = await services.supabase.find_one_multi(
-            "chat_subscriptions",
-            {"chat_id": chat["id"], "bot_name": "theo", "subscription_type": "daily_devotional"}
-        )
+        existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
         if not existing_sub or not existing_sub.get("enabled"):
             await message.answer(
                 f"ℹ️ **{message.chat.title}** is not currently subscribed to Theo's Bible verse of the day.",
@@ -637,12 +598,9 @@ def build_theo_router(description: str) -> Router:
         # Get user's preferred translation
         translation = "kjv"
         user = await services.identity.resolve_telegram_user(inline_query.from_user)
-        user_state = await services.supabase.find_one_multi(
-            "bot_user_state",
-            {"bot_name": "theo", "user_id": user["id"]}
-        )
-        if user_state and "state" in user_state:
-            translation = user_state["state"].get("translation", "kjv")
+        user_state = await services.users.get_user_state(user["id"], "theo")
+        if user_state:
+            translation = user_state.get("translation", "kjv")
 
         from bots.theo.services.devotional_service import VOTDService
         votd_service = VOTDService(services.supabase)

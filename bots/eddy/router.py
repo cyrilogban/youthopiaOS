@@ -206,12 +206,12 @@ def build_eddy_router(description: str) -> Router:
         event_id = parts[1]
         
         # 1. Lookup the official UUID using their Telegram ID
-        user_response = services.event_service.db.client.table("telegram_accounts").select("user_id").eq("telegram_id", callback.from_user.id).execute()
-        if not user_response.data:
+        user = await services.users.get_by_telegram_id(callback.from_user.id)
+        if not user:
             await callback.answer("Make sure you have started Ed privately first so we know who you are!", show_alert=True)
             return
             
-        user_uuid = user_response.data[0]["user_id"]
+        user_uuid = user["id"]
         
         status_map = {
             "coming": "coming",
@@ -222,7 +222,7 @@ def build_eddy_router(description: str) -> Router:
         status = status_map.get(action, "registered")
         
         try:
-            await services.event_service.register_participant(
+            await services.events.register_participant(
                 event_id=event_id,
                 user_id=user_uuid,
                 status=status,
@@ -243,33 +243,18 @@ def build_eddy_router(description: str) -> Router:
     @router.message(Command("my_events"))
     @router.message(F.text == "🎫 My Events")
     async def on_my_events(message: Message, services: ServiceContainer):
-        # 1. Lookup the official UUID
-        user_response = services.event_service.db.client.table("telegram_accounts").select("user_id").eq("telegram_id", message.from_user.id).execute()
-        if not user_response.data:
+        events = await services.events.get_user_upcoming_events(message.from_user.id)
+        if events is None:
             await message.answer("I couldn't find your account. Please type /start to register!")
             return
             
-        user_uuid = user_response.data[0]["user_id"]
-        
-        # 2. Get all RSVPs where status is 'coming'
-        participant_response = services.event_service.db.client.table("event_participants").select("event_id").eq("user_id", user_uuid).eq("status", "coming").execute()
-        
-        if not participant_response.data:
+        if not events:
             await message.answer(
                 "<b>🎫 Your Upcoming RSVPs</b>\n\n"
                 "- <i>No upcoming events found.</i>\n\n"
                 "Keep an eye out for Ed's daily announcements at 8:00 PM to secure your spot!",
                 parse_mode="HTML"
             )
-            return
-            
-        # 3. Get the event details
-        event_ids = [p["event_id"] for p in participant_response.data]
-        events_response = services.event_service.db.client.table("events").select("title, starts_at").in_("id", event_ids).execute()
-        
-        events = events_response.data
-        if not events:
-            await message.answer("You have RSVP'd to events, but they seem to have passed!")
             return
             
         # 4. Format the output
@@ -399,7 +384,7 @@ def build_eddy_router(description: str) -> Router:
                 "status": "scheduled"
             }
             
-            created_event = await services.event_service.create_event(event_payload)
+            created_event = await services.events.create_event(event_payload)
             event_id = created_event[0]["id"] if isinstance(created_event, list) else created_event["id"]
             
             await state.update_data(event_id=event_id)

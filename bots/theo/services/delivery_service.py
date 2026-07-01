@@ -35,15 +35,8 @@ class DeliveryService:
         fetched_texts: dict[str, str] = {}
         
         # Fetch all active subscriptions
-        chat_subs = await self.services.supabase.find_many(
-            "chat_subscriptions",
-            {"bot_name": "theo", "subscription_type": "daily_devotional", "enabled": True}
-        )
-        
-        user_subs = await self.services.supabase.find_many(
-            "user_subscriptions",
-            {"bot_name": "theo", "subscription_type": "daily_devotional", "enabled": True}
-        )
+        chat_subs = await self.services.chats.get_active_subscriptions("theo", "daily_devotional")
+        user_subs = await self.services.users.get_active_subscriptions("theo", "daily_devotional")
         
         success_count = 0
         failure_count = 0
@@ -53,17 +46,12 @@ class DeliveryService:
             chat_id = sub["chat_id"]
             try:
                 # Resolve the actual Telegram Chat ID
-                chat_record = await self.services.supabase.get_by_id("telegram_chats", chat_id)
+                chat_record = await self.services.chats.get_chat_by_id(chat_id)
                 telegram_chat_id = chat_record["telegram_chat_id"]
                 
                 # Resolve the group's preferred translation (default to kjv)
-                chat_settings = await self.services.supabase.find_one_multi(
-                    "chat_bot_settings", 
-                    {"bot_name": "theo", "chat_id": chat_id}
-                )
-                translation = "kjv"
-                if chat_settings and "settings" in chat_settings:
-                    translation = chat_settings["settings"].get("translation", "kjv")
+                chat_settings = await self.services.chats.get_bot_settings("theo", chat_id)
+                translation = chat_settings.get("translation", "kjv")
                 
                 # Fetch text if we haven't already fetched it for this translation
                 if translation not in fetched_texts:
@@ -98,9 +86,7 @@ class DeliveryService:
             user_id = sub["user_id"]
             try:
                 # Resolve the actual Telegram User ID
-                telegram_account = await self.services.supabase.find_one_multi(
-                    "telegram_accounts", {"user_id": user_id}
-                )
+                telegram_account = await self.services.users.get_telegram_account_by_user_id(user_id)
                 if not telegram_account:
                     continue
                 telegram_user_id = telegram_account["telegram_id"]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from core.identity import IdentityResolver
 from core.permissions import PermissionService
@@ -10,6 +11,7 @@ from shared.services.analytics_service import AnalyticsService
 from shared.services.chat_service import ChatService
 from shared.services.event_service import EventService
 from shared.services.moderation_service import ModerationService
+from shared.services.quiz_service import QuizService
 from shared.services.user_service import UserService
 from shared.services.xp_service import XPService
 
@@ -26,6 +28,8 @@ class ServiceContainer:
     events: EventService
     moderation: ModerationService
     analytics: AnalyticsService
+    quizzes: QuizService
+    app_config: Any = None
 
 
 def build_services(supabase: SupabaseGateway, telemetry: TelemetryMongoGateway) -> ServiceContainer:
@@ -41,4 +45,5 @@ def build_services(supabase: SupabaseGateway, telemetry: TelemetryMongoGateway) 
         events=EventService(supabase),
         moderation=ModerationService(supabase),
         analytics=AnalyticsService(supabase, telemetry),
+        quizzes=QuizService(supabase),
     )

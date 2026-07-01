@@ -44,20 +44,12 @@ async def handle_bible_detection(message: Message, services: ServiceContainer) -
     translation = "kjv"
 
     if chat:
-        settings_row = await services.supabase.find_one_multi(
-            "chat_bot_settings",
-            {"bot_name": "theo", "chat_id": chat["id"]},
-        )
-        if settings_row and "settings" in settings_row:
-            translation = settings_row["settings"].get("translation", "kjv")
+        settings = await services.chats.get_bot_settings("theo", chat["id"])
+        translation = settings.get("translation", "kjv")
     else:
         user = await services.identity.resolve_telegram_user(message.from_user)
-        user_state = await services.supabase.find_one_multi(
-            "bot_user_state",
-            {"bot_name": "theo", "user_id": user["id"]}
-        )
-        if user_state and "state" in user_state:
-            translation = user_state["state"].get("translation", "kjv")
+        user_state = await services.users.get_user_state(user["id"], "theo")
+        translation = user_state.get("translation", "kjv")
 
     # ------------------------------------------------------------------
     # Fetch verse texts from bible-api.com

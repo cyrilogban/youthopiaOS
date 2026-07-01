@@ -132,6 +132,37 @@ class ChatService:
             {"bot_name": bot_name, "status": "active", "enabled": True},
         )
 
+    async def get_active_subscriptions(self, bot_name: str, subscription_type: str) -> list[dict[str, Any]]:
+        """Get all active chat subscriptions for a bot and subscription type."""
+        self._validate_bot_name(bot_name)
+        return await self.db.find_many(
+            "chat_subscriptions",
+            {"bot_name": bot_name, "subscription_type": subscription_type, "enabled": True}
+        )
+
+    async def get_chat_by_id(self, chat_id: str) -> dict[str, Any]:
+        """Get chat details by its internal DB UUID."""
+        return await self.db.get_by_id("telegram_chats", chat_id)
+
+    async def get_bot_settings(self, bot_name: str, chat_id: str) -> dict[str, Any]:
+        """Fetch settings for a bot in a specific chat, defaulting to {}."""
+        settings_row = await self.db.find_one_multi(
+            "chat_bot_settings",
+            {"bot_name": bot_name, "chat_id": chat_id}
+        )
+        if not settings_row:
+            return {}
+        return settings_row.get("settings") or {}
+
+    async def get_subscription(
+        self, bot_name: str, chat_id: str, subscription_type: str
+    ) -> dict[str, Any] | None:
+        """Fetch subscription record for a bot in a specific chat."""
+        return await self.db.find_one_multi(
+            "chat_subscriptions",
+            {"chat_id": chat_id, "bot_name": bot_name, "subscription_type": subscription_type}
+        )
+
     def _validate_bot_name(self, bot_name: str) -> None:
         if bot_name not in VALID_BOT_NAMES:
             raise ValueError(f"Invalid bot name: {bot_name}")

@@ -276,3 +276,42 @@ In YouThopiaOS, "newness" is a system-wide property, not a bot-specific one.
 2. If true, the bot delivers the grand community onboarding message.
 3. Immediately after, the bot calls `UserService.set_engagement_level(user_id, "active")` so no other bot in the ecosystem gives them the massive welcome text again. 
 4. Returning users get short, bot-specific greetings.
+
+
+
+
+
+
+
+
+## Risks (Resolved ✅)
+
+- Shared DB dependency (Addressed)
+  - Refactored raw database queries into service classes; services are now fully responsible for DB interaction.
+- Mixed responsibilities (Resolved)
+  - All direct DB queries and business logic inside Lusy, Eddy, and Theo routers have been moved into shared service classes.
+- Inconsistent config usage (Resolved)
+  - Susy bot config loading consolidated to retrieve settings directly from injected services container.
+- Empty/unused module (Resolved)
+  - dispatcher.py documented as a future-proofing placeholder to clarify its status.
+- Admin permission checks (Resolved)
+  - Extracted IsAdminFilter into core/filters.py to allow standard admin checks across the entire system.
+- Bot startup lifecycle complexity (Resolved)
+  - Hardened Susy bot initialization with nested try-finally blocks to guarantee pyrogram/pytgcalls teardown.
+- Supabase client threading (Acknowledged)
+  - Acknowledged that blocking calls use asyncio.to_thread due to the synchronous nature of the client. Latency managed by centralizing query logic.
+
+## Improvements (Completed ✅)
+
+- Centralize config and bot lifecycle (Completed)
+  - AppConfig is injected into ServiceContainer and loaded by Susy directly.
+- Consolidate shared logic (Completed)
+  - Created QuizService, get_leaderboard in UserService, and get_user_upcoming_events in EventService. Routers are now thin.
+- Fill or remove dispatcher.py (Completed)
+  - Addressed by adding status comments documenting dispatcher.py as a planned routing boundary placeholder.
+- Strengthen permissions (Completed)
+  - Extracted a reusable IsAdminFilter to core/filters.py.
+- Improve error handling (Completed)
+  - Wrapped Pyrogram and PyTgCalls startups in nested try-finally blocks for safe teardown.
+- Standardize bot commands (Acknowledged)
+  - Menu registration standard is kept modular per bot, with shared constants planned for localization.

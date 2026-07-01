@@ -124,6 +124,63 @@ class UserService:
             on_conflict="user_id,bot_name,subscription_type",
         )
 
+    async def get_leaderboard(self, limit: int = 10) -> list[dict[str, Any]]:
+        """Returns the top users ordered by total_xp descending."""
+        import asyncio
+        def run() -> list[dict[str, Any]]:
+            response = (
+                self.db._client()
+                .table("users")
+                .select("display_name, total_xp, level")
+                .gt("total_xp", 0)
+                .order("total_xp", desc=True)
+                .limit(limit)
+                .execute()
+            )
+            return response.data or []
+        return await asyncio.to_thread(run)
+
+    async def get_user_state(self, user_id: str, bot_name: str) -> dict[str, Any]:
+        """Returns the user's state dict for a specific bot, defaulting to {}."""
+        state_record = await self.db.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": bot_name})
+        if not state_record:
+            return {}
+        return state_record.get("state") or {}
+
+    async def get_subscription(self, user_id: str, bot_name: str, subscription_type: str) -> dict[str, Any] | None:
+        """Get subscription record for a user."""
+        return await self.db.find_one_multi(
+            "user_subscriptions",
+            {"user_id": user_id, "bot_name": bot_name, "subscription_type": subscription_type}
+        )
+
+    async def set_user_state(self, user_id: str, bot_name: str, state: dict[str, Any]) -> dict[str, Any]:
+        """Save state dictionary for a specific user and bot."""
+        return await self.db.upsert(
+            "bot_user_state",
+            {
+                "user_id": user_id,
+                "bot_name": bot_name,
+                "state": state
+            },
+            on_conflict="user_id,bot_name"
+        )
+
+    async def get_telegram_account(self, telegram_id: int) -> dict[str, Any] | None:
+        """Fetch telegram_account record by telegram_id."""
+        return await self.db.find_one("telegram_accounts", "telegram_id", int(telegram_id))
+
+    async def get_active_subscriptions(self, bot_name: str, subscription_type: str) -> list[dict[str, Any]]:
+        """Get all active user subscriptions for a bot and subscription type."""
+        return await self.db.find_many(
+            "user_subscriptions",
+            {"bot_name": bot_name, "subscription_type": subscription_type, "enabled": True}
+        )
+
+    async def get_telegram_account_by_user_id(self, user_id: str) -> dict[str, Any] | None:
+        """Fetch telegram_account record by internal user UUID."""
+        return await self.db.find_one("telegram_accounts", "user_id", user_id)
+
 
 _default_service: UserService | None = None
 

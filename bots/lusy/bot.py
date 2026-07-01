@@ -44,7 +44,7 @@ async def render_user_stats(message: Message, telegram_user, services: ServiceCo
         title = "High Priest"
         
     # 2. Fetch stats from game history
-    history = await services.supabase.find_many("lusy_game_history", {"user_id": user_id})
+    history = await services.quizzes.get_game_history(user_id)
     total_quizzes = len(history)
     correct_answers = len([h for h in history if h.get("is_correct", False)])
     
@@ -178,13 +178,8 @@ def _router() -> Router:
     @router.message(F.text == "Leaderboard")
     @router.message(Command("leaderboard"))
     async def on_leaderboard(message: Message, services: ServiceContainer):
-        import asyncio
-        def run_query():
-            return services.supabase.client.table("users").select("display_name, total_xp, level").gt("total_xp", 0).order("total_xp", desc=True).limit(10).execute()
-            
         try:
-            res = await asyncio.to_thread(run_query)
-            users_list = res.data or []
+            users_list = await services.users.get_leaderboard(limit=10)
         except Exception:
             await message.answer("⚠️ Failed to retrieve the leaderboard. Please try again later.")
             return
@@ -213,23 +208,55 @@ def _router() -> Router:
 
     @router.callback_query(F.data == "lusy_menu_play")
     async def on_play_games_callback(callback: CallbackQuery):
-        await callback.answer()
-        await on_play_games(callback.message)
+        try:
+            await on_play_games(callback.message)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error in on_play_games_callback: {e}")
+        finally:
+            try:
+                await callback.answer()
+            except Exception:
+                pass
 
     @router.callback_query(F.data == "lusy_menu_leaderboard")
     async def on_leaderboard_callback(callback: CallbackQuery, services: ServiceContainer):
-        await callback.answer()
-        await on_leaderboard(callback.message, services)
+        try:
+            await on_leaderboard(callback.message, services)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error in on_leaderboard_callback: {e}")
+        finally:
+            try:
+                await callback.answer()
+            except Exception:
+                pass
 
     @router.callback_query(F.data == "lusy_menu_stats")
     async def on_stats_callback(callback: CallbackQuery, services: ServiceContainer):
-        await callback.answer()
-        await render_user_stats(callback.message, callback.from_user, services)
+        try:
+            await render_user_stats(callback.message, callback.from_user, services)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error in on_stats_callback: {e}")
+        finally:
+            try:
+                await callback.answer()
+            except Exception:
+                pass
 
     @router.callback_query(F.data == "lusy_menu_about")
     async def on_about_callback(callback: CallbackQuery):
-        await callback.answer()
-        await handle_help(callback.message)
+        try:
+            await handle_help(callback.message)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error in on_about_callback: {e}")
+        finally:
+            try:
+                await callback.answer()
+            except Exception:
+                pass
 
     @router.message(lambda message: message.text and "Over to you, @iamlusybot!" in message.text)
     async def respond_to_eddy(message: Message):

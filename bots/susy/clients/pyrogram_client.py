@@ -17,6 +17,13 @@ class PyrogramClientManager:
     async def start(self) -> Client:
         if not self.client.is_connected:
             await self.client.start()
+            # Warm up Pyrogram's peer cache by loading dialogs
+            try:
+                async for dialog in self.client.get_dialogs(limit=100):
+                    pass
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to pre-fetch dialogs for peer cache: {e}")
         return self.client
 
     async def stop(self) -> None:

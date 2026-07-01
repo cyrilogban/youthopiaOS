@@ -8,6 +8,7 @@ from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from shared.services.event_service import EventService
+from shared.services.user_service import UserService
 from core.config import BotConfig
 
 logger = logging.getLogger(__name__)
@@ -116,39 +117,37 @@ async def send_event_reminders(bot: Bot):
         
     try:
         supabase = SupabaseGateway(os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_KEY", ""))
+        event_service = EventService(supabase)
         
         # 1. Find today's event from the database (filtering by today's date)
         # For simplicity in this prototype, we'll find the most recent event created today with this title.
         today_start = datetime.now().replace(hour=0, minute=0, second=0).isoformat()
-        events_resp = supabase.client.table("events").select("id").eq("title", event_data["title"]).gte("created_at", today_start).execute()
+        event = await event_service.find_event_by_title_and_date(event_data["title"], today_start)
         
-        if not events_resp.data:
+        if not event:
             return
             
-        event_id = events_resp.data[0]["id"]
+        event_id = event["id"]
         
         # 2. Get all users who RSVP'd coming
-        participants_resp = supabase.client.table("event_participants").select("metadata").eq("event_id", event_id).eq("status", "coming").execute()
+        participants = await event_service.get_event_participants_metadata(event_id, "coming")
         
-        if not participants_resp.data:
+        if not participants:
             return
             
+        user_service = UserService(supabase)
+        
         # 3. Send them a DM!
-        for p in participants_resp.data:
+        for p in participants:
             telegram_id = p["metadata"].get("telegram_id")
             first_name = p["metadata"].get("first_name", "YouTopian")
             if telegram_id:
                 # 3a. Check if the user has reminders turned OFF
-                # We need the user's UUID first. We can get it from telegram_accounts.
-                user_resp = supabase.client.table("telegram_accounts").select("user_id").eq("telegram_id", telegram_id).execute()
-                if user_resp.data:
-                    user_uuid = user_resp.data[0].get("user_id")
-                    if user_uuid:
-                        state_resp = supabase.client.table("bot_user_state").select("state").eq("user_id", user_uuid).eq("bot_name", "eddy").execute()
-                        if state_resp.data:
-                            user_state = state_resp.data[0].get("state") or {}
-                            if user_state.get("reminders_enabled", True) is False:
-                                continue
+                user = await user_service.get_by_telegram_id(telegram_id)
+                if user:
+                    user_state = await user_service.get_user_state(user["id"], "eddy")
+                    if user_state.get("reminders_enabled", True) is False:
+                        continue
                         
                 try:
                     await bot.send_message(

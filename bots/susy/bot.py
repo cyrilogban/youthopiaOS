@@ -7,7 +7,6 @@ from bots.susy.router import build_susy_router
 
 
 async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
-    from core.config import load_config
     from bots.susy.clients.pyrogram_client import PyrogramClientManager
     from bots.susy.clients.pytgcalls_client import PyTgCallsClient
     from bots.susy.core.music.service import MusicService
@@ -15,7 +14,10 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     from bots.susy.infra.audio.ffmpeg import FFmpegAudioProcessor
     import os
 
-    app_config = load_config()
+    app_config = services.app_config
+    if app_config is None:
+        from core.config import load_config
+        app_config = load_config()
     
     # Inject Render static FFmpeg bin into system PATH
     bin_dir = os.path.join(os.getcwd(), "bin")
@@ -45,15 +47,16 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     susy_router = build_susy_router("Susy onboarding and engagement bot", music_service=music_service)
     
     await pyrogram.start()
-    await calls.start()
-    
     try:
-        await run_polling_bot(
-            config, 
-            services, 
-            description="Susy onboarding and engagement bot",
-            router=susy_router
-        )
+        await calls.start()
+        try:
+            await run_polling_bot(
+                config, 
+                services, 
+                description="Susy onboarding and engagement bot",
+                router=susy_router
+            )
+        finally:
+            await calls.stop()
     finally:
-        await calls.stop()
         await pyrogram.stop()

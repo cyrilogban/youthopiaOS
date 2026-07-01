@@ -27,6 +27,7 @@ class BotManager:
         supabase = SupabaseGateway(config.supabase_url, config.supabase_key)
         telemetry = TelemetryMongoGateway(config.mongo_uri, config.mongo_database)
         services = build_services(supabase, telemetry)
+        services.app_config = config
         user_service.configure(services.users)
         return cls(config=config, services=services)
 
