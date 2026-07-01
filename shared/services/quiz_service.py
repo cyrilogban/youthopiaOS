@@ -12,11 +12,11 @@ from shared.db.supabase import SupabaseGateway
 class QuizService:
     db: SupabaseGateway
 
-    async def get_questions_by_difficulty(self, difficulty: str) -> list[dict[str, Any]]:
-        """Fetch active multiple choice questions for a specific difficulty."""
+    async def get_questions_by_difficulty(self, difficulty: str, game_type: str = "multiple_choice") -> list[dict[str, Any]]:
+        """Fetch active questions for a specific game type and difficulty."""
         return await self.db.find_many(
             "lusy_questions",
-            {"game_type": "multiple_choice", "difficulty": difficulty, "is_active": True}
+            {"game_type": game_type, "difficulty": difficulty, "is_active": True}
         )
 
     async def get_game_history(self, user_id: str) -> list[dict[str, Any]]:

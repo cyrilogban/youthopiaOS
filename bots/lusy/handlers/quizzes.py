@@ -46,16 +46,44 @@ async def choose_difficulty(callback: CallbackQuery):
 
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
-                InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+                InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_mc_easy"),
+                InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_mc_medium")
             ],
             [
-                InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+                InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_mc_hard")
             ]
         ])
-        await callback.message.edit_text("<b>Choose your Difficulty Level!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
+        await callback.message.edit_text("<b>Choose your Bible Challenge Difficulty!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
     except Exception as e:
         logger.error(f"Error in choose_difficulty callback: {e}")
+    finally:
+        try:
+            await callback.answer()
+        except Exception:
+            pass
+
+
+@quiz_router.callback_query(F.data == "lusy_play_fill_blank")
+async def choose_fill_blank_difficulty(callback: CallbackQuery):
+    try:
+        chat_id = callback.message.chat.id
+        if callback.message.chat.type != "private":
+            if chat_id in ACTIVE_GROUP_QUIZZES:
+                await callback.answer("⚠️ An active quiz is already running in this group! Complete it first.", show_alert=True)
+                return
+
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_fb_easy"),
+                InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_fb_medium")
+            ],
+            [
+                InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_fb_hard")
+            ]
+        ])
+        await callback.message.edit_text("<b>Choose Verse Completion Difficulty!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
+    except Exception as e:
+        logger.error(f"Error in choose_fill_blank_difficulty callback: {e}")
     finally:
         try:
             await callback.answer()
@@ -67,7 +95,11 @@ async def choose_difficulty(callback: CallbackQuery):
 async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     answered = False
     try:
-        difficulty = callback.data.split("_")[-1] # easy, medium, or hard
+        parts = callback.data.split("_")
+        difficulty = parts[-1] # easy, medium, or hard
+        game_mode_code = parts[3] if len(parts) >= 5 else "mc"
+        game_type = "fill_in_the_blank" if game_mode_code == "fb" else "multiple_choice"
+        
         duration = DIFFICULTY_TIMERS.get(difficulty.lower(), 20)
         chat_id = callback.message.chat.id
         is_group = callback.message.chat.type != "private"
@@ -80,11 +112,12 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         user = await services.identity.resolve_telegram_user(callback.from_user)
         user_id = user["id"]
         
-        # 1. Fetch questions matching this difficulty
-        questions_resp = await services.quizzes.get_questions_by_difficulty(difficulty)
+        # 1. Fetch questions matching this difficulty and game type
+        questions_resp = await services.quizzes.get_questions_by_difficulty(difficulty, game_type=game_type)
         
         if not questions_resp:
-            await callback.message.edit_text(f"No {difficulty} quiz questions found in the database yet! Please try another difficulty.")
+            label = "Verse Completion" if game_type == "fill_in_the_blank" else "Bible Challenge"
+            await callback.message.edit_text(f"No {difficulty} {label} questions found in the database yet! Please try another difficulty.")
             await callback.answer()
             answered = True
             return
@@ -103,17 +136,28 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         if not eligible_questions:
             if not is_group:
                 # Tell the DM user they finished the difficulty!
-                difficulty_markup = InlineKeyboardMarkup(inline_keyboard=[
+                fb_markup = InlineKeyboardMarkup(inline_keyboard=[
                     [
-                        InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
-                        InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+                        InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_fb_easy"),
+                        InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_fb_medium")
                     ],
                     [
-                        InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+                        InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_fb_hard")
                     ]
                 ])
+                mc_markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_mc_easy"),
+                        InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_mc_medium")
+                    ],
+                    [
+                        InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_mc_hard")
+                    ]
+                ])
+                difficulty_markup = fb_markup if game_type == "fill_in_the_blank" else mc_markup
+                label = "Verse Completion" if game_type == "fill_in_the_blank" else "Bible Challenge"
                 await callback.message.edit_text(
-                    f"🏆 <b>Difficulty Completed!</b>\n\nWow! You have successfully answered all <b>{difficulty.capitalize()}</b> questions in YouThopia!\n\nTry another difficulty level to continue earning YP.",
+                    f"🏆 <b>Difficulty Completed!</b>\n\nWow! You have successfully answered all <b>{difficulty.capitalize()}</b> {label} questions in YouThopia!\n\nTry another difficulty level to continue earning YP.",
                     parse_mode="HTML",
                     reply_markup=difficulty_markup
                 )
@@ -149,8 +193,9 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
                 pass
             
         # Send a native Telegram Quiz Poll!
+        prefix = "📖 [FILL IN THE BLANK]" if game_type == "fill_in_the_blank" else f"[{difficulty.upper()}]"
         sent_poll = await callback.message.answer_poll(
-            question=f"[{difficulty.upper()}] {text}",
+            question=f"{prefix} {text}",
             options=options,
             type="quiz",
             correct_option_id=correct_idx,
@@ -161,8 +206,9 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         
         if is_group:
             # Send a self-destructing instruction message
+            label = "Verse Completion" if game_type == "fill_in_the_blank" else "Bible Challenge"
             guide_text = (
-                "⚡ <b>Quiz Started!</b>\n"
+                f"⚡ <b>{label} Started!</b>\n"
                 "• Tap your answer to vote.\n"
                 f"• The poll closes after 5 votes or {duration} seconds.\n"
                 "• Winners will get their YP added automatically!\n\n"
@@ -196,6 +242,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         # Track globally in memory
         ACTIVE_POLLS[sent_poll.poll.id] = {
             "question_id": q_id,
+            "game_type": game_type,
             "base_xp": question_record.get("base_xp", 10),
             "is_group": is_group,
             "chat_id": chat_id,
@@ -430,11 +477,36 @@ async def on_quiz_command(message: Message, services: ServiceContainer):
     # Show difficulty selection menu
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_easy"),
-            InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_medium")
+            InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_mc_easy"),
+            InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_mc_medium")
         ],
         [
-            InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_hard")
+            InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_mc_hard")
         ]
     ])
-    await message.answer("<b>Choose your Difficulty Level!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
+    await message.answer("<b>Choose your Bible Challenge Difficulty!</b>\nHarder questions reward more YP.", parse_mode="HTML", reply_markup=markup)
+
+
+async def on_fillblank_command(message: Message, services: ServiceContainer):
+    chat_id = message.chat.id
+    if message.chat.type != "private":
+        if chat_id in ACTIVE_GROUP_QUIZZES:
+            await message.answer("⚠️ <b>Quiz in Progress!</b>\nAn active quiz is already running in this group. Answer the current quiz first!")
+            return
+
+    # Show difficulty selection menu for Verse Completion
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_fb_easy"),
+            InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_fb_medium")
+        ],
+        [
+            InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_fb_hard")
+        ]
+    ])
+    await message.answer(
+        "📖 <b>Choose Verse Completion Difficulty!</b>\n"
+        "Fill in the missing words of scripture. Harder questions reward more YP.",
+        parse_mode="HTML",
+        reply_markup=markup
+    )
