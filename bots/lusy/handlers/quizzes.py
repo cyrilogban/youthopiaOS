@@ -19,6 +19,13 @@ ACTIVE_POLLS = {}
 # In-memory tracking for active group quizzes: chat_id (int) -> poll_id (str)
 ACTIVE_GROUP_QUIZZES = {}
 
+# Standard timing durations by difficulty (in seconds)
+DIFFICULTY_TIMERS = {
+    "easy": 60,
+    "medium": 30,
+    "hard": 20
+}
+
 # In-memory tracking for recently posted group questions: chat_id (int) -> list of question_id (str)
 RECENT_GROUP_QUESTIONS = {}
 
@@ -61,6 +68,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
     answered = False
     try:
         difficulty = callback.data.split("_")[-1] # easy, medium, or hard
+        duration = DIFFICULTY_TIMERS.get(difficulty.lower(), 20)
         chat_id = callback.message.chat.id
         is_group = callback.message.chat.type != "private"
         
@@ -148,7 +156,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             correct_option_id=correct_idx,
             explanation=explanation if explanation else None,
             is_anonymous=False, # Must be false so we know WHO answered it!
-            open_period=20
+            open_period=duration
         )
         
         if is_group:
@@ -156,13 +164,13 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             guide_text = (
                 "⚡ <b>Quiz Started!</b>\n"
                 "• Tap your answer to vote.\n"
-                "• The poll closes after 5 votes or 20 seconds.\n"
+                f"• The poll closes after 5 votes or {duration} seconds.\n"
                 "• Winners will get their YP added automatically!\n\n"
-                "<i>🧹 This guide will self-destruct in 25 seconds...</i>"
+                f"<i>🧹 This guide will self-destruct in {duration + 5} seconds...</i>"
             )
             try:
                 guide_msg = await callback.message.answer(text=guide_text, parse_mode="HTML")
-                asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, 25))
+                asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, duration + 5))
             except Exception:
                 pass
         
@@ -193,6 +201,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             "chat_id": chat_id,
             "message_id": sent_poll.message_id,
             "user_id": None if is_group else user_id,
+            "duration": duration,
             "votes": {}, # user_id -> { "display_name": str, "is_correct": bool }
             "max_votes": 5, # Close group poll after 5 votes
             "closed": False
@@ -200,9 +209,9 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         
         # Schedule timeout fallback
         if is_group:
-            asyncio.create_task(group_poll_timeout(sent_poll.poll.id, chat_id, sent_poll.message_id, services, callback.bot))
+            asyncio.create_task(group_poll_timeout(sent_poll.poll.id, chat_id, sent_poll.message_id, services, callback.bot, duration))
         else:
-            asyncio.create_task(dm_poll_timeout(sent_poll.poll.id, chat_id, sent_poll.message_id, services, callback.bot))
+            asyncio.create_task(dm_poll_timeout(sent_poll.poll.id, chat_id, sent_poll.message_id, services, callback.bot, duration))
             
     except Exception as e:
         logger.error(f"Error in start_quiz callback: {e}")
@@ -222,26 +231,22 @@ async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay: 
         pass
 
 
-async def group_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot):
-    # Wait for 20 seconds + 1s buffer for network latency
-    await asyncio.sleep(21)
+async def group_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot, duration: int):
+    # Wait for duration + 1s buffer for network latency
+    await asyncio.sleep(duration + 1)
     poll_info = ACTIVE_POLLS.get(poll_id)
     if poll_info and not poll_info.get("closed", False):
         await close_and_reward_group_poll(poll_id, services, bot)
 
 
-async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot):
-    # Wait for 20 seconds + 1s buffer for network latency
-    await asyncio.sleep(21)
+async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot, duration: int):
+    # Wait for duration + 1s buffer for network latency
+    await asyncio.sleep(duration + 1)
     poll_info = ACTIVE_POLLS.get(poll_id)
     if poll_info and not poll_info.get("closed", False):
         poll_info["closed"] = True
         
-        # 1. Delete the poll message
-        try:
-            await bot.delete_message(chat_id=chat_id, message_id=message_id)
-        except Exception:
-            pass
+        # We no longer delete the poll message; we let it expire natively
             
         user_id = poll_info.get("user_id")
         if user_id:
@@ -254,7 +259,7 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
         try:
             await bot.send_message(
                 chat_id=chat_id,
-                text="⏰ <b>Time's up!</b> You didn't answer the Bible Challenge within 20 seconds. (0 YP earned)\n\nReady to try again?",
+                text=f"⏰ <b>Time's up!</b> You didn't answer the Bible Challenge within {duration} seconds. (0 YP earned)\n\nReady to try again?",
                 parse_mode="HTML",
                 reply_markup=markup
             )
@@ -277,9 +282,9 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
     base_xp = poll_info["base_xp"]
     votes = poll_info["votes"]
     
-    # 1. Delete the poll on Telegram
+    # 1. Stop the poll on Telegram (locks it natively but keeps it in the chat)
     try:
-        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+        await bot.stop_poll(chat_id=chat_id, message_id=message_id)
     except Exception:
         pass
         
@@ -377,13 +382,6 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     if not is_group:
         # Private poll flow: award instantly and send DM
         poll_info["closed"] = True
-        
-        # Delete the poll message to prevent cheating/repeats
-        try:
-            await bot.delete_message(chat_id=poll_info["chat_id"], message_id=poll_info["message_id"])
-        except Exception:
-            pass
-            
         xp_awarded = base_xp if is_correct else 0
         await services.quizzes.save_game_result(
             user_id,
