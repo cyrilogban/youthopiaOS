@@ -167,7 +167,8 @@ def _router() -> Router:
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Bible Challenge 🏆", callback_data="lusy_play_quiz")],
-            [InlineKeyboardButton(text="Verse Completion 📖", callback_data="lusy_play_fill_blank")]
+            [InlineKeyboardButton(text="Verse Completion 📖", callback_data="lusy_play_fill_blank")],
+            [InlineKeyboardButton(text="Trivia Race ⚡", callback_data="lusy_play_race")]
         ])
         await message.answer(
             "<b>Welcome to the Quiz Arena!</b> Ready to test your knowledge and grow in the Word?\n\n"
@@ -201,7 +202,7 @@ def _router() -> Router:
             
         await message.answer(leaderboard_text, parse_mode="HTML")
 
-    from bots.lusy.handlers.quizzes import on_quiz_command, on_fillblank_command
+    from bots.lusy.handlers.quizzes import on_quiz_command, on_fillblank_command, on_race_command
     @router.message(Command("quiz"))
     async def handle_quiz_cmd(message: Message, services: ServiceContainer):
         await on_quiz_command(message, services)
@@ -214,6 +215,10 @@ def _router() -> Router:
     @router.message(Command("versecompletion"))
     async def handle_fillblank_cmd(message: Message, services: ServiceContainer):
         await on_fillblank_command(message, services)
+
+    @router.message(Command("race"))
+    async def handle_race_cmd(message: Message, services: ServiceContainer):
+        await on_race_command(message, services)
 
     @router.callback_query(F.data == "lusy_menu_play")
     async def on_play_games_callback(callback: CallbackQuery):

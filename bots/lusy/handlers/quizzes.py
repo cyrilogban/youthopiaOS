@@ -29,6 +29,9 @@ DIFFICULTY_TIMERS = {
 # In-memory tracking for recently posted group questions: chat_id (int) -> list of question_id (str)
 RECENT_GROUP_QUESTIONS = {}
 
+# In-memory tracking for active speed races: f"{chat_id}_{message_id}" -> state_dict
+ACTIVE_RACES = {}
+
 
 @quiz_router.callback_query(F.data == "lusy_soon")
 async def on_soon(callback: CallbackQuery):
@@ -188,10 +191,63 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             await callback.message.delete()
         except Exception:
             try:
-                await callback.message.edit_text("<b>Quiz started! Check the poll below.</b>", parse_mode="HTML")
+                await callback.message.edit_text("<b>Game started!</b>", parse_mode="HTML")
             except Exception:
                 pass
+                
+        is_race = (game_mode_code == "rc")
+        if is_race:
+            # Send a Trivia Race!
+            # Format the options as inline keyboard buttons
+            choices_buttons = []
+            row = []
+            for idx, opt in enumerate(options):
+                row.append(InlineKeyboardButton(text=opt, callback_data=f"lusy_race_choice_{idx}"))
+                if len(row) == 2:
+                    choices_buttons.append(row)
+                    row = []
+            if row:
+                choices_buttons.append(row)
+                
+            xp_reward = 15 if difficulty == "easy" else (25 if difficulty == "medium" else 35)
             
+            race_text = (
+                "⚡ <b>BIBLE TRIVIA RACE!</b>\n"
+                f"<i>({difficulty.upper()} difficulty — First correct answer wins <b>{xp_reward} YP</b>!)</i>\n"
+                "⚠️ <i>Warning: An incorrect guess eliminates you from this round!</i>\n\n"
+                f"<b>Question:</b>\n"
+                f"<blockquote>{text}</blockquote>"
+            )
+            
+            sent_msg = await callback.message.answer(
+                text=race_text,
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=choices_buttons)
+            )
+            
+            if is_group:
+                ACTIVE_GROUP_QUIZZES[chat_id] = f"race_{sent_msg.message_id}"
+                
+            import time
+            race_key = f"{chat_id}_{sent_msg.message_id}"
+            ACTIVE_RACES[race_key] = {
+                "question_id": q_id,
+                "correct_idx": correct_idx,
+                "base_xp": xp_reward,
+                "is_group": is_group,
+                "chat_id": chat_id,
+                "message_id": sent_msg.message_id,
+                "locked_out": set(),
+                "start_time": time.time(),
+                "closed": False,
+                "explanation": explanation,
+                "text": text,
+                "difficulty": difficulty
+            }
+            
+            asyncio.create_task(race_timeout_task(chat_id, sent_msg.message_id, services, callback.bot, duration))
+            return
+
         # Send a native Telegram Quiz Poll!
         prefix = "📖 [FILL IN THE BLANK]" if game_type == "fill_in_the_blank" else f"[{difficulty.upper()}]"
         sent_poll = await callback.message.answer_poll(
@@ -510,3 +566,196 @@ async def on_fillblank_command(message: Message, services: ServiceContainer):
         parse_mode="HTML",
         reply_markup=markup
     )
+
+
+@quiz_router.callback_query(F.data == "lusy_play_race")
+async def choose_race_difficulty(callback: CallbackQuery):
+    try:
+        chat_id = callback.message.chat.id
+        if callback.message.chat.type != "private":
+            if chat_id in ACTIVE_GROUP_QUIZZES:
+                await callback.answer("⚠️ An active quiz/race is already running in this group! Complete it first.", show_alert=True)
+                return
+
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Easy (15 YP)", callback_data="lusy_quiz_diff_rc_easy"),
+                InlineKeyboardButton(text="Medium (25 YP)", callback_data="lusy_quiz_diff_rc_medium")
+            ],
+            [
+                InlineKeyboardButton(text="Hard (35 YP)", callback_data="lusy_quiz_diff_rc_hard")
+            ]
+        ])
+        await callback.message.edit_text(
+            "⚡ <b>Choose Trivia Race Difficulty!</b>\n"
+            "Be the FIRST to answer correctly. Wrong answers eliminate you from the round! Harder questions reward more YP.",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+    except Exception as e:
+        logger.error(f"Error in choose_race_difficulty callback: {e}")
+    finally:
+        try:
+            await callback.answer()
+        except Exception:
+            pass
+
+
+async def on_race_command(message: Message, services: ServiceContainer):
+    chat_id = message.chat.id
+    if message.chat.type != "private":
+        if chat_id in ACTIVE_GROUP_QUIZZES:
+            await message.answer("⚠️ <b>Game in Progress!</b>\nAn active quiz/race is already running in this group. Complete it first!")
+            return
+
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Easy (15 YP)", callback_data="lusy_quiz_diff_rc_easy"),
+            InlineKeyboardButton(text="Medium (25 YP)", callback_data="lusy_quiz_diff_rc_medium")
+        ],
+        [
+            InlineKeyboardButton(text="Hard (35 YP)", callback_data="lusy_quiz_diff_rc_hard")
+        ]
+    ])
+    await message.answer(
+        "⚡ <b>Choose Trivia Race Difficulty!</b>\n"
+        "First correct answer wins YP! Wrong answers eliminate you. Harder questions reward more YP.",
+        parse_mode="HTML",
+        reply_markup=markup
+    )
+
+
+async def race_timeout_task(chat_id: int, message_id: int, services: ServiceContainer, bot: Bot, duration: int):
+    # Wait for duration (e.g., 20 seconds) plus 1s buffer
+    await asyncio.sleep(duration + 1)
+    race_key = f"{chat_id}_{message_id}"
+    race_info = ACTIVE_RACES.get(race_key)
+    if race_info and not race_info.get("closed", False):
+        race_info["closed"] = True
+        
+        # Resolve correct answer text
+        q_resp = await services.quizzes.get_question_by_id(race_info["question_id"])
+        correct_text = q_resp.get("correct_answer", "Unknown") if q_resp else "Unknown"
+        explanation = race_info.get("explanation", "")
+        
+        timeout_text = (
+            "⚡ <b>BIBLE TRIVIA RACE!</b>\n"
+            f"<i>({race_info['difficulty'].upper()} difficulty)</i>\n\n"
+            f"<b>Question:</b>\n"
+            f"<blockquote>{race_info['text']}</blockquote>\n\n"
+            "⏰ <b>Time's Up!</b> Nobody answered correctly in time.\n"
+            f"The correct answer was: <b>{correct_text}</b>\n"
+        )
+        if explanation:
+            timeout_text += f"💡 <i>{explanation}</i>\n"
+            
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race")]
+        ])
+        
+        try:
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=timeout_text,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+        except Exception:
+            pass
+            
+        # Clean up state
+        if chat_id in ACTIVE_GROUP_QUIZZES:
+            del ACTIVE_GROUP_QUIZZES[chat_id]
+        if race_key in ACTIVE_RACES:
+            del ACTIVE_RACES[race_key]
+
+
+@quiz_router.callback_query(F.data.startswith("lusy_race_choice_"))
+async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer):
+    user = await services.identity.resolve_telegram_user(callback.from_user)
+    user_id = user["id"]
+    chat_id = callback.message.chat.id
+    message_id = callback.message.message_id
+    race_key = f"{chat_id}_{message_id}"
+    
+    race_info = ACTIVE_RACES.get(race_key)
+    if not race_info or race_info.get("closed", False):
+        try:
+            await callback.answer("This race has already ended!", show_alert=True)
+        except Exception:
+            pass
+        return
+        
+    if user_id in race_info["locked_out"]:
+        try:
+            await callback.answer("❌ You are eliminated from this round!", show_alert=True)
+        except Exception:
+            pass
+        return
+        
+    choice_idx = int(callback.data.split("_")[-1])
+    is_correct = (choice_idx == race_info["correct_idx"])
+    
+    if is_correct:
+        # Secure the lock instantly to prevent double wins
+        race_info["closed"] = True
+        
+        import time
+        time_taken = round(time.time() - race_info["start_time"], 2)
+        base_xp = race_info["base_xp"]
+        question_id = race_info["question_id"]
+        
+        # Award YP
+        await services.quizzes.save_game_result(user_id, question_id, True, base_xp)
+        await services.xp.award_xp(user_id, base_xp, "lusy", f"Trivia Race Winner: {question_id}")
+        
+        # Get correct answer text
+        q_resp = await services.quizzes.get_question_by_id(question_id)
+        correct_text = q_resp.get("correct_answer", "Unknown") if q_resp else "Unknown"
+        explanation = race_info.get("explanation", "")
+        
+        winner_name = callback.from_user.first_name or callback.from_user.username or "Anonymous"
+        
+        win_text = (
+            "⚡ <b>BIBLE TRIVIA RACE!</b>\n"
+            f"<i>({race_info['difficulty'].upper()} difficulty)</i>\n\n"
+            f"<b>Question:</b>\n"
+            f"<blockquote>{race_info['text']}</blockquote>\n"
+            f"🏆 <b>Winner:</b> {winner_name} (+{base_xp} YP) in <b>{time_taken}s</b>!\n"
+            f"Correct Answer: <b>{correct_text}</b>\n"
+        )
+        if explanation:
+            win_text += f"💡 <i>{explanation}</i>\n"
+            
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race")]
+        ])
+        
+        try:
+            await callback.message.edit_text(
+                text=win_text,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+        except Exception:
+            pass
+            
+        # Clean up
+        if chat_id in ACTIVE_GROUP_QUIZZES:
+            del ACTIVE_GROUP_QUIZZES[chat_id]
+        if race_key in ACTIVE_RACES:
+            del ACTIVE_RACES[race_key]
+            
+        try:
+            await callback.answer("🏆 You won the race!", show_alert=False)
+        except Exception:
+            pass
+            
+    else:
+        # Eliminate the user
+        race_info["locked_out"].add(user_id)
+        try:
+            await callback.answer("❌ Incorrect answer! You are eliminated from this round.", show_alert=True)
+        except Exception:
+            pass
