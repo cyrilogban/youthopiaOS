@@ -81,14 +81,14 @@ def _router() -> Router:
     async def on_startup(bot: Bot) -> None:
         private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
-            BotCommand(command="quiz", description="Start a Bible Quiz"),
-            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
-            BotCommand(command="help", description="How to play and earn YP"),
+            BotCommand(command="play", description="Choose and start a Bible game"),
+            BotCommand(command="leaderboard", description="View global leaderboard"),
             BotCommand(command="yp", description="Check your current YP and Level"),
+            BotCommand(command="help", description="How to play and earn YP"),
         ]
         group_commands = [
-            BotCommand(command="quiz", description="Drop a Bible Quiz for the group!"),
-            BotCommand(command="leaderboard", description="View the Top 10 YouTopians!"),
+            BotCommand(command="play", description="Choose and start a Bible game"),
+            BotCommand(command="leaderboard", description="View global leaderboard"),
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         await bot.delete_my_commands()
@@ -164,7 +164,6 @@ def _router() -> Router:
 
     @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games", "Play Games 🎮"}))
     async def on_play_games(message: Message):
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(text="Bible Challenge", callback_data="lusy_play_quiz"),
@@ -176,8 +175,8 @@ def _router() -> Router:
             ]
         ])
         await message.answer(
-            "<b>Welcome to the Quiz Arena!</b> Ready to test your knowledge and grow in the Word?\n\n"
-            "Choose a game mode below to get started:",
+            "<b>Choose a game mode</b>\n\n"
+            "Select a game below. Each mode tests your scripture knowledge in a different way — all earn YP!",
             parse_mode="HTML",
             reply_markup=markup
         )
@@ -207,29 +206,9 @@ def _router() -> Router:
             
         await message.answer(leaderboard_text, parse_mode="HTML")
 
-    from bots.lusy.handlers.quizzes import on_quiz_command, on_fillblank_command, on_race_command
-    @router.message(Command("quiz"))
-    async def handle_quiz_cmd(message: Message, services: ServiceContainer):
-        await on_quiz_command(message, services)
-
     @router.message(Command("play"))
     async def handle_play_cmd(message: Message):
         await on_play_games(message)
-
-    @router.message(Command("fillblank"))
-    @router.message(Command("versecompletion"))
-    async def handle_fillblank_cmd(message: Message, services: ServiceContainer):
-        await on_fillblank_command(message, services)
-
-    @router.message(Command("race"))
-    async def handle_race_cmd(message: Message, services: ServiceContainer):
-        await on_race_command(message, services)
-
-    @router.message(Command("scramble"))
-    @router.message(Command("vs"))
-    async def handle_scramble_cmd(message: Message, services: ServiceContainer):
-        from bots.lusy.handlers.quizzes import on_scramble_command
-        await on_scramble_command(message, services)
 
     @router.callback_query(F.data == "lusy_menu_play")
     async def on_play_games_callback(callback: CallbackQuery):
