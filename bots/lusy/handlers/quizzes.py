@@ -148,7 +148,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             correct_option_id=correct_idx,
             explanation=explanation if explanation else None,
             is_anonymous=False, # Must be false so we know WHO answered it!
-            open_period=10
+            open_period=20
         )
         
         if is_group:
@@ -156,13 +156,13 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             guide_text = (
                 "⚡ <b>Quiz Started!</b>\n"
                 "• Tap your answer to vote.\n"
-                "• The poll closes after 5 votes or 10 seconds.\n"
+                "• The poll closes after 5 votes or 20 seconds.\n"
                 "• Winners will get their YP added automatically!\n\n"
-                "<i>🧹 This guide will self-destruct in 15 seconds...</i>"
+                "<i>🧹 This guide will self-destruct in 25 seconds...</i>"
             )
             try:
                 guide_msg = await callback.message.answer(text=guide_text, parse_mode="HTML")
-                asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, 15))
+                asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, 25))
             except Exception:
                 pass
         
@@ -223,16 +223,16 @@ async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay: 
 
 
 async def group_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot):
-    # Wait for 10 seconds + 1s buffer for network latency
-    await asyncio.sleep(11)
+    # Wait for 20 seconds + 1s buffer for network latency
+    await asyncio.sleep(21)
     poll_info = ACTIVE_POLLS.get(poll_id)
     if poll_info and not poll_info.get("closed", False):
         await close_and_reward_group_poll(poll_id, services, bot)
 
 
 async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot):
-    # Wait for 10 seconds + 1s buffer for network latency
-    await asyncio.sleep(11)
+    # Wait for 20 seconds + 1s buffer for network latency
+    await asyncio.sleep(21)
     poll_info = ACTIVE_POLLS.get(poll_id)
     if poll_info and not poll_info.get("closed", False):
         poll_info["closed"] = True
@@ -254,7 +254,7 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
         try:
             await bot.send_message(
                 chat_id=chat_id,
-                text="⏰ <b>Time's up!</b> You didn't answer the Bible Challenge within 10 seconds. (0 YP earned)\n\nReady to try again?",
+                text="⏰ <b>Time's up!</b> You didn't answer the Bible Challenge within 20 seconds. (0 YP earned)\n\nReady to try again?",
                 parse_mode="HTML",
                 reply_markup=markup
             )
