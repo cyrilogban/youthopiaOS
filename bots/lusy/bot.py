@@ -111,7 +111,7 @@ def _router() -> Router:
         
         inline_markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="Play Games 🎮", callback_data="lusy_menu_play"),
+                InlineKeyboardButton(text="Play Games", callback_data="lusy_menu_play"),
                 InlineKeyboardButton(text="Leaderboard", callback_data="lusy_menu_leaderboard")
             ],
             [
@@ -121,7 +121,7 @@ def _router() -> Router:
         ])
         
         reply_markup = ReplyKeyboardMarkup(keyboard=[
-            [KeyboardButton(text="Play Games 🎮"), KeyboardButton(text="Leaderboard")],
+            [KeyboardButton(text="Play Games"), KeyboardButton(text="Leaderboard")],
             [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
         ], resize_keyboard=True)
         
@@ -162,7 +162,7 @@ def _router() -> Router:
     async def xp(message: Message, services: ServiceContainer) -> None:
         await render_user_stats(message, message.from_user, services)
 
-    @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games", "Play Games 🎮"}))
+    @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games", "Play Games 🎮", "Play Games"}))
     async def on_play_games(message: Message):
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
