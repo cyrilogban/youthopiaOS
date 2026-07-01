@@ -101,7 +101,12 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         parts = callback.data.split("_")
         difficulty = parts[-1] # easy, medium, or hard
         game_mode_code = parts[3] if len(parts) >= 5 else "mc"
-        game_type = "fill_in_the_blank" if game_mode_code == "fb" else "multiple_choice"
+        if game_mode_code == "fb":
+            game_type = "fill_in_the_blank"
+        elif game_mode_code == "vs":
+            game_type = "verse_completion"
+        else:
+            game_type = "multiple_choice"
         
         duration = DIFFICULTY_TIMERS.get(difficulty.lower(), 20)
         chat_id = callback.message.chat.id
@@ -119,7 +124,12 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         questions_resp = await services.quizzes.get_questions_by_difficulty(difficulty, game_type=game_type)
         
         if not questions_resp:
-            label = "Verse Completion" if game_type == "fill_in_the_blank" else "Bible Challenge"
+            if game_type == "fill_in_the_blank":
+                label = "Verse Completion"
+            elif game_type == "verse_completion":
+                label = "Verse Scramble"
+            else:
+                label = "Bible Challenge"
             await callback.message.edit_text(f"No {difficulty} {label} questions found in the database yet! Please try another difficulty.")
             await callback.answer()
             answered = True
@@ -148,6 +158,15 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
                         InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_fb_hard")
                     ]
                 ])
+                vs_markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_vs_easy"),
+                        InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_vs_medium")
+                    ],
+                    [
+                        InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_vs_hard")
+                    ]
+                ])
                 mc_markup = InlineKeyboardMarkup(inline_keyboard=[
                     [
                         InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_mc_easy"),
@@ -157,8 +176,15 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
                         InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_mc_hard")
                     ]
                 ])
-                difficulty_markup = fb_markup if game_type == "fill_in_the_blank" else mc_markup
-                label = "Verse Completion" if game_type == "fill_in_the_blank" else "Bible Challenge"
+                if game_type == "fill_in_the_blank":
+                    difficulty_markup = fb_markup
+                    label = "Verse Completion"
+                elif game_type == "verse_completion":
+                    difficulty_markup = vs_markup
+                    label = "Verse Scramble"
+                else:
+                    difficulty_markup = mc_markup
+                    label = "Bible Challenge"
                 await callback.message.edit_text(
                     f"🏆 <b>Difficulty Completed!</b>\n\nWow! You have successfully answered all <b>{difficulty.capitalize()}</b> {label} questions in YouThopia!\n\nTry another difficulty level to continue earning YP.",
                     parse_mode="HTML",
@@ -249,7 +275,13 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             return
 
         # Send a native Telegram Quiz Poll!
-        prefix = "📖 [FILL IN THE BLANK]" if game_type == "fill_in_the_blank" else f"[{difficulty.upper()}]"
+        if game_type == "fill_in_the_blank":
+            prefix = "📖 [FILL IN THE BLANK]"
+        elif game_type == "verse_completion":
+            prefix = "🔠 [VERSE SCRAMBLE]\nUnscramble to find the correct reference:"
+        else:
+            prefix = f"[{difficulty.upper()}]"
+            
         sent_poll = await callback.message.answer_poll(
             question=f"{prefix} {text}",
             options=options,
@@ -262,7 +294,12 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         
         if is_group:
             # Send a self-destructing instruction message
-            label = "Verse Completion" if game_type == "fill_in_the_blank" else "Bible Challenge"
+            if game_type == "fill_in_the_blank":
+                label = "Verse Completion"
+            elif game_type == "verse_completion":
+                label = "Verse Scramble"
+            else:
+                label = "Bible Challenge"
             guide_text = (
                 f"⚡ <b>{label} Started!</b>\n"
                 "• Tap your answer to vote.\n"
@@ -355,14 +392,25 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
         if user_id:
             await services.quizzes.clear_private_poll_tracking(user_id)
             
+        game_type = poll_info.get("game_type")
+        if game_type == "fill_in_the_blank":
+            next_callback = "lusy_play_fill_blank"
+            game_label = "Verse Completion"
+        elif game_type == "verse_completion":
+            next_callback = "lusy_play_scramble"
+            game_label = "Verse Scramble"
+        else:
+            next_callback = "lusy_play_quiz"
+            game_label = "Bible Challenge"
+            
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
+            [InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback)]
         ])
         
         try:
             await bot.send_message(
                 chat_id=chat_id,
-                text=f"⏰ <b>Time's up!</b> You didn't answer the Bible Challenge within {duration} seconds. (0 YP earned)\n\nReady to try again?",
+                text=f"⏰ <b>Time's up!</b> You didn't answer the {game_label} within {duration} seconds. (0 YP earned)\n\nReady to try again?",
                 parse_mode="HTML",
                 reply_markup=markup
             )
@@ -419,7 +467,18 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
             winners.append(display_name)
             
     # 4. Format and send summary message in the group
-    leaderboard_text = "<b>🏆 Quiz Completed!</b>\n"
+    game_type = poll_info.get("game_type")
+    if game_type == "fill_in_the_blank":
+        next_callback = "lusy_play_fill_blank"
+        title = "Verse Completion"
+    elif game_type == "verse_completion":
+        next_callback = "lusy_play_scramble"
+        title = "Verse Scramble"
+    else:
+        next_callback = "lusy_play_quiz"
+        title = "Quiz"
+        
+    leaderboard_text = f"<b>🏆 {title} Completed!</b>\n"
     leaderboard_text += f"Correct Answer: <b>{correct_text}</b>\n\n"
     
     if winners:
@@ -435,7 +494,7 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
     leaderboard_text += "Ready for the next round? Tap below!"
     
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
+        [InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback)]
     ])
     
     try:
@@ -501,8 +560,17 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
             del ACTIVE_POLLS[poll_id]
             
         result_text = f"Correct! 🎉 +{xp_awarded} YP!" if is_correct else "Incorrect! ❌"
+        
+        game_type = poll_info.get("game_type")
+        if game_type == "fill_in_the_blank":
+            next_callback = "lusy_play_fill_blank"
+        elif game_type == "verse_completion":
+            next_callback = "lusy_play_scramble"
+        else:
+            next_callback = "lusy_play_quiz"
+            
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next Question ➡️", callback_data="lusy_play_quiz")]
+            [InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback)]
         ])
         await bot.send_message(
             chat_id=poll_answer.user.id,
@@ -759,3 +827,61 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
             await callback.answer("❌ Incorrect answer! You are eliminated from this round.", show_alert=True)
         except Exception:
             pass
+
+
+@quiz_router.callback_query(F.data == "lusy_play_scramble")
+async def choose_scramble_difficulty(callback: CallbackQuery):
+    try:
+        chat_id = callback.message.chat.id
+        if callback.message.chat.type != "private":
+            if chat_id in ACTIVE_GROUP_QUIZZES:
+                await callback.answer("⚠️ An active quiz/race is already running in this group! Complete it first.", show_alert=True)
+                return
+
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_vs_easy"),
+                InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_vs_medium")
+            ],
+            [
+                InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_vs_hard")
+            ]
+        ])
+        await callback.message.edit_text(
+            "🔠 <b>Choose Verse Scramble Difficulty!</b>\n"
+            "Unscramble the verse to find the correct reference. Harder questions reward more YP.",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+    except Exception as e:
+        logger.error(f"Error in choose_scramble_difficulty callback: {e}")
+    finally:
+        try:
+            await callback.answer()
+        except Exception:
+            pass
+
+
+async def on_scramble_command(message: Message, services: ServiceContainer):
+    chat_id = message.chat.id
+    if message.chat.type != "private":
+        if chat_id in ACTIVE_GROUP_QUIZZES:
+            await message.answer("⚠️ <b>Quiz in Progress!</b>\nAn active quiz is already running in this group. Answer the current quiz first!")
+            return
+
+    # Show difficulty selection menu for Verse Scramble
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Easy (10 YP)", callback_data="lusy_quiz_diff_vs_easy"),
+            InlineKeyboardButton(text="Medium (15 YP)", callback_data="lusy_quiz_diff_vs_medium")
+        ],
+        [
+            InlineKeyboardButton(text="Hard (20 YP)", callback_data="lusy_quiz_diff_vs_hard")
+        ]
+    ])
+    await message.answer(
+        "🔠 <b>Choose Verse Scramble Difficulty!</b>\n"
+        "Unscramble the verse to find the correct reference. Harder questions reward more YP.",
+        parse_mode="HTML",
+        reply_markup=markup
+    )

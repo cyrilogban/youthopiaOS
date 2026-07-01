@@ -168,6 +168,7 @@ def _router() -> Router:
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Bible Challenge 🏆", callback_data="lusy_play_quiz")],
             [InlineKeyboardButton(text="Verse Completion 📖", callback_data="lusy_play_fill_blank")],
+            [InlineKeyboardButton(text="Verse Scramble 🔠", callback_data="lusy_play_scramble")],
             [InlineKeyboardButton(text="Trivia Race ⚡", callback_data="lusy_play_race")]
         ])
         await message.answer(
@@ -219,6 +220,12 @@ def _router() -> Router:
     @router.message(Command("race"))
     async def handle_race_cmd(message: Message, services: ServiceContainer):
         await on_race_command(message, services)
+
+    @router.message(Command("scramble"))
+    @router.message(Command("vs"))
+    async def handle_scramble_cmd(message: Message, services: ServiceContainer):
+        from bots.lusy.handlers.quizzes import on_scramble_command
+        await on_scramble_command(message, services)
 
     @router.callback_query(F.data == "lusy_menu_play")
     async def on_play_games_callback(callback: CallbackQuery):
