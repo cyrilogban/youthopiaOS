@@ -111,7 +111,7 @@ def _router() -> Router:
         
         inline_markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="Start Bible Quiz", callback_data="lusy_play_quiz"),
+                InlineKeyboardButton(text="Play Games 🎮", callback_data="lusy_menu_play"),
                 InlineKeyboardButton(text="Leaderboard", callback_data="lusy_menu_leaderboard")
             ],
             [
@@ -121,7 +121,7 @@ def _router() -> Router:
         ])
         
         reply_markup = ReplyKeyboardMarkup(keyboard=[
-            [KeyboardButton(text="Start Bible Quiz"), KeyboardButton(text="Leaderboard")],
+            [KeyboardButton(text="Play Games 🎮"), KeyboardButton(text="Leaderboard")],
             [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
         ], resize_keyboard=True)
         
@@ -162,7 +162,7 @@ def _router() -> Router:
     async def xp(message: Message, services: ServiceContainer) -> None:
         await render_user_stats(message, message.from_user, services)
 
-    @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games"}))
+    @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games", "Play Games 🎮"}))
     async def on_play_games(message: Message):
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         markup = InlineKeyboardMarkup(inline_keyboard=[
@@ -203,9 +203,12 @@ def _router() -> Router:
 
     from bots.lusy.handlers.quizzes import on_quiz_command, on_fillblank_command
     @router.message(Command("quiz"))
-    @router.message(Command("play"))
     async def handle_quiz_cmd(message: Message, services: ServiceContainer):
         await on_quiz_command(message, services)
+
+    @router.message(Command("play"))
+    async def handle_play_cmd(message: Message):
+        await on_play_games(message)
 
     @router.message(Command("fillblank"))
     @router.message(Command("versecompletion"))
