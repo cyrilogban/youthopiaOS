@@ -105,8 +105,8 @@ def _router() -> Router:
             return
 
         welcome_text = (
-            "<b>Welcome to the YouThopia Bible Quiz!</b>\n"
-            "<blockquote>I am Lusy! Think you know the Bible? Let's put your knowledge to the test, learn the Word, and earn some YP!</blockquote>"
+            "<b>Think you know the Bible?</b>\n"
+            "<blockquote>Prove it. I'm Lusy — and I've got questions that'll test even the sharpest minds. Answer right, earn YP, rise through the ranks. Let's go!</blockquote>"
         )
         
         inline_markup = InlineKeyboardMarkup(inline_keyboard=[
@@ -126,6 +126,12 @@ def _router() -> Router:
         ], resize_keyboard=True)
         
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
+        
+        # Activate the persistent bottom keyboard with a silent follow-up message
+        await message.answer(
+            "Use the menu below or the buttons above to navigate:",
+            reply_markup=reply_markup
+        )
 
     async def handle_help(message: Message) -> None:
         help_text = (
