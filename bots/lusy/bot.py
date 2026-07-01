@@ -166,10 +166,14 @@ def _router() -> Router:
     async def on_play_games(message: Message):
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Bible Challenge 🏆", callback_data="lusy_play_quiz")],
-            [InlineKeyboardButton(text="Verse Completion 📖", callback_data="lusy_play_fill_blank")],
-            [InlineKeyboardButton(text="Verse Scramble 🔠", callback_data="lusy_play_scramble")],
-            [InlineKeyboardButton(text="Trivia Race ⚡", callback_data="lusy_play_race")]
+            [
+                InlineKeyboardButton(text="Bible Challenge", callback_data="lusy_play_quiz"),
+                InlineKeyboardButton(text="Verse Completion", callback_data="lusy_play_fill_blank")
+            ],
+            [
+                InlineKeyboardButton(text="Verse Scramble", callback_data="lusy_play_scramble"),
+                InlineKeyboardButton(text="Trivia Race", callback_data="lusy_play_race")
+            ]
         ])
         await message.answer(
             "<b>Welcome to the Quiz Arena!</b> Ready to test your knowledge and grow in the Word?\n\n"
