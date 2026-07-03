@@ -12,7 +12,10 @@ env/
 *-ROADMAP.md
 *-PROGRESS.md
 *-DECISION.md
+*-DECISIONS.md
+DECISIONS.md
 !README.md
+
 
 # Local setup script
 setup.bat
