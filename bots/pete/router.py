@@ -592,8 +592,6 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         disable_web_page_preview=True, 
         reply_markup=markup
     )
-    
-    await message.answer("Use the menu below to navigate my features:", reply_markup=pete_menu())
 
 # -----------------------------------------------------------------------------
 # AUTOMATED JUSTICE ENGINE (ACTIVE LISTENER)
