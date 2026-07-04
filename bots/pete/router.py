@@ -409,22 +409,49 @@ async def handle_youtopianstatus(message: Message, services: ServiceContainer) -
     trust_score = int(target_record.get("trust_score", 100))
     warnings = await services.moderation.get_user_warnings_count(target_record["id"])
     
+    # Calculate Progress Bars
+    filled_trust = int(max(0, min(100, trust_score)) // 10)
+    trust_bar = "█" * filled_trust + "░" * (10 - filled_trust)
+    
+    warn_clamped = max(0, min(5, warnings))
+    warn_bar = "█" * warn_clamped + "░" * (5 - warn_clamped)
+
+    # Kingdom Theme Logic
     if trust_score == 100 and warnings == 0:
-        title = "Exemplary Citizen"
+        trust_icon = "🟢"
+        status_icon = "👑"
+        title = "Kingdom Ambassador"
     elif trust_score >= 80:
-        title = "In Good Standing"
+        trust_icon = "🟢"
+        status_icon = "🛡️"
+        title = "Noble YouTopian"
     elif trust_score >= 50:
-        title = "On Probation"
+        trust_icon = "🟡"
+        status_icon = "👤"
+        title = "Citizen"
+    elif trust_score > 0:
+        trust_icon = "🔴"
+        status_icon = "👁️"
+        title = "Under Surveillance"
     else:
-        title = "Restricted"
+        trust_icon = "🔴"
+        status_icon = "⛓️"
+        title = "Exiled"
+        
+    if warnings == 0:
+        warn_icon = "✅"
+    elif warnings <= 2:
+        warn_icon = "⚠️"
+    else:
+        warn_icon = "🚨"
         
     status_card = (
-        "<b>YOUTOPIAN STATUS</b>\n\n"
+        "🛡️ <b>MY PROFILE</b>\n\n"
         "<blockquote>"
-        f"<b>YouTopian:</b> {message.from_user.first_name}\n"
-        f"<b>Trust Score:</b> {trust_score} / 100\n"
-        f"<b>Standing:</b> {title}\n"
-        f"<b>Warnings:</b> {warnings} / 5"
+        f"👤 <b>Name:</b> {message.from_user.first_name}\n"
+        f"{trust_icon} <b>Trust:</b> {trust_score}/100 <code>[{trust_bar}]</code>\n"
+        f"{status_icon} <b>Status:</b> {title}\n"
+        f"{warn_icon} <b>Warnings:</b> {warnings}/5 <code>[{warn_bar}]</code>\n"
         "</blockquote>"
     )
     
