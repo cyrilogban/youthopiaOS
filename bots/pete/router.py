@@ -384,7 +384,7 @@ def pete_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="YouTopian Status"),
+                KeyboardButton(text="My profile"),
                 KeyboardButton(text="📝 Submit Appeal")
             ]
         ],
@@ -395,8 +395,15 @@ def pete_menu() -> ReplyKeyboardMarkup:
 class AppealState(StatesGroup):
     waiting_for_appeal = State()
 
-@router.message(Command("youtopianstatus"))
+@router.message(Command("profile"))
 async def handle_youtopianstatus(message: Message, services: ServiceContainer) -> None:
+    if message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        return
+        
     target_record = await services.identity.resolve_telegram_user(message.from_user)
     
     trust_score = int(target_record.get("trust_score", 100))
@@ -428,14 +435,7 @@ async def handle_youtopianstatus(message: Message, services: ServiceContainer) -
         ])
         
     sent_msg = await message.reply(status_card, parse_mode="HTML", reply_markup=markup)
-    
-    # Auto-delete if invoked in a public group to keep chat clean
-    if message.chat.type != "private":
-        await asyncio.sleep(15)
-        try:
-            await sent_msg.delete()
-        except Exception:
-            pass
+    # Removed group auto-delete (command is now private only)
 
 @router.callback_query(F.data == "appeal_init")
 async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -> None:
@@ -447,8 +447,10 @@ async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -
     await start_appeal_flow(callback_query.message, state)
     await callback_query.answer()
 
-@router.message(F.text == "YouTopian Status")
+@router.message(F.text == "My profile")
 async def handle_youtopianstatus_menu(message: Message, services: ServiceContainer) -> None:
+    if message.chat.type != "private":
+        return
     await handle_youtopianstatus(message, services)
 
 @router.message(F.text == "📝 Submit Appeal")
@@ -536,6 +538,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
             await message.delete()
         except Exception:
             pass
+        return
             
     # Check if this is a Deep Link Captcha verification
     if message.text and message.text.startswith("/start verify_"):
@@ -567,7 +570,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
         "Your first friend here. Welcomes new YouTopians.</blockquote>\n\n"
         "<b>How to Use Pete</b>\n"
-        "<blockquote>Pete operates silently in the background to keep the community safe. You can check your YouTopian Status and submit appeals using the menu below.\n\n"
+        "<blockquote>Pete operates silently in the background to keep the community safe. You can check your profile and submit appeals using the menu below.\n\n"
         "If you are an administrator, Pete provides a suite of moderation commands to maintain order.</blockquote>\n\n"
         "Sharing God's Love All The Way 💜"
     )
@@ -590,14 +593,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         reply_markup=markup
     )
     
-    if message.chat.type == "private":
-        await message.answer("Use the menu below to navigate my features:", reply_markup=pete_menu())
-    else:
-        await asyncio.sleep(15)
-        try:
-            await sent_msg.delete()
-        except Exception:
-            pass
+    await message.answer("Use the menu below to navigate my features:", reply_markup=pete_menu())
 
 # -----------------------------------------------------------------------------
 # AUTOMATED JUSTICE ENGINE (ACTIVE LISTENER)
@@ -891,7 +887,7 @@ async def on_startup(bot: Bot) -> None:
     
     user_commands = [
         BotCommand(command="start", description="Wake up pete"),
-        BotCommand(command="youtopianstatus", description="Check your Trust Score"),
+        BotCommand(command="profile", description="Check your Profile"),
         BotCommand(command="help", description="Show Pete's instructions")
     ]
     
@@ -900,9 +896,11 @@ async def on_startup(bot: Bot) -> None:
     except Exception:
         pass
         
-    # Set public commands for DMs and general Group Members
+    # Set public commands for Private DMs only
     await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
-    await bot.set_my_commands(user_commands, scope=BotCommandScopeAllGroupChats())
     
-    # Set admin commands for Group Administrators (Combines public + admin)
-    await bot.set_my_commands(user_commands + admin_commands, scope=BotCommandScopeAllChatAdministrators())
+    # Normal group members see NO commands, avoiding clutter
+    await bot.set_my_commands([], scope=BotCommandScopeAllGroupChats())
+    
+    # Group Administrators ONLY see the moderation commands in groups
+    await bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
