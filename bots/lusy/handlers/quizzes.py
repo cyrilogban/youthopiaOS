@@ -305,11 +305,11 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
                 "• Tap your answer to vote.\n"
                 f"• The poll closes after 5 votes or {duration} seconds.\n"
                 "• Winners will get their YP added automatically!\n\n"
-                f"<i>🧹 This guide will self-destruct in {duration + 5} seconds...</i>"
+                f"<i>🧹 This guide will self-destruct in 10 seconds...</i>"
             )
             try:
                 guide_msg = await callback.message.answer(text=guide_text, parse_mode="HTML")
-                asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, duration + 5))
+                asyncio.create_task(self_destruct_message(callback.bot, chat_id, guide_msg.message_id, 10))
             except Exception:
                 pass
         
