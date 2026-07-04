@@ -69,6 +69,7 @@ def build_theo_router(description: str) -> Router:
                 await message.delete()
             except Exception:
                 pass
+            return
         await register_group_chat(message, services, "theo")
         
         user = await services.identity.resolve_telegram_user(message.from_user)
@@ -115,13 +116,7 @@ def build_theo_router(description: str) -> Router:
                 reply_markup=welcome_keyboard(),
             )
             
-        if message.chat.type != "private":
-            import asyncio
-            await asyncio.sleep(15)
-            try:
-                await sent_msg.delete()
-            except Exception:
-                pass
+        # Removed group auto-delete (command is now private only)
 
     @router.message(Command("help"))
     async def help_command(message: Message, services: ServiceContainer) -> None:
@@ -130,6 +125,7 @@ def build_theo_router(description: str) -> Router:
                 await message.delete()
             except Exception:
                 pass
+            return
         first_name = message.from_user.first_name or "Friend"
         help_text = (
             f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n"
@@ -174,24 +170,28 @@ def build_theo_router(description: str) -> Router:
             disable_web_page_preview=True,
             reply_markup=markup,
         )
-        if message.chat.type != "private":
-            import asyncio
-            await asyncio.sleep(15)
-            try:
-                await sent_msg.delete()
-            except Exception:
-                pass
+        # Removed group auto-delete (command is now private only)
 
     @router.message(F.text == PROFILE_BUTTON)
     async def menu_profile(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            return
         await send_profile(message, services)
 
     @router.message(Command("profile"))
     async def profile_command(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
         await send_profile(message, services)
         
     @router.message(F.text == SAVED_VERSES_BUTTON)
     async def menu_saved_verses(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            return
         await send_saved_verses_page(message, services, page=1)
 
     from bots.theo.utils.keyboards import SavedVersesPage
