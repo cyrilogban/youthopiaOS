@@ -89,15 +89,15 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
         f"<b>Happy {today_name}, YouTopians!</b> 🚀\n\n"
         f"<b>Tonight's Event:</b> {event_data['title']}\n"
         f"<blockquote>{event_data['description']}</blockquote>\n\n"
-        "We are starting in exactly 1 hour (9:00 PM WAT). Click below to RSVP!"
+        "We are starting in exactly 1 hour (9:00 PM WAT). Can you make it tonight?"
     )
     
     # 3. Attach the specific event_id to the callback data
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Coming", callback_data=f"rsvp_coming:{event_id}"),
-            InlineKeyboardButton(text="❓ Maybe", callback_data=f"rsvp_maybe:{event_id}"),
-            InlineKeyboardButton(text="❌ Can't Attend", callback_data=f"rsvp_no:{event_id}")
+            InlineKeyboardButton(text="Yes", callback_data=f"rsvp_coming:{event_id}"),
+            InlineKeyboardButton(text="Maybe", callback_data=f"rsvp_maybe:{event_id}"),
+            InlineKeyboardButton(text="No", callback_data=f"rsvp_no:{event_id}")
         ]
     ])
     

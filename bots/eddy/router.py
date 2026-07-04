@@ -433,14 +433,14 @@ def build_eddy_router(description: str) -> Router:
                     f"<b>🚨 SPECIAL ANNOUNCEMENT 🚨</b>\n\n"
                     f"<b>Event:</b> {data['title']}\n"
                     f"<blockquote>{data['description']}</blockquote>\n\n"
-                    "Click below to RSVP!"
+                    "Can you make it?"
                 )
                 
                 markup = InlineKeyboardMarkup(inline_keyboard=[
                     [
-                        InlineKeyboardButton(text="✅ Coming", callback_data=f"rsvp_coming:{event_id}"),
-                        InlineKeyboardButton(text="❓ Maybe", callback_data=f"rsvp_maybe:{event_id}"),
-                        InlineKeyboardButton(text="❌ Can't Attend", callback_data=f"rsvp_no:{event_id}")
+                        InlineKeyboardButton(text="Yes", callback_data=f"rsvp_coming:{event_id}"),
+                        InlineKeyboardButton(text="Maybe", callback_data=f"rsvp_maybe:{event_id}"),
+                        InlineKeyboardButton(text="No", callback_data=f"rsvp_no:{event_id}")
                     ]
                 ])
                 
