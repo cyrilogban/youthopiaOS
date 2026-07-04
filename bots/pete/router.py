@@ -418,40 +418,23 @@ async def handle_youtopianstatus(message: Message, services: ServiceContainer) -
 
     # Kingdom Theme Logic
     if trust_score == 100 and warnings == 0:
-        trust_icon = "🟢"
-        status_icon = "👑"
         title = "Kingdom Ambassador"
     elif trust_score >= 80:
-        trust_icon = "🟢"
-        status_icon = "🛡️"
         title = "Noble YouTopian"
     elif trust_score >= 50:
-        trust_icon = "🟡"
-        status_icon = "👤"
         title = "Citizen"
     elif trust_score > 0:
-        trust_icon = "🔴"
-        status_icon = "👁️"
         title = "Under Surveillance"
     else:
-        trust_icon = "🔴"
-        status_icon = "⛓️"
         title = "Exiled"
         
-    if warnings == 0:
-        warn_icon = "✅"
-    elif warnings <= 2:
-        warn_icon = "⚠️"
-    else:
-        warn_icon = "🚨"
-        
     status_card = (
-        "🛡️ <b>MY PROFILE</b>\n\n"
+        "<b>MY PROFILE</b>\n\n"
         "<blockquote>"
-        f"👤 <b>Name:</b> {message.from_user.first_name}\n"
-        f"{trust_icon} <b>Trust:</b> {trust_score}/100 <code>[{trust_bar}]</code>\n"
-        f"{status_icon} <b>Status:</b> {title}\n"
-        f"{warn_icon} <b>Warnings:</b> {warnings}/5 <code>[{warn_bar}]</code>\n"
+        f"<b>Name:</b> {message.from_user.first_name}\n"
+        f"<b>Trust:</b> {trust_score}/100 <code>[{trust_bar}]</code>\n"
+        f"<b>Status:</b> {title}\n"
+        f"<b>Warnings:</b> {warnings}/5 <code>[{warn_bar}]</code>\n"
         "</blockquote>"
     )
     
