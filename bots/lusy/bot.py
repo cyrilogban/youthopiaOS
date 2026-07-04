@@ -119,18 +119,7 @@ def _router() -> Router:
             ]
         ])
         
-        reply_markup = ReplyKeyboardMarkup(keyboard=[
-            [KeyboardButton(text="Play Games"), KeyboardButton(text="Leaderboard")],
-            [KeyboardButton(text="My points"), KeyboardButton(text="About Lusy")]
-        ], resize_keyboard=True)
-        
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
-        
-        # Activate the persistent bottom keyboard with a silent follow-up message
-        await message.answer(
-            "Use the menu below or the buttons above to navigate:",
-            reply_markup=reply_markup
-        )
 
     async def handle_help(message: Message) -> None:
         help_text = (
