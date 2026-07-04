@@ -89,7 +89,6 @@ def _router() -> Router:
         group_commands = [
             BotCommand(command="play", description="Choose and start a Bible game"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
-            BotCommand(command="help", description="How to play and earn YP"),
         ]
         await bot.delete_my_commands()
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
@@ -115,14 +114,14 @@ def _router() -> Router:
                 InlineKeyboardButton(text="Leaderboard", callback_data="lusy_menu_leaderboard")
             ],
             [
-                InlineKeyboardButton(text="My YP & Stats", callback_data="lusy_menu_stats"),
+                InlineKeyboardButton(text="My points", callback_data="lusy_menu_stats"),
                 InlineKeyboardButton(text="About Lusy", callback_data="lusy_menu_about")
             ]
         ])
         
         reply_markup = ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text="Play Games"), KeyboardButton(text="Leaderboard")],
-            [KeyboardButton(text="My YP & Stats"), KeyboardButton(text="About Lusy")]
+            [KeyboardButton(text="My points"), KeyboardButton(text="About Lusy")]
         ], resize_keyboard=True)
         
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
@@ -138,7 +137,7 @@ def _router() -> Router:
             "<b>About Lusy & Bible Quizzes</b>\n\n"
             "Welcome to the Quiz Room! Here is how it works:\n"
             "• <b>Play Games</b>: Test your Bible knowledge with solo or group quizzes.\n"
-            "• <b>My YP & Stats</b>: Track your YouTopian Points and current Level.\n"
+            "• <b>My points</b>: Track your YouTopian Points and current Level.\n"
             "• <b>Leaderboard</b>: See the Top 10 YouTopians!\n\n"
             "<i>More quizzes and games are being added soon!</i>\n\n"
             "<b>Explore other bots in the community:</b>"
@@ -160,12 +159,24 @@ def _router() -> Router:
     @router.message(Command("help"))
     @router.message(F.text == "About Lusy")
     async def on_help_command(message: Message):
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
         await handle_help(message)
 
-    @router.message(F.text == "My YP & Stats")
+    @router.message(F.text == "My points")
     @router.message(Command("yp"))
     @router.message(Command("xp")) # Keeping /xp just in case someone is used to it
     async def xp(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
         await render_user_stats(message, message.from_user, services)
 
     @router.message(F.text.in_({"Start Bible Quiz", "Play Games", "🎮 Play Games", "Play Games 🎮", "Play Games"}))
@@ -244,6 +255,9 @@ def _router() -> Router:
 
     @router.callback_query(F.data == "lusy_menu_stats")
     async def on_stats_callback(callback: CallbackQuery, services: ServiceContainer):
+        if callback.message.chat.type != "private":
+            await callback.answer("Please check your points in our DM!", show_alert=True)
+            return
         try:
             await render_user_stats(callback.message, callback.from_user, services)
         except Exception as e:
@@ -257,6 +271,9 @@ def _router() -> Router:
 
     @router.callback_query(F.data == "lusy_menu_about")
     async def on_about_callback(callback: CallbackQuery):
+        if callback.message.chat.type != "private":
+            await callback.answer("Please check this in our DM!", show_alert=True)
+            return
         try:
             await handle_help(callback.message)
         except Exception as e:
