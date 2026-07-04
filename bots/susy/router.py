@@ -23,17 +23,19 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot) -> None:
-        # Define the exact sidebar commands requested
-        commands = [
+        private_commands = [
             BotCommand(command="start", description="Wake Up Susy"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="download", description="Download a song"),
         ]
         
-        # Apply them to DMs and Groups
+        group_commands = [
+            BotCommand(command="download", description="Download a song"),
+        ]
+        
         await bot.delete_my_commands()
-        await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
-        await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
     @router.message(Command("start"))
     async def handle_start(message: Message, services: ServiceContainer) -> None:
@@ -43,6 +45,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await message.delete()
             except Exception:
                 pass
+            return
                 
         # Check if deep link from Pete
         if message.text and "onboarding" in message.text:
@@ -91,13 +94,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 reply_markup=markup
             )
             
-        # Delete Susy's welcome message in groups after 15s to prevent spam
-        if message.chat.type != "private":
-            await asyncio.sleep(15)
-            try:
-                await sent_msg.delete()
-            except Exception:
-                pass
+        # Removed group auto-delete (command is now private only)
 
     # --- ONBOARDING PAGINATION LOGIC ---
     
@@ -193,6 +190,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await message.delete()
             except Exception:
                 pass
+            return
                 
         first_name = message.from_user.first_name or "Friend"
         help_text = (
@@ -228,12 +226,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             reply_markup=markup
         )
         
-        if message.chat.type != "private":
-            await asyncio.sleep(15)
-            try:
-                await sent_msg.delete()
-            except Exception:
-                pass
+        # Removed group auto-delete (command is now private only)
 
     @router.message(Command("play"))
     async def handle_play(message: Message, command: CommandObject) -> None:
