@@ -1,4 +1,4 @@
-# 🌌 YouThopiaOS
+# YouThopiaOS
 
 `YouThopiaOS` is a modular, Python-powered, multi-bot Telegram ecosystem designed to run multiple specialized bots under a single architecture, shared intelligence layer, and centralized deployment pipeline.
 

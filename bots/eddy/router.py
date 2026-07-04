@@ -33,18 +33,23 @@ def build_eddy_router(description: str) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot) -> None:
-        # Define the exact sidebar commands requested
-        commands = [
+        # Define the exact sidebar commands requested for DMs
+        private_commands = [
             BotCommand(command="start", description="Open the Main Dashboard"),
             BotCommand(command="help", description="Show Ed's instructions"),
             BotCommand(command="calendar", description="View all upcoming events"),
             BotCommand(command="my_events", description="View events I am attending"),
         ]
+
+        # Define the commands allowed in groups (exclude start/help/my_events)
+        group_commands = [
+            BotCommand(command="calendar", description="View all upcoming events"),
+        ]
         
-        # Apply them to DMs and Groups
+        # Apply them to DMs and Groups separately
         await bot.delete_my_commands()
-        await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
-        await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
         # ----------------------------------------------------
         # THE INVISIBLE ADMIN COMMAND
@@ -55,7 +60,7 @@ def build_eddy_router(description: str) -> Router:
             admin_ids = [aid.strip() for aid in admin_ids_str.split(",") if aid.strip().isdigit()]
             
             # Register the new_event command for EVERY admin in the list
-            admin_commands = commands + [
+            admin_commands = private_commands + [
                 BotCommand(command="new_event", description="[Admin] Create a pop-up event")
             ]
             for admin_id in admin_ids:
@@ -69,13 +74,20 @@ def build_eddy_router(description: str) -> Router:
         setup_eddy_scheduler(bot)
 
     @router.message(Command("start"))
-    async def handle_start(message: Message) -> None:
+    async def handle_start(message: Message, services: ServiceContainer) -> None:
         # Temporary cleanup if in a group
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
+            return
+            
+        # Register the user so their RSVPs and profile can be stored
+        try:
+            await services.identity.resolve_telegram_user(message.from_user)
+        except Exception as e:
+            logger.error(f"Failed to register user in Eddy /start: {e}")
 
         welcome_text = (
             "<b>Welcome to the YouThopia Weekly Calendar! 📅</b>\n"
@@ -97,20 +109,14 @@ def build_eddy_router(description: str) -> Router:
             persistent=True
         )
 
-        sent_msg = await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
-        
-        # Cleanup dashboard in groups to avoid spam
-        if message.chat.type != "private":
-            import asyncio
-            await asyncio.sleep(15)
-            try:
-                await sent_msg.delete()
-            except Exception:
-                pass
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
+
 
     @router.message(Command("calendar"))
     @router.message(F.text == "📅 View Calendar")
     async def on_view_calendar(message: Message, services: ServiceContainer):
+        if message.chat.type != "private" and message.text == "📅 View Calendar":
+            return
         # Fetch upcoming events from the daily schedule dictionary for now
         from bots.eddy.services.scheduler import DAILY_SCHEDULE
         
@@ -132,20 +138,11 @@ def build_eddy_router(description: str) -> Router:
             except Exception:
                 pass
 
-    @router.message(Command("my_events"))
-    @router.message(F.text == "🎫 My Events")
-    async def on_my_events(message: Message, services: ServiceContainer):
-        # Placeholder for querying Supabase
-        await message.answer(
-            "<b>🎫 Your RSVPs</b>\n\n"
-            "You are currently RSVP'd to:\n"
-            "- <i>No upcoming events found.</i>\n\n"
-            "Keep an eye out for Ed's daily announcements at 8:00 PM to secure your spot!",
-            parse_mode="HTML"
-        )
 
     @router.message(F.text == "🔔 Reminders")
     async def on_reminders(message: Message, services: ServiceContainer):
+        if message.chat.type != "private":
+            return
         try:
             # 1. Resolve the official User UUID
             user = await services.identity.resolve_telegram_user(message.from_user)
@@ -191,11 +188,13 @@ def build_eddy_router(description: str) -> Router:
 
     @router.message(F.text == "About Community")
     async def on_about_text(message: Message):
+        if message.chat.type != "private":
+            return
         # When they click About Community, we just show the help text
         await handle_help(message)
 
     @router.callback_query(F.data.startswith("rsvp_"))
-    async def handle_event_rsvp(callback: CallbackQuery, services: ServiceContainer):
+    async def handle_event_rsvp(callback: CallbackQuery, services: ServiceContainer, bot: Bot):
         # Data format: "rsvp_coming:event_id"
         parts = callback.data.split(":")
         if len(parts) != 2:
@@ -208,7 +207,25 @@ def build_eddy_router(description: str) -> Router:
         # 1. Lookup the official UUID using their Telegram ID
         user = await services.users.get_by_telegram_id(callback.from_user.id)
         if not user:
-            await callback.answer("Make sure you have started Ed privately first so we know who you are!", show_alert=True)
+            await callback.answer("Please start me privately first!", show_alert=False)
+            me = await bot.get_me()
+            link = f"https://t.me/{me.username}?start=rsvp"
+            warn_msg = await callback.message.answer(
+                f"Hey <a href='tg://user?id={callback.from_user.id}'>{callback.from_user.first_name}</a>! "
+                f"I need to know who you are before you can RSVP.\n\n"
+                f"👉 <a href='{link}'>Click here to Start Ed Privately</a>",
+                parse_mode="HTML",
+                disable_web_page_preview=True
+            )
+            # Cleanup warning message after 20 seconds so it doesn't clutter
+            import asyncio
+            async def delete_later():
+                await asyncio.sleep(20)
+                try:
+                    await warn_msg.delete()
+                except Exception:
+                    pass
+            asyncio.create_task(delete_later())
             return
             
         user_uuid = user["id"]
@@ -240,9 +257,11 @@ def build_eddy_router(description: str) -> Router:
         except Exception as e:
             await callback.answer("An error occurred while saving your RSVP.", show_alert=True)
 
-    @router.message(Command("my_events"))
+    @router.message(Command("my_events", "myevents"))
     @router.message(F.text == "🎫 My Events")
     async def on_my_events(message: Message, services: ServiceContainer):
+        if message.chat.type != "private":
+            return
         events = await services.events.get_user_upcoming_events(message.from_user.id)
         if events is None:
             await message.answer("I couldn't find your account. Please type /start to register!")
@@ -275,13 +294,15 @@ def build_eddy_router(description: str) -> Router:
         await message.answer(reply_text, parse_mode="HTML")
 
     @router.message(Command("help"))
+    async def handle_help_command(message: Message) -> None:
+        if message.chat.type != "private":
+            return
+        await handle_help(message)
+
     async def handle_help(message: Message) -> None:
         if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
-                
+            return
+            
         first_name = message.from_user.first_name or "Friend"
         help_text = (
             f"<b>Ed's Help Guide, {first_name}!</b>\n"
@@ -309,20 +330,13 @@ def build_eddy_router(description: str) -> Router:
             ]
         ])
         
-        sent_msg = await message.answer(
+        await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
             reply_markup=markup
         )
-        
-        if message.chat.type != "private":
-            import asyncio
-            await asyncio.sleep(15)
-            try:
-                await sent_msg.delete()
-            except Exception:
-                pass
+
 
     @router.callback_query(F.data == "eddy_about")
     async def on_about_callback(callback: CallbackQuery):
