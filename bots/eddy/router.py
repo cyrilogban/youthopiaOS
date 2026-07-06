@@ -204,16 +204,42 @@ def build_eddy_router(description: str) -> Router:
         action = parts[0].replace("rsvp_", "") # "coming", "maybe", or "no"
         event_id = parts[1]
         
-        # 1. Lookup the official UUID using their Telegram ID
+        # 1. Check if the event has passed
+        event = await services.events.get_event_by_id(event_id)
+        if not event:
+            await callback.answer("Error: Event not found.", show_alert=True)
+            return
+            
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        event_time = datetime.fromisoformat(event["starts_at"])
+        now_wat = datetime.now(ZoneInfo("Africa/Lagos"))
+        
+        event_has_passed = now_wat > event_time
+
+        # 2. Lookup the official UUID using their Telegram ID
         user = await services.users.get_by_telegram_id(callback.from_user.id)
         if not user:
             await callback.answer("Please start me privately first!", show_alert=False)
             me = await bot.get_me()
             link = f"https://t.me/{me.username}?start=rsvp"
+            
+            if event_has_passed:
+                warning_text = (
+                    f"Hey <a href='tg://user?id={callback.from_user.id}'>{callback.from_user.first_name}</a>! "
+                    f"This event has already passed! ⏰\n\n"
+                    f"Also, you haven't introduced yourself to me yet. "
+                    f"👉 <a href='{link}'>Click here to start me privately</a> so you don't miss the next one!"
+                )
+            else:
+                warning_text = (
+                    f"Hey <a href='tg://user?id={callback.from_user.id}'>{callback.from_user.first_name}</a>! "
+                    f"I need to know who you are before you can RSVP.\n\n"
+                    f"👉 <a href='{link}'>Click here to Start Ed Privately</a>"
+                )
+                
             warn_msg = await callback.message.answer(
-                f"Hey <a href='tg://user?id={callback.from_user.id}'>{callback.from_user.first_name}</a>! "
-                f"I need to know who you are before you can RSVP.\n\n"
-                f"👉 <a href='{link}'>Click here to Start Ed Privately</a>",
+                warning_text,
                 parse_mode="HTML",
                 disable_web_page_preview=True
             )
@@ -226,6 +252,10 @@ def build_eddy_router(description: str) -> Router:
                 except Exception:
                     pass
             asyncio.create_task(delete_later())
+            return
+
+        if event_has_passed:
+            await callback.answer("Oops! This event has already finished. ❌", show_alert=True)
             return
             
         user_uuid = user["id"]

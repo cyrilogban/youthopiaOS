@@ -17,6 +17,23 @@ class EventService:
             raise ValueError(f"Missing required event fields: {', '.join(sorted(missing))}")
         return await self.db.insert("events", payload)
 
+    async def get_event_by_id(self, event_id: str) -> dict[str, Any] | None:
+        import asyncio
+        def run():
+            response = self.db._client().table("events").select("*").eq("id", event_id).execute()
+            return response.data[0] if response.data else None
+        return await asyncio.to_thread(run)
+
+    async def get_latest_event(self) -> dict[str, Any] | None:
+        import asyncio
+        def run():
+            response = self.db._client().table("events").select("*").order("created_at", desc=True).limit(1).execute()
+            return response.data[0] if response.data else None
+        return await asyncio.to_thread(run)
+
+    async def update_event(self, event_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        return await self.db.update_by_id("events", event_id, updates)
+
     async def register_participant(
         self,
         event_id: str,

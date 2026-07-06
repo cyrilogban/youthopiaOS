@@ -75,6 +75,18 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
     supabase = SupabaseGateway(os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_KEY", ""))
     event_service = EventService(supabase)
     
+    # 0. Delete yesterday's announcement to keep the group clean
+    try:
+        latest_event = await event_service.get_latest_event()
+        if latest_event and latest_event.get("metadata", {}).get("announcement_message_id"):
+            old_msg_id = latest_event["metadata"]["announcement_message_id"]
+            try:
+                await bot.delete_message(group_chat_id, old_msg_id)
+            except Exception as e:
+                logger.error(f"Could not delete old 5PM announcement: {e}")
+    except Exception as e:
+        logger.error(f"Error checking for old announcement: {e}")
+
     # 1. Create the event in the database
     event_starts_at = now_wat.replace(hour=21, minute=0, second=0, microsecond=0)
     event_payload = {
@@ -108,7 +120,11 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
     ])
     
     try:
-        await bot.send_message(group_chat_id, announcement, parse_mode="HTML", reply_markup=markup)
+        sent_msg = await bot.send_message(group_chat_id, announcement, parse_mode="HTML", reply_markup=markup)
+        
+        # 4. Save the message ID so we can delete it tomorrow
+        event_metadata = {"announcement_message_id": sent_msg.message_id}
+        await event_service.update_event(event_id, {"metadata": event_metadata})
     except Exception as e:
         logger.error(f"Failed to send 5PM announcement: {e}")
 
