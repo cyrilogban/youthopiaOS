@@ -404,7 +404,10 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
             game_label = "Bible Challenge"
             
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback)]
+            [
+                InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
+                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ]
         ])
         
         try:
@@ -494,7 +497,10 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
     leaderboard_text += "Ready for the next round? Tap below!"
     
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback)]
+        [
+            InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
+            InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+        ]
     ])
     
     try:
@@ -570,7 +576,10 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
             next_callback = "lusy_play_quiz"
             
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback)]
+            [
+                InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
+                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ]
         ])
         await bot.send_message(
             chat_id=poll_answer.user.id,
@@ -718,7 +727,10 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
             timeout_text += f"💡 <i>{explanation}</i>\n"
             
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race")]
+            [
+                InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race"),
+                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ]
         ])
         
         try:
@@ -797,7 +809,10 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
             win_text += f"💡 <i>{explanation}</i>\n"
             
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race")]
+            [
+                InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race"),
+                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ]
         ])
         
         try:
