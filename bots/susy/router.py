@@ -473,21 +473,23 @@ def build_susy_router(description: str, music_service=None) -> Router:
             else:
                 await message.answer(caption, parse_mode="HTML")
                 
-            from aiogram.types import FSInputFile
-            import os
-            
-            audio_file = FSInputFile(track.file_path)
-            await message.answer_audio(
-                audio=audio_file,
-                title=track.title,
-                performer="YouThopia Music"
-            )
-            
-            # Clean up the file
-            if os.path.exists(track.file_path):
-                os.remove(track.file_path)
+            try:
+                from aiogram.types import FSInputFile
+                import os
                 
-            await status_msg.delete()
+                audio_file = FSInputFile(track.file_path)
+                await message.answer_audio(
+                    audio=audio_file,
+                    title=track.title,
+                    performer="YouThopia Music"
+                )
+                await status_msg.delete()
+            finally:
+                # Always clean up the file, even if sending to Telegram fails
+                import os
+                if hasattr(track, 'file_path') and os.path.exists(track.file_path):
+                    os.remove(track.file_path)
+                    
         except Exception as e:
             await status_msg.edit_text(f"Error fetching song: {e}")
 
