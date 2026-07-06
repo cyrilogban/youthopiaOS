@@ -47,33 +47,40 @@ DAILY_SCHEDULE = {
 
 from shared.db.supabase import SupabaseGateway
 import os
+from zoneinfo import ZoneInfo
+
+WAT_TZ = ZoneInfo("Africa/Lagos")
 
 async def post_daily_announcement(bot: Bot, group_chat_id: int):
-    """Runs every day at 8:00 PM WAT to announce the 9:00 PM event."""
-    today_name = datetime.now().strftime("%A")
+    """Runs every day at 5:00 PM WAT to announce the 9:00 PM event."""
+    now_wat = datetime.now(WAT_TZ)
+    today_name = now_wat.strftime("%A")
     event_data = DAILY_SCHEDULE.get(today_name)
     
     if not event_data:
         return
         
+    title = event_data["title"]
+    description = event_data["description"]
+        
     # Check for Last Wednesday of the Month Book Review
     if today_name == "Wednesday":
-        today = datetime.now()
-        # Logic: If adding 7 days pushes us into the next month, this is the last Wednesday
         from datetime import timedelta
-        if (today + timedelta(days=7)).month != today.month:
-            event_data["title"] = "Wisdom Wednesday (Monthly Book Review!)"
-            event_data["description"] = "It's the last Wednesday of the month! Join us for our deep-dive Monthly Book review."
+        # Logic: If adding 7 days pushes us into the next month, this is the last Wednesday
+        if (now_wat + timedelta(days=7)).month != now_wat.month:
+            title = "Wisdom Wednesday (Monthly Book Review!)"
+            description = "It's the last Wednesday of the month! Join us for our deep-dive Monthly Book review."
 
     # Initialize Supabase and EventService
     supabase = SupabaseGateway(os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_KEY", ""))
     event_service = EventService(supabase)
     
     # 1. Create the event in the database
+    event_starts_at = now_wat.replace(hour=21, minute=0, second=0, microsecond=0)
     event_payload = {
-        "title": event_data["title"],
-        "description": event_data["description"],
-        "starts_at": datetime.now().replace(hour=21, minute=0, second=0, microsecond=0).isoformat(),
+        "title": title,
+        "description": description,
+        "starts_at": event_starts_at.isoformat(),
         "status": "scheduled"
     }
     
@@ -87,16 +94,15 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
     # 2. Format the message
     announcement = (
         f"<b>Happy {today_name}, YouTopians!</b> 🚀\n\n"
-        f"<b>Tonight's Event:</b> {event_data['title']}\n"
-        f"<blockquote>{event_data['description']}</blockquote>\n\n"
-        "We are starting in exactly 1 hour (9:00 PM WAT). Can you make it tonight?"
+        f"<b>Tonight's Event:</b> {title}\n"
+        f"<blockquote>{description}</blockquote>\n\n"
+        "We are starting tonight at 9:00 PM WAT. Can you make it?"
     )
     
     # 3. Attach the specific event_id to the callback data
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="Yes", callback_data=f"rsvp_coming:{event_id}"),
-            InlineKeyboardButton(text="Maybe", callback_data=f"rsvp_maybe:{event_id}"),
             InlineKeyboardButton(text="No", callback_data=f"rsvp_no:{event_id}")
         ]
     ])
@@ -104,25 +110,56 @@ async def post_daily_announcement(bot: Bot, group_chat_id: int):
     try:
         await bot.send_message(group_chat_id, announcement, parse_mode="HTML", reply_markup=markup)
     except Exception as e:
-        logger.error(f"Failed to send 8PM announcement: {e}")
+        logger.error(f"Failed to send 5PM announcement: {e}")
 
-
-async def send_event_reminders(bot: Bot):
-    """Runs at 8:45 PM WAT to send a private DM reminder to everyone who RSVP'd."""
-    today_name = datetime.now().strftime("%A")
+async def send_group_reminder(bot: Bot, group_chat_id: int):
+    """Runs every day at 8:00 PM WAT to remind the group."""
+    now_wat = datetime.now(WAT_TZ)
+    today_name = now_wat.strftime("%A")
     event_data = DAILY_SCHEDULE.get(today_name)
     
     if not event_data:
         return
+        
+    title = event_data["title"]
+    if today_name == "Wednesday":
+        from datetime import timedelta
+        if (now_wat + timedelta(days=7)).month != now_wat.month:
+            title = "Wisdom Wednesday (Monthly Book Review!)"
+
+    reminder_text = (
+        f"⏰ <b>Reminder!</b>\n\n"
+        f"<b>{title}</b> is starting in exactly 1 hour in this group. Grab your notes and get ready! 🚀"
+    )
+    
+    try:
+        await bot.send_message(group_chat_id, reminder_text, parse_mode="HTML")
+    except Exception as e:
+        logger.error(f"Failed to send 8PM group reminder: {e}")
+
+
+async def send_event_reminders(bot: Bot):
+    """Runs at 8:45 PM WAT to send a private DM reminder to everyone who RSVP'd."""
+    now_wat = datetime.now(WAT_TZ)
+    today_name = now_wat.strftime("%A")
+    event_data = DAILY_SCHEDULE.get(today_name)
+    
+    if not event_data:
+        return
+        
+    title = event_data["title"]
+    if today_name == "Wednesday":
+        from datetime import timedelta
+        if (now_wat + timedelta(days=7)).month != now_wat.month:
+            title = "Wisdom Wednesday (Monthly Book Review!)"
         
     try:
         supabase = SupabaseGateway(os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_KEY", ""))
         event_service = EventService(supabase)
         
         # 1. Find today's event from the database (filtering by today's date)
-        # For simplicity in this prototype, we'll find the most recent event created today with this title.
-        today_start = datetime.now().replace(hour=0, minute=0, second=0).isoformat()
-        event = await event_service.find_event_by_title_and_date(event_data["title"], today_start)
+        today_start = now_wat.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        event = await event_service.find_event_by_title_and_date(title, today_start)
         
         if not event:
             return
@@ -152,7 +189,7 @@ async def send_event_reminders(bot: Bot):
                 try:
                     await bot.send_message(
                         chat_id=telegram_id,
-                        text=f"⏰ <b>Wake up, {first_name}!</b>\n\n<b>{event_data['title']}</b> is starting in exactly 15 minutes in the Main Group! Grab your notes and get ready. 🚀",
+                        text=f"⏰ <b>Wake up, {first_name}!</b>\n\n<b>{title}</b> is starting in exactly 15 minutes in the Main Group! Grab your notes and get ready. 🚀",
                         parse_mode="HTML"
                     )
                 except Exception as e:
@@ -163,20 +200,20 @@ async def send_event_reminders(bot: Bot):
 
 async def trigger_live_event(bot: Bot, group_chat_id: int):
     """Runs every day at 9:00 PM WAT."""
-    today_name = datetime.now().strftime("%A")
+    now_wat = datetime.now(WAT_TZ)
+    today_name = now_wat.strftime("%A")
     event_data = DAILY_SCHEDULE.get(today_name)
     
     if not event_data:
         return
         
-    if today_name == "Friday":
-        # LUSY SYNC: Tell Lusy to take over!
-        message = (
-            f"🚨 <b>{event_data['title']} IS LIVE!</b> 🚨\n\n"
-            "The weekend is here! Let's get to it. Over to you, @iamlusybot! 🎮"
-        )
-    else:
-        message = f"🚨 <b>{event_data['title']} IS STARTING NOW!</b> 🚨\n\nHead to the main chat and let's go!"
+    title = event_data["title"]
+    if today_name == "Wednesday":
+        from datetime import timedelta
+        if (now_wat + timedelta(days=7)).month != now_wat.month:
+            title = "Wisdom Wednesday (Monthly Book Review!)"
+        
+    message = f"🚨 <b>{title} IS STARTING NOW!</b> 🚨\n\nHead to the main chat and let's go!"
         
     try:
         await bot.send_message(group_chat_id, message, parse_mode="HTML")
@@ -188,21 +225,28 @@ def setup_eddy_scheduler(bot: Bot):
     scheduler = AsyncIOScheduler(timezone="Africa/Lagos")
     main_group_id = int(os.getenv("MAIN_GROUP_ID", "0"))
     
-    # 1. Announce the event at 8:00 PM
+    # 1. Announce the event at 5:00 PM
     scheduler.add_job(
         post_daily_announcement,
+        CronTrigger(hour=17, minute=0),
+        args=[bot, main_group_id]
+    )
+    
+    # 2. Send Group Reminder at 8:00 PM
+    scheduler.add_job(
+        send_group_reminder,
         CronTrigger(hour=20, minute=0),
         args=[bot, main_group_id]
     )
     
-    # 2. Send private DM Reminders at 8:45 PM
+    # 3. Send private DM Reminders at 8:45 PM
     scheduler.add_job(
         send_event_reminders,
         CronTrigger(hour=20, minute=45),
         args=[bot]
     )
     
-    # 3. Trigger the actual event at 9:00 PM
+    # 4. Trigger live event at 9:00 PM
     scheduler.add_job(
         trigger_live_event,
         CronTrigger(hour=21, minute=0),

@@ -232,7 +232,6 @@ def build_eddy_router(description: str) -> Router:
         
         status_map = {
             "coming": "coming",
-            "maybe": "maybe",
             "no": "not_attending"
         }
         
@@ -248,7 +247,6 @@ def build_eddy_router(description: str) -> Router:
             
             response_map = {
                 "coming": "RSVP Saved! ✅ We'll remind you before it starts.",
-                "maybe": "RSVP Saved! 🤔 We'll keep you updated.",
                 "no": "No problem! ❌ Have a great day."
             }
             
