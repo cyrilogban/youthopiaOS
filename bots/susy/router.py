@@ -114,17 +114,42 @@ def build_susy_router(description: str, music_service=None) -> Router:
             keyboard=[
                 [
                     KeyboardButton(text="🎵 Download Song"),
-                    KeyboardButton(text="🎂 Add Birthday")
+                    KeyboardButton(text="🎧 Play Song")
                 ],
                 [
-                    KeyboardButton(text="📖 Help"),
-                    KeyboardButton(text="About YouThopia")
+                    KeyboardButton(text="🎂 Add Birthday"),
+                    KeyboardButton(text="🌍 Community")
                 ]
             ],
             resize_keyboard=True,
             persistent=True
         )
         await message.answer("Use the menu below to navigate! 👇", reply_markup=reply_markup)
+
+    @router.message(F.text == "🎵 Download Song")
+    async def on_download_button(message: Message):
+        if message.chat.type != "private": return
+        await message.answer("Awesome! 🎧 Just type `/download` followed by the song name or YouTube link!\n\n*Example:* `/download Oceans Hillsong`", parse_mode="Markdown")
+
+    @router.message(F.text == "🎧 Play Song")
+    async def on_play_button(message: Message):
+        if message.chat.type != "private": return
+        await message.answer("📻 Ready to listen? Just type `/play` followed by the song name!\n\n*Example:* `/play Oceans Hillsong`", parse_mode="Markdown")
+
+    @router.message(F.text == "🌍 Community")
+    async def on_about_community(message: Message):
+        if message.chat.type != "private": return
+        
+        about_text = (
+            "<b>About YouThopia Bible Community 🌍</b>\n"
+            "<blockquote>We are a cross-platform Gen Z Christian community. This is a space where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
+            "If you haven't joined the main group yet, jump in! We can't wait to fellowship with you. 🤍"
+        )
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Join the Main Group", url="https://t.me/youthopiabiblecommunity")]
+        ])
+        
+        await message.answer(about_text, parse_mode="HTML", reply_markup=markup)
 
     @router.message(Command("addbirthday"))
     @router.message(F.text == "🎂 Add Birthday")
@@ -243,8 +268,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
             # Return their normal keyboard
             reply_markup = ReplyKeyboardMarkup(
                 keyboard=[
-                    [KeyboardButton(text="🎵 Download Song"), KeyboardButton(text="🎂 Add Birthday")],
-                    [KeyboardButton(text="📖 Help"), KeyboardButton(text="About YouThopia")]
+                    [KeyboardButton(text="🎵 Download Song"), KeyboardButton(text="🎧 Play Song")],
+                    [KeyboardButton(text="🎂 Add Birthday"), KeyboardButton(text="🌍 Community")]
                 ],
                 resize_keyboard=True,
                 persistent=True
