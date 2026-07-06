@@ -9,8 +9,19 @@ from aiogram.types import (
     BotCommandScopeAllPrivateChats,
     BotCommandScopeAllGroupChats,
     InlineKeyboardMarkup,
-    InlineKeyboardButton
+    InlineKeyboardButton,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardRemove
 )
+
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from shared.services.container import ServiceContainer
+
+class AddBirthday(StatesGroup):
+    waiting_for_date = State()
+    waiting_for_photo = State()
 
 from core.telegram_runtime import build_router
 from aiogram.filters import Command, CommandObject
@@ -25,6 +36,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     async def on_startup(bot: Bot) -> None:
         private_commands = [
             BotCommand(command="start", description="Wake Up Susy"),
+            BotCommand(command="addbirthday", description="Add your birthday"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="download", description="Download a song"),
         ]
@@ -36,6 +48,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
         await bot.delete_my_commands()
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+
+        # Start the background scheduler
+        from bots.susy.services.scheduler import setup_susy_scheduler
+        setup_susy_scheduler(bot)
 
     @router.message(Command("start"))
     async def handle_start(message: Message, services: ServiceContainer) -> None:
@@ -80,21 +96,170 @@ def build_susy_router(description: str, music_service=None) -> Router:
         ])
         
         if SUSY_PHOTO:
-            sent_msg = await message.answer_photo(
+            await message.answer_photo(
                 photo=SUSY_PHOTO,
                 caption=welcome_text,
                 parse_mode="HTML",
                 reply_markup=markup
             )
         else:
-            sent_msg = await message.answer(
+            await message.answer(
                 welcome_text,
                 parse_mode="HTML",
                 disable_web_page_preview=True,
                 reply_markup=markup
             )
             
-        # Removed group auto-delete (command is now private only)
+        reply_markup = ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text="🎵 Download Song"),
+                    KeyboardButton(text="🎂 Add Birthday")
+                ],
+                [
+                    KeyboardButton(text="📖 Help"),
+                    KeyboardButton(text="About YouThopia")
+                ]
+            ],
+            resize_keyboard=True,
+            persistent=True
+        )
+        await message.answer("Use the menu below to navigate! 👇", reply_markup=reply_markup)
+
+    @router.message(Command("addbirthday"))
+    @router.message(F.text == "🎂 Add Birthday")
+    async def start_add_birthday(message: Message, state: FSMContext):
+        if message.chat.type != "private":
+            return
+        await state.set_state(AddBirthday.waiting_for_date)
+        await message.answer(
+            "Yay! 🎂 I love birthdays!\n\n"
+            "When is your special day? Please reply with your birth date.\n"
+            "*(Format: DD/MM or just type the month and day, e.g. July 6)*",
+            parse_mode="Markdown"
+        )
+
+    @router.message(AddBirthday.waiting_for_date)
+    async def process_birthday_date(message: Message, state: FSMContext):
+        import re
+        from datetime import datetime
+        
+        text = message.text.strip().lower()
+        b_month = None
+        b_day = None
+        
+        # Try DD/MM or MM/DD parsing
+        match = re.search(r'(\d{1,2})[/-](\d{1,2})', text)
+        if match:
+            part1 = int(match.group(1))
+            part2 = int(match.group(2))
+            
+            # Simple heuristic: if part2 > 12, it must be the day
+            if part2 > 12:
+                b_month = part1
+                b_day = part2
+            elif part1 > 12:
+                b_month = part2
+                b_day = part1
+            else:
+                # Ambiguous, assume DD/MM for Nigeria/UK style
+                b_day = part1
+                b_month = part2
+        else:
+            # Try parsing natural language like "July 6"
+            months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+            for i, m in enumerate(months):
+                if m in text:
+                    b_month = i + 1
+                    break
+            
+            # Find the day number
+            day_match = re.search(r'\b(\d{1,2})(st|nd|rd|th)?\b', text)
+            if day_match:
+                b_day = int(day_match.group(1))
+                
+        if not b_month or not b_day or b_month < 1 or b_month > 12 or b_day < 1 or b_day > 31:
+            await message.answer("Oops! I couldn't quite understand that date. 😅\nPlease try again using the format **DD/MM** (e.g., 06/07 for July 6th).", parse_mode="Markdown")
+            return
+            
+        await state.update_data(b_month=b_month, b_day=b_day)
+        await state.set_state(AddBirthday.waiting_for_photo)
+        
+        markup = ReplyKeyboardMarkup(
+            keyboard=[[KeyboardButton(text="Skip")]],
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+        
+        await message.answer(
+            f"Got it! 📸\n\n"
+            f"Would you like me to include a cool photo of you in your birthday shoutout?\n"
+            f"If yes, please send me an image right now. If no, just click **Skip**!",
+            parse_mode="Markdown",
+            reply_markup=markup
+        )
+
+    @router.message(AddBirthday.waiting_for_photo)
+    async def process_birthday_photo(message: Message, state: FSMContext, services: ServiceContainer):
+        photo_id = None
+        
+        if message.photo:
+            photo_id = message.photo[-1].file_id
+        elif message.text and message.text.lower() == "skip":
+            photo_id = None
+        else:
+            await message.answer(
+                "Oops! That looks like text. 😅\n\n"
+                "Please send me an actual photo to use for your birthday shoutout, or just type/click **Skip** if you don't want a photo!"
+            )
+            return
+            
+        data = await state.get_data()
+        b_month = data.get("b_month")
+        b_day = data.get("b_day")
+        
+        try:
+            # 1. Resolve user ID
+            user = await services.identity.resolve_telegram_user(message.from_user)
+            user_id = user["id"]
+            
+            # 2. Fetch existing state
+            state_record = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "susy"})
+            bot_state = {}
+            if state_record:
+                bot_state = state_record.get("state") or {}
+                
+            # 3. Update state
+            bot_state["birthday_month"] = b_month
+            bot_state["birthday_day"] = b_day
+            bot_state["birthday_photo_id"] = photo_id
+            
+            await services.supabase.upsert(
+                "bot_user_state", 
+                {"user_id": user_id, "bot_name": "susy", "state": bot_state},
+                on_conflict="user_id, bot_name"
+            )
+            
+            # Return their normal keyboard
+            reply_markup = ReplyKeyboardMarkup(
+                keyboard=[
+                    [KeyboardButton(text="🎵 Download Song"), KeyboardButton(text="🎂 Add Birthday")],
+                    [KeyboardButton(text="📖 Help"), KeyboardButton(text="About YouThopia")]
+                ],
+                resize_keyboard=True,
+                persistent=True
+            )
+            
+            await message.answer(
+                "🎉 **All set!**\n\nI have saved your birthday. Get ready for a massive shoutout when your special day arrives! 🎈",
+                parse_mode="Markdown",
+                reply_markup=reply_markup
+            )
+            
+        except Exception as e:
+            await message.answer("Oh no, something went wrong while saving your birthday. Please try again later!")
+            
+        await state.clear()
 
     # --- ONBOARDING PAGINATION LOGIC ---
     
