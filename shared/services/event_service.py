@@ -89,11 +89,17 @@ class EventService:
             if not event_ids:
                 return []
                 
+            from datetime import datetime
+            from zoneinfo import ZoneInfo
+            now_wat = datetime.now(ZoneInfo("Africa/Lagos")).isoformat()
+            
             events_resp = (
                 self.db._client()
                 .table("events")
                 .select("title, starts_at")
                 .in_("id", event_ids)
+                .gte("starts_at", now_wat)
+                .order("starts_at")
                 .execute()
             )
             return events_resp.data or []
