@@ -134,7 +134,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     @router.message(F.text == "🎧 Play Song")
     async def on_play_button(message: Message):
         if message.chat.type != "private": return
-        await message.answer("📻 Ready to listen? Just type `/play` followed by the song name!\n\n*Example:* `/play Oceans Hillsong`", parse_mode="Markdown")
+        await message.answer("📻 Ready to listen? Just type `/playsong` followed by the song name!\n\n*Example:* `/playsong Oceans Hillsong`", parse_mode="Markdown")
 
     @router.message(F.text == "🌍 Community")
     async def on_about_community(message: Message):
@@ -418,14 +418,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         # Removed group auto-delete (command is now private only)
 
-    @router.message(Command("play"))
+    @router.message(Command("playsong"))
     async def handle_play(message: Message, command: CommandObject) -> None:
         if not music_service:
             await message.answer("My music engine is currently offline!")
             return
             
         if not command.args:
-            await message.answer("Please provide a song name or YouTube link!\nExample: `/play Oceans Hillsong`", parse_mode="Markdown")
+            await message.answer("Please provide a song name or YouTube link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
             return
             
         status_msg = await message.answer("🔍 Searching for your track...")
