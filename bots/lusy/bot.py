@@ -81,13 +81,13 @@ def _router() -> Router:
     async def on_startup(bot: Bot) -> None:
         private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
-            BotCommand(command="play", description="Choose and start a Bible game"),
+            BotCommand(command="playgame", description="Choose and start a Bible game"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
             BotCommand(command="yp", description="Check your current YP and Level"),
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         group_commands = [
-            BotCommand(command="play", description="Choose and start a Bible game"),
+            BotCommand(command="playgame", description="Choose and start a Bible game"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
         ]
         await bot.delete_my_commands()
@@ -212,7 +212,7 @@ def _router() -> Router:
             
         await message.answer(leaderboard_text, parse_mode="HTML")
 
-    @router.message(Command("play"))
+    @router.message(Command("playgame"))
     async def handle_play_cmd(message: Message):
         await on_play_games(message)
 
