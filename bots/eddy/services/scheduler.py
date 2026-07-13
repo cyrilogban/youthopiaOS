@@ -244,28 +244,28 @@ def setup_eddy_scheduler(bot: Bot):
     # 1. Announce the event at 5:00 PM
     scheduler.add_job(
         post_daily_announcement,
-        CronTrigger(hour=17, minute=0),
+        CronTrigger(hour=17, minute=0, timezone="Africa/Lagos"),
         args=[bot, main_group_id]
     )
     
     # 2. Send Group Reminder at 8:00 PM
     scheduler.add_job(
         send_group_reminder,
-        CronTrigger(hour=20, minute=0),
+        CronTrigger(hour=20, minute=0, timezone="Africa/Lagos"),
         args=[bot, main_group_id]
     )
     
     # 3. Send private DM Reminders at 8:45 PM
     scheduler.add_job(
         send_event_reminders,
-        CronTrigger(hour=20, minute=45),
+        CronTrigger(hour=20, minute=45, timezone="Africa/Lagos"),
         args=[bot]
     )
     
     # 4. Trigger live event at 9:00 PM
     scheduler.add_job(
         trigger_live_event,
-        CronTrigger(hour=21, minute=0),
+        CronTrigger(hour=21, minute=0, timezone="Africa/Lagos"),
         args=[bot, main_group_id]
     )
     
