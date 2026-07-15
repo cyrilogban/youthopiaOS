@@ -36,12 +36,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
     async def on_startup(bot: Bot) -> None:
         private_commands = [
             BotCommand(command="start", description="Wake Up Susy"),
+            BotCommand(command="playsong", description="Play song on telegram"),
             BotCommand(command="addbirthday", description="Add your birthday"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="download", description="Download a song"),
         ]
         
         group_commands = [
+            BotCommand(command="playsong", description="Play song in group"),
             BotCommand(command="download", description="Download a song"),
         ]
         

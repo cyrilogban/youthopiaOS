@@ -91,7 +91,7 @@ def build_eddy_router(description: str) -> Router:
 
         welcome_text = (
             "<b>Welcome to the YouThopia Weekly Calendar! 📅</b>\n"
-            "<blockquote>I am Ed, your community manager. Click a button below to check your schedule!</blockquote>"
+            "<blockquote>I am Eddy, your community manager. Click a button below to check your schedule!</blockquote>"
         )
 
         markup = ReplyKeyboardMarkup(
