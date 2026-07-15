@@ -110,20 +110,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 reply_markup=markup
             )
             
-        reply_markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="🎧 Play Song")
-                ],
-                [
-                    KeyboardButton(text="🎂 Add Birthday"),
-                    KeyboardButton(text="🌍 Community")
-                ]
-            ],
-            resize_keyboard=True,
-            persistent=True
-        )
-        await message.answer("Use the menu below to navigate! 👇", reply_markup=reply_markup)
+
 
     @router.message(F.text == "🎧 Play Song")
     async def on_play_button(message: Message):
