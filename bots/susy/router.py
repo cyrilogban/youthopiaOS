@@ -39,12 +39,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             BotCommand(command="playsong", description="Play song on telegram"),
             BotCommand(command="addbirthday", description="Add your birthday"),
             BotCommand(command="help", description="Show help information"),
-            BotCommand(command="download", description="Download a song"),
         ]
         
         group_commands = [
             BotCommand(command="playsong", description="Play song in group"),
-            BotCommand(command="download", description="Download a song"),
         ]
         
         await bot.delete_my_commands()
@@ -115,7 +113,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
         reply_markup = ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton(text="🎵 Download Song"),
                     KeyboardButton(text="🎧 Play Song")
                 ],
                 [
@@ -127,11 +124,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
             persistent=True
         )
         await message.answer("Use the menu below to navigate! 👇", reply_markup=reply_markup)
-
-    @router.message(F.text == "🎵 Download Song")
-    async def on_download_button(message: Message):
-        if message.chat.type != "private": return
-        await message.answer("Awesome! 🎧 Just type `/download` followed by the song name or YouTube link!\n\n*Example:* `/download Oceans Hillsong`", parse_mode="Markdown")
 
     @router.message(F.text == "🎧 Play Song")
     async def on_play_button(message: Message):
@@ -270,7 +262,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             # Return their normal keyboard
             reply_markup = ReplyKeyboardMarkup(
                 keyboard=[
-                    [KeyboardButton(text="🎵 Download Song"), KeyboardButton(text="🎧 Play Song")],
+                    [KeyboardButton(text="🎧 Play Song")],
                     [KeyboardButton(text="🎂 Add Birthday"), KeyboardButton(text="🌍 Community")]
                 ],
                 resize_keyboard=True,
@@ -437,63 +429,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         except Exception as e:
             await status_msg.edit_text(f"Error: {e}")
 
-    @router.message(Command("download"))
-    async def handle_download(message: Message, command: CommandObject) -> None:
-        if not music_service:
-            await message.answer("My music engine is currently offline!")
-            return
-            
-        if not command.args:
-            await message.answer("Please provide a song name or YouTube link!\nExample: `/download Oceans Hillsong`", parse_mode="Markdown")
-            return
-            
-        status_msg = await message.answer("🔍 Searching and downloading... Give me a few seconds!")
-        try:
-            result = await music_service.fetch_track(command.args)
-            if not result.track:
-                await status_msg.edit_text(result.message)
-                return
-            
-            track = result.track
-            minutes = track.duration // 60
-            seconds = track.duration % 60
-            
-            caption = (
-                "⚡️ <b>Successfully Downloaded:</b>\n\n"
-                f"🎶 <b>Title:</b> {track.title}\n"
-                f"⏱ <b>Duration:</b> {minutes}:{seconds:02d} minutes\n"
-                f"👤 <b>Requested by:</b> {message.from_user.first_name}\n"
-                "🕊️"
-            )
-            
-            if track.thumbnail_url:
-                await message.answer_photo(
-                    photo=track.thumbnail_url,
-                    caption=caption,
-                    parse_mode="HTML"
-                )
-            else:
-                await message.answer(caption, parse_mode="HTML")
-                
-            try:
-                from aiogram.types import FSInputFile
-                import os
-                
-                audio_file = FSInputFile(track.file_path)
-                await message.answer_audio(
-                    audio=audio_file,
-                    title=track.title,
-                    performer="YouThopia Music"
-                )
-                await status_msg.delete()
-            finally:
-                # Always clean up the file, even if sending to Telegram fails
-                import os
-                if hasattr(track, 'file_path') and os.path.exists(track.file_path):
-                    os.remove(track.file_path)
-                    
-        except Exception as e:
-            await status_msg.edit_text(f"Error fetching song: {e}")
+
 
     @router.message(Command("stop"))
     async def handle_stop(message: Message) -> None:
