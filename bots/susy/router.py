@@ -5,6 +5,7 @@ from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.types import (
     Message,
+    CallbackQuery,
     BotCommand,
     BotCommandScopeAllPrivateChats,
     BotCommandScopeAllGroupChats,
@@ -269,7 +270,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     # --- ONBOARDING PAGINATION LOGIC ---
     
-    async def send_onboarding_page(message: Message | Any, page: int, edit: bool = False) -> None:
+    async def send_onboarding_page(message: Message, page: int, edit: bool = False) -> None:
         if page == 1:
             text = (
                 "<b>Welcome to YOUTHOPIA! 🤍 (1/3)</b>\n"
@@ -316,7 +317,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await message.answer(text, parse_mode="HTML", reply_markup=markup)
 
     @router.callback_query(F.data.startswith("onboarding_"))
-    async def handle_onboarding_callbacks(callback_query: Any, services: ServiceContainer) -> None:
+    async def handle_onboarding_callbacks(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         action = callback_query.data.split("_")[1]
         
         if action in ["1", "2", "3"]:
