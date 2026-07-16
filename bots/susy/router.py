@@ -84,15 +84,15 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="Explore the Community", callback_data="onboarding_1")
-            ],
-            [
                 InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
                 InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
             ],
             [
                 InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
                 InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
+            ],
+            [
+                InlineKeyboardButton(text="Explore the Community", callback_data="onboarding_1")
             ]
         ])
         
