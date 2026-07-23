@@ -19,6 +19,7 @@ class YtDlpDownloader:
         socket_timeout: int = 30,
         extractor_retries: int = 2,
         js_runtimes: str | None = None,
+        cookiefile: str | None = None,
     ) -> None:
         self._download_dir = Path(download_dir)
         self._download_dir.mkdir(parents=True, exist_ok=True)
@@ -26,6 +27,7 @@ class YtDlpDownloader:
         self._socket_timeout = socket_timeout
         self._extractor_retries = extractor_retries
         self._js_runtimes = js_runtimes
+        self._cookiefile = cookiefile
 
     async def download(self, query: str) -> Track:
         return await asyncio.to_thread(self._download_sync, query)
@@ -45,6 +47,8 @@ class YtDlpDownloader:
             "extractor_retries": self._extractor_retries,
             "extractor_args": {"youtube": ["player_client=ios,android", "player_skip=webpage,configs,js"]},
         }
+        if self._cookiefile:
+            options["cookiefile"] = self._cookiefile
 
         try:
             with yt_dlp.YoutubeDL(options) as downloader:

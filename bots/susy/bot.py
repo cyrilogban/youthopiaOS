@@ -32,6 +32,15 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     processed_dir = os.path.join(downloads_dir, "processed")
     os.makedirs(processed_dir, exist_ok=True)
     
+    # Resolve cookies path to bypass YouTube 403 Forbidden blocks
+    cookies_path = os.getenv("YOUTUBE_COOKIES_PATH")
+    if not cookies_path:
+        render_secret_path = "/etc/secrets/youtube_cookies.txt"
+        if os.path.exists(render_secret_path):
+            cookies_path = render_secret_path
+        elif os.path.exists("cookies.txt"):
+            cookies_path = "cookies.txt"
+            
     music_service = MusicService(
         downloader=YtDlpDownloader(
             download_dir=downloads_dir,
@@ -39,6 +48,7 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
             socket_timeout=15,
             extractor_retries=3,
             js_runtimes="node",
+            cookiefile=cookies_path,
         ),
         audio_processor=FFmpegAudioProcessor(output_dir=processed_dir),
         stream_client=calls,
