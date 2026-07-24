@@ -60,8 +60,16 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
         stream_client=calls,
     )
 
-    susy_router = build_susy_router("Susy onboarding and engagement bot", music_service=music_service)
-    
+    from aiogram.types import BotCommand
+    susy_commands = [
+        BotCommand(command="playsong", description="Play a song in Voice Chat"),
+        BotCommand(command="skip", description="Skip the current track"),
+        BotCommand(command="pause", description="Pause music playback"),
+        BotCommand(command="resume", description="Resume music playback"),
+        BotCommand(command="stop", description="Stop music and clear queue"),
+        BotCommand(command="help", description="Show Susy host & music features"),
+    ]
+
     await pyrogram.start()
     try:
         await calls.start()
@@ -70,7 +78,8 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
                 config, 
                 services, 
                 description="Susy onboarding and engagement bot",
-                router=susy_router
+                router=susy_router,
+                commands=susy_commands,
             )
         finally:
             await calls.stop()

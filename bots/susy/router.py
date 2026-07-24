@@ -253,6 +253,18 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         # Removed group auto-delete (command is now private only)
 
+    def _get_music_controls_keyboard() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="⏸️ Pause", callback_data="susy_pause"),
+                    InlineKeyboardButton(text="▶️ Resume", callback_data="susy_resume"),
+                    InlineKeyboardButton(text="⏭️ Skip", callback_data="susy_skip"),
+                    InlineKeyboardButton(text="⏹️ Stop", callback_data="susy_stop"),
+                ]
+            ]
+        )
+
     @router.message(Command("playsong"))
     async def handle_play(message: Message, command: CommandObject) -> None:
         if message.chat.type == "private":
@@ -264,17 +276,78 @@ def build_susy_router(description: str, music_service=None) -> Router:
             return
             
         if not command.args:
-            await message.answer("Please provide a song name or YouTube link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
+            await message.answer("Please provide a song name or link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
             return
             
         status_msg = await message.answer("🔍 Searching for your track...")
         try:
             result = await music_service.play(message.chat.id, command.args)
-            await status_msg.edit_text(result.message)
+            try:
+                await status_msg.delete()
+            except Exception:
+                pass
+
+            if result.track:
+                duration_min = result.track.duration // 60
+                duration_sec = result.track.duration % 60
+                dur_str = f"{duration_min}:{duration_sec:02d}" if result.track.duration else "Live Stream"
+                user_mention = message.from_user.mention_html() if message.from_user else "User"
+                
+                caption = (
+                    f"🎶 <b>Now Playing</b>\n\n"
+                    f"🎵 <b>Title:</b> {result.track.title}\n"
+                    f"⏱️ <b>Duration:</b> {dur_str}\n"
+                    f"🎧 <b>Requested by:</b> {user_mention}"
+                )
+                
+                if result.track.thumbnail_url:
+                    try:
+                        await message.answer_photo(
+                            photo=result.track.thumbnail_url,
+                            caption=caption,
+                            parse_mode="HTML",
+                            reply_markup=_get_music_controls_keyboard()
+                        )
+                        return
+                    except Exception as photo_err:
+                        print(f"SUSY PHOTO CARD NOTICE: {photo_err}")
+
+                await message.answer(
+                    caption,
+                    parse_mode="HTML",
+                    reply_markup=_get_music_controls_keyboard()
+                )
+            else:
+                await message.answer(result.message)
         except Exception as e:
-            await status_msg.edit_text(f"Error: {e}")
+            try:
+                await status_msg.edit_text(f"Error: {e}")
+            except Exception:
+                await message.answer(f"Error: {e}")
 
-
+    @router.callback_query(F.data.startswith("susy_"))
+    async def handle_music_callback(callback: CallbackQuery) -> None:
+        if not music_service:
+            await callback.answer("Music service offline", show_alert=True)
+            return
+            
+        action = callback.data.replace("susy_", "")
+        chat_id = callback.message.chat.id
+        
+        if action == "pause":
+            res = await music_service.pause(chat_id)
+            await callback.answer(res.message)
+        elif action == "resume":
+            res = await music_service.resume(chat_id)
+            await callback.answer(res.message)
+        elif action == "skip":
+            res = await music_service.skip(chat_id)
+            await callback.answer(res.message)
+            await callback.message.answer(f"⏭️ {res.message}")
+        elif action == "stop":
+            res = await music_service.stop(chat_id)
+            await callback.answer(res.message)
+            await callback.message.answer(f"⏹️ {res.message}")
 
     @router.message(Command("stop"))
     async def handle_stop(message: Message) -> None:
