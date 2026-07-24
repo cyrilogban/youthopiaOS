@@ -259,6 +259,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 [
                     InlineKeyboardButton(text="⏸️ Pause", callback_data="susy_pause"),
                     InlineKeyboardButton(text="▶️ Resume", callback_data="susy_resume"),
+                ],
+                [
                     InlineKeyboardButton(text="⏭️ Skip", callback_data="susy_skip"),
                     InlineKeyboardButton(text="⏹️ Stop", callback_data="susy_stop"),
                 ]
