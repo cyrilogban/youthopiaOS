@@ -19,3 +19,7 @@ cd ..
 
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
+
+# Ensure binaries have executable permissions
+chmod +x bin/node bin/ffmpeg bin/ffprobe
+
