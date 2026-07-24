@@ -70,6 +70,8 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
         BotCommand(command="help", description="Show Susy host & music features"),
     ]
 
+    susy_router = build_susy_router("Susy onboarding and engagement bot", music_service=music_service)
+
     await pyrogram.start()
     try:
         await calls.start()
