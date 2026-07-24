@@ -59,6 +59,7 @@ class YtDlpDownloader:
             "retries": self._retries,
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
+            "remote_components": ["ejs:github"],
         }
         if self._cookiefile:
             options["cookiefile"] = self._cookiefile
