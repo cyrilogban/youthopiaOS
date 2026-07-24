@@ -47,7 +47,7 @@ class YtDlpDownloader:
         return await asyncio.to_thread(self._download_sync, query)
 
     def _download_sync(self, query: str) -> Track:
-        request = query if _looks_like_url(query) else f"ytsearch1:{query}"
+        request = query if _looks_like_url(query) else f"scsearch1:{query}"
         output_stem = self._download_dir / f"{uuid4()}"
 
         options = {
@@ -55,16 +55,10 @@ class YtDlpDownloader:
             "outtmpl": f"{output_stem}.%(ext)s",
             "quiet": False,
             "noplaylist": True,
-            "default_search": "ytsearch",
+            "default_search": "scsearch",
             "retries": self._retries,
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
-            "remote_components": ["ejs:github"],
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["ios", "mweb"]
-                }
-            },
         }
         if self._cookiefile:
             options["cookiefile"] = self._cookiefile
