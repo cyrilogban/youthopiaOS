@@ -53,13 +53,12 @@ class YtDlpDownloader:
         options = {
             "format": "bestaudio/best",
             "outtmpl": f"{output_stem}.%(ext)s",
-            "quiet": True,
+            "quiet": False,
             "noplaylist": True,
             "default_search": "ytsearch",
             "retries": self._retries,
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
-            "extractor_args": {"youtube": ["player_client=mweb,android,ios"]},
         }
         if self._cookiefile:
             options["cookiefile"] = self._cookiefile
