@@ -35,11 +35,18 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     # Resolve cookies path to bypass YouTube 403 Forbidden blocks
     cookies_path = os.getenv("YOUTUBE_COOKIES_PATH")
     if not cookies_path:
-        render_secret_path = "/etc/secrets/youtube_cookies.txt"
-        if os.path.exists(render_secret_path):
-            cookies_path = render_secret_path
-        elif os.path.exists("cookies.txt"):
+        secret_dir = "/etc/secrets"
+        if os.path.exists(secret_dir) and os.path.isdir(secret_dir):
+            secret_files = [os.path.join(secret_dir, f) for f in os.listdir(secret_dir) if os.path.isfile(os.path.join(secret_dir, f))]
+            if secret_files:
+                cookies_path = secret_files[0]
+        if not cookies_path and os.path.exists("cookies.txt"):
             cookies_path = "cookies.txt"
+            
+    if cookies_path:
+        print(f"SUSY MUSIC ENGINE: Using cookies file at -> {cookies_path}")
+    else:
+        print("SUSY MUSIC ENGINE: WARNING - No cookies file detected!")
             
     music_service = MusicService(
         downloader=YtDlpDownloader(

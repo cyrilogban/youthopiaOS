@@ -59,7 +59,7 @@ class YtDlpDownloader:
             "retries": self._retries,
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
-            "extractor_args": {"youtube": ["player_client=ios,android"]},
+            "extractor_args": {"youtube": ["player_client=mweb,android,ios"]},
         }
         if self._cookiefile:
             options["cookiefile"] = self._cookiefile
