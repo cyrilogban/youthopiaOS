@@ -23,14 +23,23 @@ class PyTgCallsClient:
         for chat_id in list(self._active_chats):
             await self.leave_group_call(chat_id)
 
+    async def resolve_peer_cache(self, chat_id: int) -> None:
+        try:
+            await self._pyrogram_manager.client.get_chat(chat_id)
+        except Exception as e:
+            print(f"PYROGRAM REFRESHING PEER CACHE FOR CHAT {chat_id}: {e}")
+            try:
+                async for _ in self._pyrogram_manager.client.get_dialogs(limit=200):
+                    pass
+                await self._pyrogram_manager.client.get_chat(chat_id)
+            except Exception as inner_e:
+                print(f"PYROGRAM PEER CACHE RESOLVE NOTICE: {inner_e}")
+
     async def join_group_call(self, chat_id: int, file_path: str) -> None:
         app = self._require_app()
         _ensure_file_exists(file_path)
         from pytgcalls.types import MediaStream
-        try:
-            await self._pyrogram_manager.client.get_chat(chat_id)
-        except Exception as e:
-            print(f"PYROGRAM PEER CACHE RESOLVE NOTICE: {e}")
+        await self.resolve_peer_cache(chat_id)
         await app.play(chat_id, MediaStream(file_path))
         self._active_chats.add(chat_id)
 
@@ -38,10 +47,7 @@ class PyTgCallsClient:
         app = self._require_app()
         _ensure_file_exists(file_path)
         from pytgcalls.types import MediaStream
-        try:
-            await self._pyrogram_manager.client.get_chat(chat_id)
-        except Exception as e:
-            print(f"PYROGRAM PEER CACHE RESOLVE NOTICE: {e}")
+        await self.resolve_peer_cache(chat_id)
         await app.play(chat_id, MediaStream(file_path))
         self._active_chats.add(chat_id)
 
