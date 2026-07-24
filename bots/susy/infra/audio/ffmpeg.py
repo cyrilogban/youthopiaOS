@@ -18,13 +18,13 @@ class FFmpegAudioProcessor:
         return await asyncio.to_thread(self._prepare_sync, track)
 
     def _prepare_sync(self, track: Track) -> Track:
-        output_path = self._output_dir / f"{uuid4()}.raw"
+        output_path = self._output_dir / f"{uuid4()}.wav"
 
         (
             ffmpeg.input(track.file_path)
             .output(
                 str(output_path),
-                format="s16le",
+                format="wav",
                 acodec="pcm_s16le",
                 ac=2,
                 ar="48000",
