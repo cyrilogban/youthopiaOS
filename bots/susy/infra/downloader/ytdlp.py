@@ -60,6 +60,11 @@ class YtDlpDownloader:
             "socket_timeout": self._socket_timeout,
             "extractor_retries": self._extractor_retries,
             "remote_components": ["ejs:github"],
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["ios", "mweb"]
+                }
+            },
         }
         if self._cookiefile:
             options["cookiefile"] = self._cookiefile
