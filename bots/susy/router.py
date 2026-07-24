@@ -255,6 +255,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     @router.message(Command("playsong"))
     async def handle_play(message: Message, command: CommandObject) -> None:
+        if message.chat.type == "private":
+            await message.answer("🎧 Music playback is designed for Telegram Group Voice Chats! Please use `/playsong` inside a group chat with an active Voice Chat.", parse_mode="Markdown")
+            return
+
         if not music_service:
             await message.answer("My music engine is currently offline!")
             return

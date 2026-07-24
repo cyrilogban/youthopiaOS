@@ -58,7 +58,18 @@ class MusicService:
             return MusicResult(
                 message=f"I couldn't prepare that track right now. Debug: {str(e)}"
             )
+
         self._queue.add(chat_id, track)
+
+        if chat_id not in self._playing_chats:
+            try:
+                await self._start_next(chat_id)
+                return MusicResult(message=f"🎶 Now playing: {track.title}", track=track)
+            except Exception as e:
+                self._playing_chats.discard(chat_id)
+                return MusicResult(message=f"⚠️ Voice Chat Error: Make sure an active Telegram Voice Chat is started in this group! ({e})")
+
+        return MusicResult(message=f"🎵 Added to queue: {track.title}", track=track)
 
     async def fetch_track(self, query: str) -> MusicResult:
         try:
@@ -68,12 +79,6 @@ class MusicService:
             return MusicResult(message=_friendly_download_error(error.reason))
         except Exception as e:
             return MusicResult(message=f"Debug Fetch Error: {str(e)}")
-
-        if chat_id not in self._playing_chats:
-            await self._start_next(chat_id)
-            return MusicResult(message=f"Now playing: {track.title}", track=track)
-
-        return MusicResult(message=f"Added to queue: {track.title}", track=track)
 
     async def skip(self, chat_id: int) -> MusicResult:
         if chat_id not in self._playing_chats and self._queue.is_empty(chat_id):
