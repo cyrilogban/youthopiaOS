@@ -27,7 +27,21 @@ class YtDlpDownloader:
         self._socket_timeout = socket_timeout
         self._extractor_retries = extractor_retries
         self._js_runtimes = js_runtimes
-        self._cookiefile = cookiefile
+        
+        self._cookiefile = None
+        if cookiefile:
+            c_path = Path(cookiefile)
+            if c_path.exists():
+                writable_path = self._download_dir / "youtube_cookies_writable.txt"
+                try:
+                    import shutil
+                    shutil.copy2(c_path, writable_path)
+                    self._cookiefile = str(writable_path)
+                except Exception as e:
+                    print(f"FAILED TO COPY COOKIEFILE TO WRITABLE PATH: {e}")
+                    self._cookiefile = cookiefile
+            else:
+                self._cookiefile = cookiefile
 
     async def download(self, query: str) -> Track:
         return await asyncio.to_thread(self._download_sync, query)
