@@ -15,6 +15,9 @@ class FFmpegAudioProcessor:
         self._output_dir.mkdir(parents=True, exist_ok=True)
 
     async def prepare_for_stream(self, track: Track) -> Track:
+        file_path = Path(track.file_path)
+        if file_path.suffix.lower() in [".m4a", ".mp3", ".ogg", ".wav", ".webm", ".opus", ".flac", ".aac"]:
+            return track
         return await asyncio.to_thread(self._prepare_sync, track)
 
     def _prepare_sync(self, track: Track) -> Track:
