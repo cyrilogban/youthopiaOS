@@ -63,6 +63,8 @@ class YtDlpDownloader:
         }
         if self._cookiefile:
             options["cookiefile"] = self._cookiefile
+        if self._js_runtimes:
+            options["js_runtimes"] = self._js_runtimes
 
         try:
             with yt_dlp.YoutubeDL(options) as downloader:

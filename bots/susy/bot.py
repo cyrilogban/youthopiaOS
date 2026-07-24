@@ -54,7 +54,6 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
             retries=3,
             socket_timeout=15,
             extractor_retries=3,
-            js_runtimes="node",
             cookiefile=cookies_path,
         ),
         audio_processor=FFmpegAudioProcessor(output_dir=processed_dir),
