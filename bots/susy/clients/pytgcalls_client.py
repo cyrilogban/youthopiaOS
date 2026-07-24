@@ -26,12 +26,20 @@ class PyTgCallsClient:
     async def join_group_call(self, chat_id: int, file_path: str) -> None:
         app = self._require_app()
         _ensure_file_exists(file_path)
+        try:
+            await self._pyrogram_manager.client.get_chat(chat_id)
+        except Exception as e:
+            print(f"PYROGRAM PEER CACHE RESOLVE NOTICE: {e}")
         await app.play(chat_id, file_path)
         self._active_chats.add(chat_id)
 
     async def switch_stream(self, chat_id: int, file_path: str) -> None:
         app = self._require_app()
         _ensure_file_exists(file_path)
+        try:
+            await self._pyrogram_manager.client.get_chat(chat_id)
+        except Exception as e:
+            print(f"PYROGRAM PEER CACHE RESOLVE NOTICE: {e}")
         await app.play(chat_id, file_path)
         self._active_chats.add(chat_id)
 

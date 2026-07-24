@@ -66,8 +66,11 @@ class MusicService:
                 await self._start_next(chat_id)
                 return MusicResult(message=f"🎶 Now playing: {track.title}", track=track)
             except Exception as e:
+                import traceback
+                print(f"PYTGCALLS PLAY ERROR TRACEBACK:\n{traceback.format_exc()}")
                 self._playing_chats.discard(chat_id)
-                return MusicResult(message=f"⚠️ Voice Chat Error: Make sure an active Telegram Voice Chat is started in this group! ({e})")
+                err_detail = str(e) or type(e).__name__
+                return MusicResult(message=f"⚠️ Voice Chat Error: ({type(e).__name__}: {err_detail}) - Ensure your Userbot account is in the group and Voice Chat is started!")
 
         return MusicResult(message=f"🎵 Added to queue: {track.title}", track=track)
 
