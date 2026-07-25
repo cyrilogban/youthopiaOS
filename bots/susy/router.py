@@ -328,16 +328,21 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         # Removed group auto-delete (command is now private only)
 
-    def _get_music_controls_keyboard() -> InlineKeyboardMarkup:
+    def _get_music_controls_keyboard(dur_str: str = "3:33") -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="⏸️ Pause", callback_data="susy_pause"),
-                    InlineKeyboardButton(text="▶️ Resume", callback_data="susy_resume"),
+                    InlineKeyboardButton(text=f"0:00 ──▷─────────────────── {dur_str}", callback_data="ignore")
                 ],
                 [
-                    InlineKeyboardButton(text="⏭️ Skip", callback_data="susy_skip"),
-                    InlineKeyboardButton(text="⏹️ Stop", callback_data="susy_stop"),
+                    InlineKeyboardButton(text="▷", callback_data="susy_resume"),
+                    InlineKeyboardButton(text="❙❙", callback_data="susy_pause"),
+                    InlineKeyboardButton(text="➕", callback_data="susy_how_to_play"),
+                    InlineKeyboardButton(text="⏭", callback_data="susy_skip"),
+                    InlineKeyboardButton(text="⏹", callback_data="susy_stop"),
+                ],
+                [
+                    InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
                 ]
             ]
         )
@@ -352,7 +357,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await message.answer("Please provide a song name or link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
             return
             
-        status_msg = await message.answer("🔍 Searching SoundCloud for your track...")
+        status_msg = await message.answer("🔍 Searching for your track...")
         try:
             result = await music_service.fetch_track(command.args)
             try:
@@ -360,10 +365,22 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-            if result.track and result.track.file_path:
-                audio_file = FSInputFile(result.track.file_path)
-                thumbnail_file = None
+            if result.track:
+                duration_min = (result.track.duration or 0) // 60
+                duration_sec = (result.track.duration or 0) % 60
+                dur_str = f"{duration_min}:{duration_sec:02d}" if result.track.duration else "Live"
+                user_mention = message.from_user.mention_html() if message.from_user else "User"
                 
+                caption = (
+                    f"⚡ <u><b>Started Streaming:</b></u>\n\n"
+                    f"🎶 <b>Title:</b> {result.track.title}\n"
+                    f"⏱️ <b>Duration:</b> {dur_str} minutes\n"
+                    f"👤 <b>Requested by:</b> {user_mention}\n"
+                    f"🕊️"
+                )
+
+                markup = _get_music_controls_keyboard(dur_str)
+
                 if result.track.thumbnail_url:
                     try:
                         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -372,34 +389,19 @@ def build_susy_router(description: str, music_service=None) -> Router:
                                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
                             )
                             if resp.status_code == 200:
-                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
+                                photo_file = BufferedInputFile(resp.content, filename="cover.jpg")
+                                await message.answer_photo(
+                                    photo=photo_file,
+                                    caption=caption,
+                                    parse_mode="HTML",
+                                    reply_markup=markup
+                                )
+                                return
                     except Exception as photo_err:
-                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
+                        print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
 
-                duration_sec = result.track.duration or None
-                user_mention = message.from_user.mention_html() if message.from_user else "User"
-                
-                caption = (
-                    f"🎶 <b>Now Sharing</b>\n\n"
-                    f"🎵 <b>Title:</b> {result.track.title}\n"
-                    f"🎧 <b>Requested by:</b> {user_mention}\n"
-                    f"🕊️ <i>YouThopia Bible Community</i>"
-                )
-
-                markup = InlineKeyboardMarkup(inline_keyboard=[
-                    [
-                        InlineKeyboardButton(text="🎵 How to Play Songs", callback_data="susy_how_to_play"),
-                        InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg"),
-                    ]
-                ])
-
-                await message.answer_audio(
-                    audio=audio_file,
-                    thumbnail=thumbnail_file,
-                    title=result.track.title,
-                    performer="Susy Music",
-                    duration=duration_sec,
-                    caption=caption,
+                await message.answer(
+                    caption,
                     parse_mode="HTML",
                     reply_markup=markup
                 )
@@ -413,13 +415,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     @router.callback_query(F.data == "susy_how_to_play")
     async def handle_how_to_play(callback: CallbackQuery) -> None:
-        alert_text = (
-            "🎧 How to Play Songs with Susy:\n\n"
-            "1. Type /playsong <song name or link> (e.g. /playsong Oceans Hillsong).\n"
-            "2. Susy will search SoundCloud and share the audio track directly in the group!\n"
-            "3. Tap Play ▶️ to listen anywhere inside Telegram!"
-        )
-        await callback.answer(alert_text, show_alert=True)
+        await callback.answer("🎧 Type /playsong <song name> to play music in the group!", show_alert=True)
 
     @router.callback_query(F.data == "susy_close_msg")
     async def handle_close_msg(callback: CallbackQuery) -> None:
