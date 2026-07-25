@@ -209,7 +209,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await message.answer("My music engine is currently offline!")
             return
 
-        status_msg = await message.answer("🔍 Searching for your track...")
+        status_msg = await message.answer("🔍 Searching for your song...")
         try:
             result = await music_service.fetch_track(query)
             try:
@@ -427,7 +427,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await message.answer("Please provide a song name or link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
             return
             
-        status_msg = await message.answer("🔍 Searching for your track...")
+        status_msg = await message.answer("🔍 Searching for your song...")
         try:
             result = await music_service.fetch_track(command.args)
             try:
