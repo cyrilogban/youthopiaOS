@@ -217,10 +217,23 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-            if result.track and result.track.file_path:
-                audio_file = FSInputFile(result.track.file_path)
-                thumbnail_file = None
-                
+            if result.track:
+                duration_sec = result.track.duration or None
+                duration_min = (result.track.duration or 0) // 60
+                dur_rem = (result.track.duration or 0) % 60
+                dur_str = f"{duration_min}:{dur_rem:02d}" if result.track.duration else "Live Stream"
+                user_mention = message.from_user.mention_html() if message.from_user else "User"
+
+                caption = (
+                    f"⚡ <b>Started Sharing:</b>\n\n"
+                    f"🎶 <b>Title:</b> {result.track.title}\n"
+                    f"⏱️ <b>Duration:</b> {dur_str}\n"
+                    f"🎧 <b>Requested by:</b> {user_mention}\n"
+                    f"🕊️ <i>YouThopia Bible Community</i>"
+                )
+
+                markup = _get_music_controls_keyboard()
+
                 if result.track.thumbnail_url:
                     try:
                         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -428,10 +441,23 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-            if result.track and result.track.file_path:
-                audio_file = FSInputFile(result.track.file_path)
-                thumbnail_file = None
-                
+            if result.track:
+                duration_sec = result.track.duration or None
+                duration_min = (result.track.duration or 0) // 60
+                dur_rem = (result.track.duration or 0) % 60
+                dur_str = f"{duration_min}:{dur_rem:02d}" if result.track.duration else "Live Stream"
+                user_mention = message.from_user.mention_html() if message.from_user else "User"
+
+                caption = (
+                    f"⚡ <b>Started Sharing:</b>\n\n"
+                    f"🎶 <b>Title:</b> {result.track.title}\n"
+                    f"⏱️ <b>Duration:</b> {dur_str}\n"
+                    f"🎧 <b>Requested by:</b> {user_mention}\n"
+                    f"🕊️ <i>YouThopia Bible Community</i>"
+                )
+
+                markup = _get_music_controls_keyboard()
+
                 if result.track.thumbnail_url:
                     try:
                         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
