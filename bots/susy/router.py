@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import httpx
 from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.types import (
@@ -11,6 +12,7 @@ from aiogram.types import (
     BotCommandScopeAllGroupChats,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
+    BufferedInputFile,
 )
 
 from shared.services.container import ServiceContainer
@@ -304,15 +306,22 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 
                 if result.track.thumbnail_url:
                     try:
-                        await message.answer_photo(
-                            photo=result.track.thumbnail_url,
-                            caption=caption,
-                            parse_mode="HTML",
-                            reply_markup=_get_music_controls_keyboard()
-                        )
-                        return
+                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                            resp = await client.get(
+                                result.track.thumbnail_url,
+                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+                            )
+                            if resp.status_code == 200:
+                                photo_file = BufferedInputFile(resp.content, filename="cover.jpg")
+                                await message.answer_photo(
+                                    photo=photo_file,
+                                    caption=caption,
+                                    parse_mode="HTML",
+                                    reply_markup=_get_music_controls_keyboard()
+                                )
+                                return
                     except Exception as photo_err:
-                        print(f"SUSY PHOTO CARD NOTICE: {photo_err}")
+                        print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
 
                 await message.answer(
                     caption,
