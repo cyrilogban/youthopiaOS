@@ -72,18 +72,23 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
 
     susy_router = build_susy_router("Susy onboarding and engagement bot", music_service=music_service)
 
-    await pyrogram.start()
     try:
+        await pyrogram.start()
         await calls.start()
-        try:
-            await run_polling_bot(
-                config, 
-                services, 
-                description="Susy onboarding and engagement bot",
-                router=susy_router,
-                commands=susy_commands,
-            )
-        finally:
-            await calls.stop()
+    except Exception as e:
+        print(f"SUSY VOICE STREAM NOTICE (Native Audio Mode Active): {e}")
+
+    try:
+        await run_polling_bot(
+            config, 
+            services, 
+            description="Susy onboarding and engagement bot",
+            router=susy_router,
+            commands=susy_commands,
+        )
     finally:
-        await pyrogram.stop()
+        try:
+            await calls.stop()
+            await pyrogram.stop()
+        except Exception:
+            pass

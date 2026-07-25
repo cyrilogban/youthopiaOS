@@ -13,6 +13,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     BufferedInputFile,
+    FSInputFile,
 )
 
 from shared.services.container import ServiceContainer
@@ -42,15 +43,87 @@ def build_susy_router(description: str, music_service=None) -> Router:
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
+    @router.my_chat_member()
+    async def on_bot_added(event, bot: Bot) -> None:
+        if event.new_chat_member.status in {"member", "administrator"}:
+            first_name = event.from_user.first_name if event.from_user else "Friend"
+            chat_title = event.chat.title or "your group"
+            
+            welcome_caption = (
+                f"✨ <b>Hey {first_name}, This is Susy!</b>\n\n"
+                f"🎶 Thanks for adding me to <b>{chat_title}</b>! I am your community music hostess.\n\n"
+                f"I can search and share worship tracks, songs, and audio podcasts directly in your Telegram group!"
+            )
+            
+            welcome_markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🎵 How to Play Songs", callback_data="susy_how_to_play")
+                ],
+                [
+                    InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
+                ]
+            ])
+            
+            try:
+                await bot.send_message(
+                    chat_id=event.chat.id,
+                    text=welcome_caption,
+                    parse_mode="HTML",
+                    reply_markup=welcome_markup
+                )
+            except Exception as e:
+                print(f"SUSY BOT ADDED WELCOME NOTICE: {e}")
+
+
+    async def send_group_welcome_card(message: Message) -> None:
+        first_name = message.from_user.first_name if message.from_user else "Friend"
+        chat_title = message.chat.title or "your community"
+
+        welcome_text = (
+            f"✨ <b>Hey {first_name}, This is Susy!</b>\n\n"
+            f"🎶 Thanks for adding me to <b>{chat_title}</b>! I am your community music hostess.\n\n"
+            f"I can search and share worship tracks, songs, and audio podcasts directly in your Telegram group!"
+        )
+
+        welcome_markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🎵 How to Play Songs", callback_data="susy_how_to_play")
+            ],
+            [
+                InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
+            ]
+        ])
+
+        banner_url = "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=1200&q=80"
+        try:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                resp = await client.get(banner_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+                if resp.status_code == 200:
+                    banner_file = BufferedInputFile(resp.content, filename="welcome.jpg")
+                    await message.answer_photo(
+                        photo=banner_file,
+                        caption=welcome_text,
+                        parse_mode="HTML",
+                        reply_markup=welcome_markup
+                    )
+                    return
+        except Exception:
+            pass
+
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=welcome_markup)
 
     @router.message(Command("start"))
-    async def handle_start(message: Message, services: ServiceContainer) -> None:
-        # Group Cleanup Mechanism
+    async def handle_start(message: Message, command: CommandObject, services: ServiceContainer) -> None:
+        # Group Cleanup & Targeted Start Mechanism
         if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
+            is_targeted = message.text and ("susy" in message.text.lower() or "@" in message.text)
+            if not is_targeted:
+                try:
+                    await message.delete()
+                except Exception:
+                    pass
+                return
+            await send_group_welcome_card(message)
             return
                 
         # Check if deep link from Pete
@@ -271,10 +344,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     @router.message(Command("playsong"))
     async def handle_play(message: Message, command: CommandObject) -> None:
-        if message.chat.type == "private":
-            await message.answer("🎧 Music playback is designed for Telegram Group Voice Chats! Please use `/playsong` inside a group chat with an active Voice Chat.", parse_mode="Markdown")
-            return
-
         if not music_service:
             await message.answer("My music engine is currently offline!")
             return
@@ -283,26 +352,17 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await message.answer("Please provide a song name or link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
             return
             
-        status_msg = await message.answer("🔍 Searching for your track...")
+        status_msg = await message.answer("🔍 Searching SoundCloud for your track...")
         try:
-            result = await music_service.play(message.chat.id, command.args)
+            result = await music_service.fetch_track(command.args)
             try:
                 await status_msg.delete()
             except Exception:
                 pass
 
-            if result.track:
-                duration_min = result.track.duration // 60
-                duration_sec = result.track.duration % 60
-                dur_str = f"{duration_min}:{duration_sec:02d}" if result.track.duration else "Live Stream"
-                user_mention = message.from_user.mention_html() if message.from_user else "User"
-                
-                caption = (
-                    f"🎶 <b>Now Playing</b>\n\n"
-                    f"🎵 <b>Title:</b> {result.track.title}\n"
-                    f"⏱️ <b>Duration:</b> {dur_str}\n"
-                    f"🎧 <b>Requested by:</b> {user_mention}"
-                )
+            if result.track and result.track.file_path:
+                audio_file = FSInputFile(result.track.file_path)
+                thumbnail_file = None
                 
                 if result.track.thumbnail_url:
                     try:
@@ -312,21 +372,36 @@ def build_susy_router(description: str, music_service=None) -> Router:
                                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
                             )
                             if resp.status_code == 200:
-                                photo_file = BufferedInputFile(resp.content, filename="cover.jpg")
-                                await message.answer_photo(
-                                    photo=photo_file,
-                                    caption=caption,
-                                    parse_mode="HTML",
-                                    reply_markup=_get_music_controls_keyboard()
-                                )
-                                return
+                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
                     except Exception as photo_err:
-                        print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
+                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
 
-                await message.answer(
-                    caption,
+                duration_sec = result.track.duration or None
+                user_mention = message.from_user.mention_html() if message.from_user else "User"
+                
+                caption = (
+                    f"🎶 <b>Now Sharing</b>\n\n"
+                    f"🎵 <b>Title:</b> {result.track.title}\n"
+                    f"🎧 <b>Requested by:</b> {user_mention}\n"
+                    f"🕊️ <i>YouThopia Bible Community</i>"
+                )
+
+                markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="🎵 How to Play Songs", callback_data="susy_how_to_play"),
+                        InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg"),
+                    ]
+                ])
+
+                await message.answer_audio(
+                    audio=audio_file,
+                    thumbnail=thumbnail_file,
+                    title=result.track.title,
+                    performer="Susy Music",
+                    duration=duration_sec,
+                    caption=caption,
                     parse_mode="HTML",
-                    reply_markup=_get_music_controls_keyboard()
+                    reply_markup=markup
                 )
             else:
                 await message.answer(result.message)
@@ -335,6 +410,23 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await status_msg.edit_text(f"Error: {e}")
             except Exception:
                 await message.answer(f"Error: {e}")
+
+    @router.callback_query(F.data == "susy_how_to_play")
+    async def handle_how_to_play(callback: CallbackQuery) -> None:
+        alert_text = (
+            "🎧 How to Play Songs with Susy:\n\n"
+            "1. Type /playsong <song name or link> (e.g. /playsong Oceans Hillsong).\n"
+            "2. Susy will search SoundCloud and share the audio track directly in the group!\n"
+            "3. Tap Play ▶️ to listen anywhere inside Telegram!"
+        )
+        await callback.answer(alert_text, show_alert=True)
+
+    @router.callback_query(F.data == "susy_close_msg")
+    async def handle_close_msg(callback: CallbackQuery) -> None:
+        try:
+            await callback.message.delete()
+        except Exception:
+            await callback.answer("Message closed")
 
     @router.callback_query(F.data.startswith("susy_"))
     async def handle_music_callback(callback: CallbackQuery) -> None:
