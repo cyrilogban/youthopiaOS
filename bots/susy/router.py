@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import os
+from pathlib import Path
 import httpx
 from aiogram import F, Router, Bot
 from aiogram.filters import Command
@@ -233,6 +235,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 )
 
                 markup = _get_music_controls_keyboard()
+                photo_sent = False
 
                 if result.track.thumbnail_url:
                     try:
@@ -249,22 +252,27 @@ def build_susy_router(description: str, music_service=None) -> Router:
                                     parse_mode="HTML",
                                     reply_markup=markup
                                 )
-                                if result.track.file_path:
-                                    await message.answer_audio(
-                                        audio=FSInputFile(result.track.file_path),
-                                        title=result.track.title,
-                                        performer="Susy Player",
-                                        duration=duration_sec
-                                    )
-                                return
+                                photo_sent = True
                     except Exception as photo_err:
                         print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
 
-                await message.answer(
-                    caption,
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
+                if not photo_sent:
+                    await message.answer(
+                        caption,
+                        parse_mode="HTML",
+                        reply_markup=markup
+                    )
+
+                if result.track.file_path and os.path.exists(result.track.file_path):
+                    try:
+                        await message.answer_audio(
+                            audio=FSInputFile(result.track.file_path),
+                            title=result.track.title,
+                            performer="Susy Player",
+                            duration=duration_sec
+                        )
+                    except Exception as audio_err:
+                        print(f"SUSY AUDIO SEND ERROR: {audio_err}")
             else:
                 await message.answer(result.message)
         except Exception as e:
@@ -457,6 +465,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 )
 
                 markup = _get_music_controls_keyboard()
+                photo_sent = False
 
                 if result.track.thumbnail_url:
                     try:
@@ -473,22 +482,27 @@ def build_susy_router(description: str, music_service=None) -> Router:
                                     parse_mode="HTML",
                                     reply_markup=markup
                                 )
-                                if result.track.file_path:
-                                    await message.answer_audio(
-                                        audio=FSInputFile(result.track.file_path),
-                                        title=result.track.title,
-                                        performer="Susy Player",
-                                        duration=duration_sec
-                                    )
-                                return
+                                photo_sent = True
                     except Exception as photo_err:
                         print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
 
-                await message.answer(
-                    caption,
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
+                if not photo_sent:
+                    await message.answer(
+                        caption,
+                        parse_mode="HTML",
+                        reply_markup=markup
+                    )
+
+                if result.track.file_path and os.path.exists(result.track.file_path):
+                    try:
+                        await message.answer_audio(
+                            audio=FSInputFile(result.track.file_path),
+                            title=result.track.title,
+                            performer="Susy Player",
+                            duration=duration_sec
+                        )
+                    except Exception as audio_err:
+                        print(f"SUSY AUDIO SEND ERROR: {audio_err}")
             else:
                 await message.answer(result.message)
         except Exception as e:
