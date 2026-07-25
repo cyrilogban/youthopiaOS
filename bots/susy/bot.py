@@ -62,7 +62,8 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
 
     from aiogram.types import BotCommand
     susy_commands = [
-        BotCommand(command="playsong", description="Play a song in Voice Chat"),
+        BotCommand(command="start", description="Meet Susy"),
+        BotCommand(command="playsong", description="Play a song in group"),
         BotCommand(command="skip", description="Skip the current track"),
         BotCommand(command="pause", description="Pause music playback"),
         BotCommand(command="resume", description="Resume music playback"),

@@ -36,6 +36,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         ]
         
         group_commands = [
+            BotCommand(command="start", description="Meet Susy"),
             BotCommand(command="playsong", description="Play song in group"),
         ]
         
