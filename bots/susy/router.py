@@ -329,18 +329,16 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         # Removed group auto-delete (command is now private only)
 
-    def _get_music_controls_keyboard(dur_str: str = "3:33") -> InlineKeyboardMarkup:
+    def _get_music_controls_keyboard() -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text=f"0:00 ──▷─────────────────── {dur_str}", callback_data="ignore")
+                    InlineKeyboardButton(text="⏸️ Pause", callback_data="susy_pause"),
+                    InlineKeyboardButton(text="▶️ Resume", callback_data="susy_resume"),
                 ],
                 [
-                    InlineKeyboardButton(text="▷", callback_data="susy_resume"),
-                    InlineKeyboardButton(text="❙❙", callback_data="susy_pause"),
-                    InlineKeyboardButton(text="➕", callback_data="susy_how_to_play"),
-                    InlineKeyboardButton(text="⏭", callback_data="susy_skip"),
-                    InlineKeyboardButton(text="⏹", callback_data="susy_stop"),
+                    InlineKeyboardButton(text="⏭️ Skip", callback_data="susy_skip"),
+                    InlineKeyboardButton(text="⏹️ Stop", callback_data="susy_stop"),
                 ],
                 [
                     InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
@@ -366,22 +364,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-            if result.track:
-                duration_min = (result.track.duration or 0) // 60
-                duration_sec = (result.track.duration or 0) % 60
-                dur_str = f"{duration_min}:{duration_sec:02d}" if result.track.duration else "Live"
-                user_mention = message.from_user.mention_html() if message.from_user else "User"
+            if result.track and result.track.file_path:
+                audio_file = FSInputFile(result.track.file_path)
+                thumbnail_file = None
                 
-                caption = (
-                    f"⚡ <u><b>Started Streaming:</b></u>\n\n"
-                    f"🎶 <b>Title:</b> {result.track.title}\n"
-                    f"⏱️ <b>Duration:</b> {dur_str} minutes\n"
-                    f"👤 <b>Requested by:</b> {user_mention}\n"
-                    f"🕊️"
-                )
-
-                markup = _get_music_controls_keyboard(dur_str)
-
                 if result.track.thumbnail_url:
                     try:
                         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -390,19 +376,33 @@ def build_susy_router(description: str, music_service=None) -> Router:
                                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
                             )
                             if resp.status_code == 200:
-                                photo_file = BufferedInputFile(resp.content, filename="cover.jpg")
-                                await message.answer_photo(
-                                    photo=photo_file,
-                                    caption=caption,
-                                    parse_mode="HTML",
-                                    reply_markup=markup
-                                )
-                                return
+                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
                     except Exception as photo_err:
-                        print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
+                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
 
-                await message.answer(
-                    caption,
+                duration_sec = result.track.duration or None
+                duration_min = (result.track.duration or 0) // 60
+                dur_rem = (result.track.duration or 0) % 60
+                dur_str = f"{duration_min}:{dur_rem:02d}" if result.track.duration else "Live Stream"
+                user_mention = message.from_user.mention_html() if message.from_user else "User"
+
+                caption = (
+                    f"⚡ <b>Started Sharing:</b>\n\n"
+                    f"🎶 <b>Title:</b> {result.track.title}\n"
+                    f"⏱️ <b>Duration:</b> {dur_str}\n"
+                    f"🎧 <b>Requested by:</b> {user_mention}\n"
+                    f"🕊️ <i>YouThopia Bible Community</i>"
+                )
+
+                markup = _get_music_controls_keyboard()
+
+                await message.answer_audio(
+                    audio=audio_file,
+                    thumbnail=thumbnail_file,
+                    title=result.track.title,
+                    performer="Susy Music",
+                    duration=duration_sec,
+                    caption=caption,
                     parse_mode="HTML",
                     reply_markup=markup
                 )
