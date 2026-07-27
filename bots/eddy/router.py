@@ -646,9 +646,10 @@ def build_eddy_router(description: str) -> Router:
     async def mirror_channel_post(message: Message, bot: Bot):
         """
         Fires whenever a new post appears in the linked channel (@joinyouthopia).
-        Copies it into the General topic (message_thread_id=1) of the Main Group
-        and attaches a button linking back to the original post in the channel.
+        Copies it into the General topic of the Main Group and attaches a button linking back.
         """
+        logger.info(f"📢 CHANNEL POST DETECTED in Eddy! Msg ID: {message.message_id}, Chat: {message.chat.title} ({message.chat.id})")
+        
         main_group_id_str = os.getenv("MAIN_GROUP_ID", "-1001904672000")
         try:
             main_group_id = int(main_group_id_str)
@@ -656,26 +657,44 @@ def build_eddy_router(description: str) -> Router:
             logger.error(f"Invalid MAIN_GROUP_ID: {main_group_id_str}")
             return
 
-        topic_id = int(os.getenv("ANNOUNCEMENTS_TOPIC_ID", "1"))
+        topic_id_str = os.getenv("ANNOUNCEMENTS_TOPIC_ID", "1")
+        topic_id = int(topic_id_str) if topic_id_str.isdigit() else None
         channel_username = os.getenv("CHANNEL_USERNAME", "joinyouthopia").replace("@", "").strip()
 
-        try:
-            channel_link = f"https://t.me/{channel_username}/{message.message_id}"
-            keyboard = InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [InlineKeyboardButton(text="📢 View in Channel ↗️", url=channel_link)]
-                ]
-            )
+        channel_link = f"https://t.me/{channel_username}/{message.message_id}"
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="📢 View in Channel ↗️", url=channel_link)]
+            ]
+        )
 
+        # Attempt 1: Copy with explicit topic ID
+        try:
+            kwargs = {
+                "chat_id": main_group_id,
+                "from_chat_id": message.chat.id,
+                "message_id": message.message_id,
+                "reply_markup": keyboard,
+            }
+            if topic_id:
+                kwargs["message_thread_id"] = topic_id
+
+            await bot.copy_message(**kwargs)
+            logger.info(f"Eddy successfully mirrored channel post {message.message_id} to group {main_group_id} topic {topic_id}")
+            return
+        except Exception as e:
+            logger.warning(f"Eddy topic copy attempt failed with topic_id={topic_id}: {e}")
+
+        # Attempt 2: Fallback copy without message_thread_id (for General topic)
+        try:
             await bot.copy_message(
                 chat_id=main_group_id,
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
-                message_thread_id=topic_id,
-                reply_markup=keyboard
+                reply_markup=keyboard,
             )
-            logger.info(f"Eddy successfully mirrored channel post {message.message_id} to group {main_group_id} topic {topic_id}")
-        except Exception as e:
-            logger.error(f"Eddy failed to mirror channel post {message.message_id}: {e}")
+            logger.info(f"Eddy successfully mirrored channel post {message.message_id} to main group {main_group_id} (fallback without thread_id)")
+        except Exception as fallback_err:
+            logger.error(f"Eddy fallback mirror also failed for channel post {message.message_id}: {fallback_err}")
 
     return router
