@@ -14,6 +14,8 @@ from aiogram.types import (
     BotCommandScopeAllGroupChats,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
     BufferedInputFile,
     FSInputFile,
 )
@@ -161,6 +163,21 @@ def build_susy_router(description: str, music_service=None) -> Router:
             ]
         ])
         
+        reply_keyboard = ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text="Play Song"),
+                    KeyboardButton(text="My Playlist")
+                ],
+                [
+                    KeyboardButton(text="Community"),
+                    KeyboardButton(text="Help")
+                ]
+            ],
+            resize_keyboard=True,
+            persistent=True
+        )
+
         if SUSY_PHOTO:
             await message.answer_photo(
                 photo=SUSY_PHOTO,
@@ -176,14 +193,16 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 reply_markup=markup
             )
             
+        await message.answer("Use the menu below to navigate Susy:", reply_markup=reply_keyboard)
+            
 
 
-    @router.message(F.text == "🎧 Play Song")
+    @router.message(F.text == "Play Song")
     async def on_play_button(message: Message):
         if message.chat.type != "private": return
-        await message.answer("📻 Ready to listen? Just type `/playsong` followed by the song name!\n\n*Example:* `/playsong Oceans Hillsong`", parse_mode="Markdown")
+        await message.answer("📻 Ready to listen? Just type the name or link of your song below!\n\n*Example:* `Oceans Hillsong`", parse_mode="Markdown")
 
-    @router.message(F.text == "🌍 Community")
+    @router.message(F.text == "Community")
     async def on_about_community(message: Message):
         if message.chat.type != "private": return
         
@@ -198,13 +217,18 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         await message.answer(about_text, parse_mode="HTML", reply_markup=markup)
 
+    @router.message(F.text == "Help")
+    async def on_help_menu_button(message: Message):
+        if message.chat.type != "private": return
+        await handle_help_command(message)
+
     @router.message(F.chat.type == "private", F.text & ~F.text.startswith("/"))
     async def handle_private_dm_music_query(message: Message) -> None:
         query = message.text.strip()
         if not query or len(query) < 2:
             return
             
-        if query in {"🎧 Play Song", "🌍 Community", "❓ Help"}:
+        if query in {"Play Song", "My Playlist", "Community", "Help", "🎧 Play Song", "🌍 Community", "❓ Help"}:
             return
             
         if not music_service:
