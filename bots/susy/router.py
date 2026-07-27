@@ -402,7 +402,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
         # Removed group auto-delete (command is now private only)
 
     def _get_dm_music_controls_keyboard(is_saved: bool = False) -> InlineKeyboardMarkup:
-        save_text = "💖 Saved in Playlist" if is_saved else "❤️ Save to Favorites"
+        save_text = "💜 Saved in Playlist" if is_saved else "💜 Save to Favorites"
+        share_url = "https://t.me/share/url?url=https%3A%2F%2Ft.me%2Fiamsusiebot&text=Listen%20to%20worship%20music%20with%20Susy%20on%20Telegram%20%F0%9F%8E%B6"
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
@@ -411,7 +412,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 ],
                 [
                     InlineKeyboardButton(text="➕ Request Another", callback_data="susy_request_another"),
-                    InlineKeyboardButton(text="👥 Share to Group ↗️", url="https://t.me/youthopiabiblecommunity")
+                    InlineKeyboardButton(text="👥 Share Track ↗️", url=share_url)
                 ]
             ]
         )
@@ -420,7 +421,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="❤️ Save to Favorites", callback_data="susy_fav_save"),
+                    InlineKeyboardButton(text="💜 Save to Favorites", callback_data="susy_fav_save"),
                     InlineKeyboardButton(text="📜 My Playlist", callback_data="susy_group_playlist")
                 ],
                 [
@@ -457,21 +458,29 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 on_conflict="user_id, title"
             )
 
-            # In DM, we update button text to "💖 Saved in Playlist"
-            if callback.message and callback.message.chat.type == "private":
+            is_private = callback.message and callback.message.chat.type == "private"
+
+            if is_private:
                 try:
                     await callback.message.edit_reply_markup(reply_markup=_get_dm_music_controls_keyboard(is_saved=True))
                 except Exception:
                     pass
 
-            await callback.answer(
-                f"🎉 Saved to Favorites! ❤️\n\n"
-                f"\"{track_title}\" has been added to your personal playlist.\n\n"
-                f"Tap '💬 Open Susy DM' or type /playlist in DM to view your saved songs!",
-                show_alert=True
-            )
+                await callback.answer(
+                    f"🎉 Saved to Favorites! 💜\n\n"
+                    f"\"{track_title}\" has been added to your personal playlist.\n\n"
+                    f"Tap '📜 My Playlist' below to view your saved songs!",
+                    show_alert=True
+                )
+            else:
+                await callback.answer(
+                    f"🎉 Saved to Favorites! 💜\n\n"
+                    f"\"{track_title}\" has been saved to your personal playlist.\n\n"
+                    f"Open a private chat with Susy (@iamsusiebot) to view your saved songs!",
+                    show_alert=True
+                )
         except Exception as e:
-            await callback.answer(f"🎉 \"{track_title}\" saved to your playlist! ❤️", show_alert=True)
+            await callback.answer(f"🎉 \"{track_title}\" saved to your playlist! 💜", show_alert=True)
 
     @router.callback_query(F.data == "susy_group_playlist")
     async def handle_group_playlist(callback: CallbackQuery) -> None:
@@ -505,10 +514,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             if not saved_tracks:
                 txt = (
                     "<b>📜 Your Personal Playlist is Empty!</b>\n\n"
-                    "You haven't saved any tracks yet. Play a song and tap <b>❤️ Save to Favorites</b> to build your collection!"
+                    "You haven't saved any tracks yet. Play a song and tap <b>💜 Save to Favorites</b> to build your collection!"
                 )
                 if is_cb:
-                    await event.answer("Your playlist is currently empty! Play a song to save it. ❤️", show_alert=True)
+                    await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
                 else:
                     await message.answer(txt, parse_mode="HTML")
                 return
