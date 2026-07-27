@@ -694,7 +694,23 @@ def build_eddy_router(description: str) -> Router:
                 reply_markup=keyboard,
             )
             logger.info(f"Eddy successfully mirrored channel post {message.message_id} to main group {main_group_id} (fallback without thread_id)")
+            return
         except Exception as fallback_err:
-            logger.error(f"Eddy fallback mirror also failed for channel post {message.message_id}: {fallback_err}")
+            logger.warning(f"Eddy fallback copy failed for channel post {message.message_id}: {fallback_err}")
+
+        # Attempt 3: Fallback forward_message (for Polls, Quizzes, and uncopyable Telegram types)
+        try:
+            fwd_kwargs = {
+                "chat_id": main_group_id,
+                "from_chat_id": message.chat.id,
+                "message_id": message.message_id,
+            }
+            if topic_id:
+                fwd_kwargs["message_thread_id"] = topic_id
+
+            await bot.forward_message(**fwd_kwargs)
+            logger.info(f"Eddy successfully forwarded channel post {message.message_id} to main group {main_group_id} topic {topic_id}")
+        except Exception as fwd_err:
+            logger.error(f"Eddy forward fallback also failed for channel post {message.message_id}: {fwd_err}")
 
     return router
