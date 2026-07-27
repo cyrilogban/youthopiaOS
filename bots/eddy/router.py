@@ -664,7 +664,7 @@ def build_eddy_router(description: str) -> Router:
         channel_link = f"https://t.me/{channel_username}/{message.message_id}"
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="📢 View in Channel ↗️", url=channel_link)]
+                [InlineKeyboardButton(text="💜 View in Channel 💜", url=channel_link)]
             ]
         )
 
