@@ -219,7 +219,22 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-            if result.track:
+            if result.track and result.track.file_path:
+                audio_file = FSInputFile(result.track.file_path)
+                thumbnail_file = None
+                
+                if result.track.thumbnail_url:
+                    try:
+                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                            resp = await client.get(
+                                result.track.thumbnail_url,
+                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+                            )
+                            if resp.status_code == 200:
+                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
+                    except Exception as photo_err:
+                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
+
                 duration_sec = result.track.duration or None
                 duration_min = (result.track.duration or 0) // 60
                 dur_rem = (result.track.duration or 0) % 60
@@ -235,44 +250,17 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 )
 
                 markup = _get_music_controls_keyboard()
-                photo_sent = False
 
-                if result.track.thumbnail_url:
-                    try:
-                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                            resp = await client.get(
-                                result.track.thumbnail_url,
-                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
-                            )
-                            if resp.status_code == 200:
-                                photo_file = BufferedInputFile(resp.content, filename="cover.jpg")
-                                await message.answer_photo(
-                                    photo=photo_file,
-                                    caption=caption,
-                                    parse_mode="HTML",
-                                    reply_markup=markup
-                                )
-                                photo_sent = True
-                    except Exception as photo_err:
-                        print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
-
-                if not photo_sent:
-                    await message.answer(
-                        caption,
-                        parse_mode="HTML",
-                        reply_markup=markup
-                    )
-
-                if result.track.file_path and os.path.exists(result.track.file_path):
-                    try:
-                        await message.answer_audio(
-                            audio=FSInputFile(result.track.file_path),
-                            title=result.track.title,
-                            performer="Susy Player",
-                            duration=duration_sec
-                        )
-                    except Exception as audio_err:
-                        print(f"SUSY AUDIO SEND ERROR: {audio_err}")
+                await message.answer_audio(
+                    audio=audio_file,
+                    thumbnail=thumbnail_file,
+                    title=result.track.title,
+                    performer="Susy Player",
+                    duration=duration_sec,
+                    caption=caption,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
             else:
                 await message.answer(result.message)
         except Exception as e:
@@ -449,7 +437,22 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-            if result.track:
+            if result.track and result.track.file_path:
+                audio_file = FSInputFile(result.track.file_path)
+                thumbnail_file = None
+                
+                if result.track.thumbnail_url:
+                    try:
+                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                            resp = await client.get(
+                                result.track.thumbnail_url,
+                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+                            )
+                            if resp.status_code == 200:
+                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
+                    except Exception as photo_err:
+                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
+
                 duration_sec = result.track.duration or None
                 duration_min = (result.track.duration or 0) // 60
                 dur_rem = (result.track.duration or 0) % 60
@@ -465,44 +468,17 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 )
 
                 markup = _get_music_controls_keyboard()
-                photo_sent = False
 
-                if result.track.thumbnail_url:
-                    try:
-                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                            resp = await client.get(
-                                result.track.thumbnail_url,
-                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
-                            )
-                            if resp.status_code == 200:
-                                photo_file = BufferedInputFile(resp.content, filename="cover.jpg")
-                                await message.answer_photo(
-                                    photo=photo_file,
-                                    caption=caption,
-                                    parse_mode="HTML",
-                                    reply_markup=markup
-                                )
-                                photo_sent = True
-                    except Exception as photo_err:
-                        print(f"SUSY PHOTO CARD FETCH NOTICE: {photo_err}")
-
-                if not photo_sent:
-                    await message.answer(
-                        caption,
-                        parse_mode="HTML",
-                        reply_markup=markup
-                    )
-
-                if result.track.file_path and os.path.exists(result.track.file_path):
-                    try:
-                        await message.answer_audio(
-                            audio=FSInputFile(result.track.file_path),
-                            title=result.track.title,
-                            performer="Susy Player",
-                            duration=duration_sec
-                        )
-                    except Exception as audio_err:
-                        print(f"SUSY AUDIO SEND ERROR: {audio_err}")
+                await message.answer_audio(
+                    audio=audio_file,
+                    thumbnail=thumbnail_file,
+                    title=result.track.title,
+                    performer="Susy Player",
+                    duration=duration_sec,
+                    caption=caption,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
             else:
                 await message.answer(result.message)
         except Exception as e:
