@@ -217,11 +217,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         await message.answer(about_text, parse_mode="HTML", reply_markup=markup)
 
-    @router.message(F.text == "Help")
-    async def on_help_menu_button(message: Message):
-        if message.chat.type != "private": return
-        await handle_help_command(message)
-
     @router.message(F.chat.type == "private", F.text & ~F.text.startswith("/"))
     async def handle_private_dm_music_query(message: Message) -> None:
         query = message.text.strip()
