@@ -217,6 +217,50 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         await message.answer(about_text, parse_mode="HTML", reply_markup=markup)
 
+    @router.message(Command("playlist"))
+    @router.message(F.text == "My Playlist")
+    @router.callback_query(F.data == "susy_my_playlist")
+    async def handle_my_playlist(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+        is_cb = isinstance(event, CallbackQuery)
+        message = event.message if is_cb else event
+        user_obj = event.from_user
+
+        empty_txt = (
+            "<b>📜 Your Personal Playlist is Empty!</b>\n\n"
+            "You haven't saved any tracks yet. Play a song and tap <b>💜 Save to Favorites</b> to build your collection!"
+        )
+
+        try:
+            user = await services.identity.resolve_telegram_user(user_obj)
+            user_id = user["id"]
+
+            try:
+                saved_tracks = await services.supabase.find_many("user_favorite_tracks", {"user_id": user_id})
+            except Exception as e:
+                saved_tracks = []
+
+            if not saved_tracks:
+                if is_cb:
+                    await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
+                else:
+                    await message.answer(empty_txt, parse_mode="HTML")
+                return
+
+            list_txt = "<b>📜 Your Saved Playlist 🎶</b>\n\n"
+            for idx, tr in enumerate(saved_tracks, 1):
+                list_txt += f"{idx}. <b>{tr.get('title', 'Unknown Track')}</b>\n"
+
+            list_txt += "\n<i>Type the name of any track to play it instantly!</i>"
+
+            if is_cb:
+                await event.answer()
+            await message.answer(list_txt, parse_mode="HTML")
+        except Exception:
+            if is_cb:
+                await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
+            else:
+                await message.answer(empty_txt, parse_mode="HTML")
+
     @router.message(F.chat.type == "private", F.text & ~F.text.startswith("/"))
     async def handle_private_dm_music_query(message: Message) -> None:
         query = message.text.strip()
@@ -517,50 +561,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "Type /playsong <song name> right here in this chat to request your next song!",
             show_alert=True
         )
-
-    @router.message(Command("playlist"))
-    @router.message(F.text == "My Playlist")
-    @router.callback_query(F.data == "susy_my_playlist")
-    async def handle_my_playlist(event: Message | CallbackQuery, services: ServiceContainer) -> None:
-        is_cb = isinstance(event, CallbackQuery)
-        message = event.message if is_cb else event
-        user_obj = event.from_user
-
-        empty_txt = (
-            "<b>📜 Your Personal Playlist is Empty!</b>\n\n"
-            "You haven't saved any tracks yet. Play a song and tap <b>💜 Save to Favorites</b> to build your collection!"
-        )
-
-        try:
-            user = await services.identity.resolve_telegram_user(user_obj)
-            user_id = user["id"]
-
-            try:
-                saved_tracks = await services.supabase.find("user_favorite_tracks", {"user_id": user_id})
-            except Exception:
-                saved_tracks = []
-
-            if not saved_tracks:
-                if is_cb:
-                    await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
-                else:
-                    await message.answer(empty_txt, parse_mode="HTML")
-                return
-
-            list_txt = "<b>📜 Your Saved Playlist 🎶</b>\n\n"
-            for idx, tr in enumerate(saved_tracks, 1):
-                list_txt += f"{idx}. <b>{tr.get('title', 'Unknown Track')}</b>\n"
-
-            list_txt += "\n<i>Type the name of any track to play it instantly!</i>"
-
-            if is_cb:
-                await event.answer()
-            await message.answer(list_txt, parse_mode="HTML")
-        except Exception:
-            if is_cb:
-                await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
-            else:
-                await message.answer(empty_txt, parse_mode="HTML")
 
     @router.callback_query(F.data == "susy_request_another")
     async def handle_request_another(callback: CallbackQuery) -> None:
