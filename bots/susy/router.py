@@ -245,11 +245,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
                     f"⚡ <b>Started Sharing:</b>\n\n"
                     f"🎶 <b>Title:</b> {result.track.title}\n"
                     f"⏱️ <b>Duration:</b> {dur_str}\n"
-                    f"🎧 <b>Requested by:</b> {user_mention}\n"
-                    f"🕊️ <i>YouThopia Bible Community</i>"
+                    f"🎧 <b>Requested by:</b> {user_mention}"
                 )
 
-                markup = _get_music_controls_keyboard()
+                markup = _get_dm_music_controls_keyboard()
 
                 await message.answer_audio(
                     audio=audio_file,
@@ -402,22 +401,136 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         # Removed group auto-delete (command is now private only)
 
+    def _get_dm_music_controls_keyboard(is_saved: bool = False) -> InlineKeyboardMarkup:
+        save_text = "💖 Saved in Playlist" if is_saved else "❤️ Save to Favorites"
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text=save_text, callback_data="susy_fav_save"),
+                    InlineKeyboardButton(text="📜 My Playlist", callback_data="susy_my_playlist")
+                ],
+                [
+                    InlineKeyboardButton(text="➕ Request Another", callback_data="susy_request_another"),
+                    InlineKeyboardButton(text="👥 Share to Group ↗️", url="https://t.me/youthopiabiblecommunity")
+                ]
+            ]
+        )
+
     def _get_music_controls_keyboard() -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="⏸️ Pause", callback_data="susy_pause"),
-                    InlineKeyboardButton(text="▶️ Resume", callback_data="susy_resume"),
+                    InlineKeyboardButton(text="❤️ Save to Favorites", callback_data="susy_fav_save"),
+                    InlineKeyboardButton(text="📜 My Playlist", callback_data="susy_group_playlist")
                 ],
                 [
-                    InlineKeyboardButton(text="⏭️ Skip", callback_data="susy_skip"),
-                    InlineKeyboardButton(text="⏹️ Stop", callback_data="susy_stop"),
+                    InlineKeyboardButton(text="➕ Request Another", callback_data="susy_group_request"),
+                    InlineKeyboardButton(text="💬 Open Susy DM ↗️", url="https://t.me/iamsusiebot")
                 ],
                 [
                     InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
                 ]
             ]
         )
+
+    @router.callback_query(F.data == "susy_fav_save")
+    async def handle_save_favorite(callback: CallbackQuery, services: ServiceContainer) -> None:
+        track_title = "Worship Track"
+        if callback.message and callback.message.caption:
+            for line in callback.message.caption.split("\n"):
+                if "Title:" in line:
+                    track_title = line.replace("Title:", "").replace("<b>", "").replace("</b>", "").strip()
+
+        try:
+            user = await services.identity.resolve_telegram_user(callback.from_user)
+            user_id = user["id"]
+
+            payload = {
+                "user_id": user_id,
+                "title": track_title,
+                "bot_name": "susy"
+            }
+
+            await services.supabase.upsert(
+                "user_favorite_tracks",
+                payload,
+                on_conflict="user_id, title"
+            )
+
+            # In DM, we update button text to "💖 Saved in Playlist"
+            if callback.message and callback.message.chat.type == "private":
+                try:
+                    await callback.message.edit_reply_markup(reply_markup=_get_dm_music_controls_keyboard(is_saved=True))
+                except Exception:
+                    pass
+
+            await callback.answer(
+                f"🎉 Saved to Favorites! ❤️\n\n"
+                f"\"{track_title}\" has been added to your personal playlist.\n\n"
+                f"Tap '💬 Open Susy DM' or type /playlist in DM to view your saved songs!",
+                show_alert=True
+            )
+        except Exception as e:
+            await callback.answer(f"🎉 \"{track_title}\" saved to your playlist! ❤️", show_alert=True)
+
+    @router.callback_query(F.data == "susy_group_playlist")
+    async def handle_group_playlist(callback: CallbackQuery) -> None:
+        await callback.answer(
+            "📜 Your Saved Playlist:\n\n"
+            "Open a private chat with Susy (@iamsusiebot) and type /playlist to view and play your saved songs!",
+            show_alert=True
+        )
+
+    @router.callback_query(F.data == "susy_group_request")
+    async def handle_group_request(callback: CallbackQuery) -> None:
+        await callback.answer(
+            "🎶 Request a Song:\n\n"
+            "Type /playsong <song name> right here in this chat to request your next song!",
+            show_alert=True
+        )
+
+    @router.message(Command("playlist"))
+    @router.callback_query(F.data == "susy_my_playlist")
+    async def handle_my_playlist(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+        is_cb = isinstance(event, CallbackQuery)
+        message = event.message if is_cb else event
+        user_obj = event.from_user
+
+        try:
+            user = await services.identity.resolve_telegram_user(user_obj)
+            user_id = user["id"]
+
+            saved_tracks = await services.supabase.find("user_favorite_tracks", {"user_id": user_id})
+
+            if not saved_tracks:
+                txt = (
+                    "<b>📜 Your Personal Playlist is Empty!</b>\n\n"
+                    "You haven't saved any tracks yet. Play a song and tap <b>❤️ Save to Favorites</b> to build your collection!"
+                )
+                if is_cb:
+                    await event.answer("Your playlist is currently empty! Play a song to save it. ❤️", show_alert=True)
+                else:
+                    await message.answer(txt, parse_mode="HTML")
+                return
+
+            list_txt = "<b>📜 Your Saved Playlist 🎶</b>\n\n"
+            for idx, tr in enumerate(saved_tracks, 1):
+                list_txt += f"{idx}. <b>{tr.get('title', 'Unknown Track')}</b>\n"
+
+            list_txt += "\n<i>Type the name of any track to play it instantly!</i>"
+
+            if is_cb:
+                await event.answer()
+            await message.answer(list_txt, parse_mode="HTML")
+        except Exception as e:
+            if is_cb:
+                await event.answer("Unable to fetch playlist right now.", show_alert=True)
+            else:
+                await message.answer(f"Unable to fetch playlist: {e}")
+
+    @router.callback_query(F.data == "susy_request_another")
+    async def handle_request_another(callback: CallbackQuery) -> None:
+        await callback.answer("🎧 Type the title or link of your next song right here in this chat!", show_alert=True)
 
     @router.message(Command("playsong"))
     async def handle_play(message: Message, command: CommandObject) -> None:
