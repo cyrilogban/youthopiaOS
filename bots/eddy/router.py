@@ -639,4 +639,43 @@ def build_eddy_router(description: str) -> Router:
             
         await state.clear()
 
+    # ----------------------------------------------------------------------
+    # CHANNEL-TO-TOPIC MIRROR (YouThopia Channel -> Group Topic Thread)
+    # ----------------------------------------------------------------------
+    @router.channel_post()
+    async def mirror_channel_post(message: Message, bot: Bot):
+        """
+        Fires whenever a new post appears in the linked channel (@joinyouthopia).
+        Copies it into the General topic (message_thread_id=1) of the Main Group
+        and attaches a button linking back to the original post in the channel.
+        """
+        main_group_id_str = os.getenv("MAIN_GROUP_ID", "-1001904672000")
+        try:
+            main_group_id = int(main_group_id_str)
+        except ValueError:
+            logger.error(f"Invalid MAIN_GROUP_ID: {main_group_id_str}")
+            return
+
+        topic_id = int(os.getenv("ANNOUNCEMENTS_TOPIC_ID", "1"))
+        channel_username = os.getenv("CHANNEL_USERNAME", "joinyouthopia").replace("@", "").strip()
+
+        try:
+            channel_link = f"https://t.me/{channel_username}/{message.message_id}"
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="📢 View in Channel ↗️", url=channel_link)]
+                ]
+            )
+
+            await bot.copy_message(
+                chat_id=main_group_id,
+                from_chat_id=message.chat.id,
+                message_id=message.message_id,
+                message_thread_id=topic_id,
+                reply_markup=keyboard
+            )
+            logger.info(f"Eddy successfully mirrored channel post {message.message_id} to group {main_group_id} topic {topic_id}")
+        except Exception as e:
+            logger.error(f"Eddy failed to mirror channel post {message.message_id}: {e}")
+
     return router
