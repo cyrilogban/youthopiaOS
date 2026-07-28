@@ -34,14 +34,15 @@ def build_susy_router(description: str, music_service=None) -> Router:
     @router.startup()
     async def on_startup(bot: Bot) -> None:
         private_commands = [
-            BotCommand(command="start", description="Wake Up Susy"),
-            BotCommand(command="playsong", description="Play song on telegram"),
-            BotCommand(command="help", description="Show help information"),
+            BotCommand(command="start", description="Meet Susy & Welcome"),
+            BotCommand(command="where", description="Community Topic Directory"),
+            BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
         group_commands = [
             BotCommand(command="start", description="Meet Susy"),
-            BotCommand(command="playsong", description="Play song in group"),
+            BotCommand(command="where", description="Community Topic Directory"),
+            BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
         await bot.delete_my_commands()
@@ -55,14 +56,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
             chat_title = event.chat.title or "your group"
             
             welcome_caption = (
-                f"✨ <b>Hey {first_name}, This is Susy!</b>\n\n"
-                f"🎶 Thanks for adding me to <b>{chat_title}</b>! I am your community music hostess.\n\n"
-                f"I can search and share worship tracks, songs, and audio podcasts directly in your Telegram group!"
+                f"🌸 <b>Hey {first_name}, This is Susy!</b>\n\n"
+                f"Thanks for having me in <b>{chat_title}</b>! I am your friendly community hostess.\n\n"
+                f"I'm here to make sure every member feels welcomed, connected, and guided across our community!"
             )
             
             welcome_markup = InlineKeyboardMarkup(inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="🎵 How to Play Songs", callback_data="susy_how_to_play")
+                    InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot")
                 ],
                 [
                     InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
@@ -85,14 +86,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
         chat_title = message.chat.title or "your community"
 
         welcome_text = (
-            f"✨ <b>Hey {first_name}, This is Susy!</b>\n\n"
-            f"🎶 Thanks for adding me to <b>{chat_title}</b>! I am your community music hostess.\n\n"
-            f"I can search and share worship tracks, songs, and audio podcasts directly in your Telegram group!"
+            f"🌸 <b>Hey {first_name}, This is Susy!</b>\n\n"
+            f"Thanks for having me in <b>{chat_title}</b>! I am your community hostess.\n\n"
+            f"I am here to welcome you, answer your questions, and guide you around!"
         )
 
         welcome_markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="🎵 How to Play Songs", callback_data="susy_how_to_play")
+                InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot")
             ],
             [
                 InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
@@ -163,21 +164,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
             ]
         ])
         
-        reply_keyboard = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="Play Song"),
-                    KeyboardButton(text="My Playlist")
-                ],
-                [
-                    KeyboardButton(text="Community"),
-                    KeyboardButton(text="Help")
-                ]
-            ],
-            resize_keyboard=True,
-            persistent=True
-        )
-
         if SUSY_PHOTO:
             await message.answer_photo(
                 photo=SUSY_PHOTO,
@@ -193,14 +179,24 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 reply_markup=markup
             )
             
-        await message.answer("Use the menu below to navigate Susy:", reply_markup=reply_keyboard)
-            
 
 
-    @router.message(F.text == "Play Song")
-    async def on_play_button(message: Message):
-        if message.chat.type != "private": return
-        await message.answer("📻 Ready to listen? Just type the name or link of your song below!\n\n*Example:* `Oceans Hillsong`", parse_mode="Markdown")
+    @router.message(Command("where"))
+    async def on_where_command(message: Message):
+        directory_text = (
+            "<b>🗺️ YouThopia Topic Directory & Guide</b>\n\n"
+            "<blockquote>Where would you like to go today? Here is your quick map to our group threads:</blockquote>\n\n"
+            "📢 <b>Announcements & Events:</b> Stay up to date with community news.\n"
+            "📖 <b>Devotionals & Scripture:</b> Daily inspiration with Theo (@iamtheobot).\n"
+            "🎮 <b>Games & Quizzes:</b> Test your Bible knowledge with Lusy (@iamlusybot).\n"
+            "🙏 <b>Prayer & Testimonies:</b> Stand in faith and share praise reports.\n"
+            "💬 <b>General Fellowship:</b> Connect and chat with fellow YouTopians!\n\n"
+            "<i>Tap below to jump right into the main group! 💜</i>"
+        )
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="💬 Open YouThopia Group", url="https://t.me/youthopiabiblecommunity")]
+        ])
+        await message.answer(directory_text, parse_mode="HTML", reply_markup=markup)
 
     @router.message(F.text == "Community")
     async def on_about_community(message: Message):
@@ -261,75 +257,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             else:
                 await message.answer(empty_txt, parse_mode="HTML")
 
-    @router.message(F.chat.type == "private", F.text & ~F.text.startswith("/"))
-    async def handle_private_dm_music_query(message: Message) -> None:
-        query = message.text.strip()
-        if not query or len(query) < 2:
-            return
-            
-        if query in {"Play Song", "My Playlist", "Community", "Help", "🎧 Play Song", "🌍 Community", "❓ Help"}:
-            return
-            
-        if not music_service:
-            await message.answer("My music engine is currently offline!")
-            return
-
-        status_msg = await message.answer("🔍 Searching for your song...")
-        try:
-            result = await music_service.fetch_track(query)
-            try:
-                await status_msg.delete()
-            except Exception:
-                pass
-
-            if result.track and result.track.file_path:
-                audio_file = FSInputFile(result.track.file_path)
-                thumbnail_file = None
-                
-                if result.track.thumbnail_url:
-                    try:
-                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                            resp = await client.get(
-                                result.track.thumbnail_url,
-                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
-                            )
-                            if resp.status_code == 200:
-                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
-                    except Exception as photo_err:
-                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
-
-                duration_sec = result.track.duration or None
-                duration_min = (result.track.duration or 0) // 60
-                dur_rem = (result.track.duration or 0) % 60
-                dur_str = f"{duration_min}:{dur_rem:02d}" if result.track.duration else "Live Stream"
-                user_mention = message.from_user.mention_html() if message.from_user else "User"
-
-                caption = (
-                    f"⚡ <b>Started Sharing:</b>\n\n"
-                    f"🎶 <b>Title:</b> {result.track.title}\n"
-                    f"⏱️ <b>Duration:</b> {dur_str}\n"
-                    f"🎧 <b>Requested by:</b> {user_mention}"
-                )
-
-                markup = _get_dm_music_controls_keyboard()
-
-                await message.answer_audio(
-                    audio=audio_file,
-                    thumbnail=thumbnail_file,
-                    title=result.track.title,
-                    performer="Susy Player",
-                    duration=duration_sec,
-                    caption=caption,
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
-            else:
-                await message.answer(result.message)
-        except Exception as e:
-            try:
-                await status_msg.edit_text(f"Error: {e}")
-            except Exception:
-                await message.answer(f"Error: {e}")
+    # --- DM MUSIC QUERY (DISABLED - PRESERVED FOR FUTURE REUSE) ---
+    # @router.message(F.chat.type == "private", F.text & ~F.text.startswith("/"))
+    # async def handle_private_dm_music_query(message: Message) -> None:
+    #     ...
 
 
     # --- ONBOARDING PAGINATION LOGIC ---
@@ -566,77 +497,11 @@ def build_susy_router(description: str, music_service=None) -> Router:
     async def handle_request_another(callback: CallbackQuery) -> None:
         await callback.answer("🎧 Type the title or link of your next song right here in this chat!", show_alert=True)
 
-    @router.message(Command("playsong"))
-    async def handle_play(message: Message, command: CommandObject) -> None:
-        if not music_service:
-            await message.answer("My music engine is currently offline!")
-            return
-            
-        if not command.args:
-            await message.answer("Please provide a song name or link!\nExample: `/playsong Oceans Hillsong`", parse_mode="Markdown")
-            return
-            
-        status_msg = await message.answer("🔍 Searching for your song...")
-        try:
-            result = await music_service.fetch_track(command.args)
-            try:
-                await status_msg.delete()
-            except Exception:
-                pass
-
-            if result.track and result.track.file_path:
-                audio_file = FSInputFile(result.track.file_path)
-                thumbnail_file = None
-                
-                if result.track.thumbnail_url:
-                    try:
-                        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                            resp = await client.get(
-                                result.track.thumbnail_url,
-                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
-                            )
-                            if resp.status_code == 200:
-                                thumbnail_file = BufferedInputFile(resp.content, filename="cover.jpg")
-                    except Exception as photo_err:
-                        print(f"SUSY THUMBNAIL FETCH NOTICE: {photo_err}")
-
-                duration_sec = result.track.duration or None
-                duration_min = (result.track.duration or 0) // 60
-                dur_rem = (result.track.duration or 0) % 60
-                dur_str = f"{duration_min}:{dur_rem:02d}" if result.track.duration else "Live Stream"
-                user_mention = message.from_user.mention_html() if message.from_user else "User"
-
-                caption = (
-                    f"⚡ <b>Started Sharing:</b>\n\n"
-                    f"🎶 <b>Title:</b> {result.track.title}\n"
-                    f"⏱️ <b>Duration:</b> {dur_str}\n"
-                    f"🎧 <b>Requested by:</b> {user_mention}\n"
-                    f"🕊️ <i>YouThopia Bible Community</i>"
-                )
-
-                markup = _get_music_controls_keyboard()
-
-                await message.answer_audio(
-                    audio=audio_file,
-                    thumbnail=thumbnail_file,
-                    title=result.track.title,
-                    performer="Susy Player",
-                    duration=duration_sec,
-                    caption=caption,
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
-            else:
-                await message.answer(result.message)
-        except Exception as e:
-            try:
-                await status_msg.edit_text(f"Error: {e}")
-            except Exception:
-                await message.answer(f"Error: {e}")
-
-    @router.callback_query(F.data == "susy_how_to_play")
-    async def handle_how_to_play(callback: CallbackQuery) -> None:
-        await callback.answer("🎧 Type /playsong <song name> to play music in the group!", show_alert=True)
+    # --- MUSIC COMMANDS & CALLBACKS (DISABLED - PRESERVED FOR FUTURE REUSE) ---
+    # @router.message(Command("playsong"))
+    # async def handle_play(message: Message, command: CommandObject) -> None:
+    #     ...
+    # @router.message(Command("stop")) ...
 
     @router.callback_query(F.data == "susy_close_msg")
     async def handle_close_msg(callback: CallbackQuery) -> None:
@@ -644,57 +509,5 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await callback.message.delete()
         except Exception:
             await callback.answer("Message closed")
-
-    @router.callback_query(F.data.startswith("susy_"))
-    async def handle_music_callback(callback: CallbackQuery) -> None:
-        if not music_service:
-            await callback.answer("Music service offline", show_alert=True)
-            return
-            
-        action = callback.data.replace("susy_", "")
-        chat_id = callback.message.chat.id
-        
-        if action == "pause":
-            res = await music_service.pause(chat_id)
-            await callback.answer(res.message)
-        elif action == "resume":
-            res = await music_service.resume(chat_id)
-            await callback.answer(res.message)
-        elif action == "skip":
-            res = await music_service.skip(chat_id)
-            await callback.answer(res.message)
-            await callback.message.answer(f"⏭️ {res.message}")
-        elif action == "stop":
-            res = await music_service.stop(chat_id)
-            await callback.answer(res.message)
-            await callback.message.answer(f"⏹️ {res.message}")
-
-    @router.message(Command("stop"))
-    async def handle_stop(message: Message) -> None:
-        if not music_service:
-            return
-        result = await music_service.stop(message.chat.id)
-        await message.answer(result.message)
-
-    @router.message(Command("skip"))
-    async def handle_skip(message: Message) -> None:
-        if not music_service:
-            return
-        result = await music_service.skip(message.chat.id)
-        await message.answer(result.message)
-
-    @router.message(Command("pause"))
-    async def handle_pause(message: Message) -> None:
-        if not music_service:
-            return
-        result = await music_service.pause(message.chat.id)
-        await message.answer(result.message)
-        
-    @router.message(Command("resume"))
-    async def handle_resume(message: Message) -> None:
-        if not music_service:
-            return
-        result = await music_service.resume(message.chat.id)
-        await message.answer(result.message)
 
     return router
