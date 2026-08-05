@@ -49,15 +49,13 @@ def build_susy_router(description: str, music_service=None) -> Router:
     @router.startup()
     async def on_startup(bot: Bot) -> None:
         private_commands = [
-            BotCommand(command="start", description="Meet Susy & Welcome"),
-            BotCommand(command="where", description="Community Topic Directory"),
+            BotCommand(command="start", description="Meet Susy"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
         group_commands = [
             BotCommand(command="start", description="Meet Susy"),
-            BotCommand(command="where", description="Community Topic Directory"),
             BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
@@ -333,6 +331,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
     @router.message(Command("help"))
+    @router.message(F.text == "ℹ️ Help")
     @router.message(F.text == "Help")
     @router.callback_query(F.data == "susy_help")
     async def handle_susy_help(event: Message | CallbackQuery, services: ServiceContainer) -> None:
@@ -355,19 +354,20 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "<blockquote>I am Susy (@iamsusiebot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Susy Features & Commands</b>\n"
             "• 🌸 <b>Explore the Community:</b> Interactive 3-step tour for new YouTopians (+50 Trust Points).\n"
-            "• 🗺️ <b>Topic Directory (/where):</b> Direct links to all group threads.\n"
             "• 🤝 <b>Hospitality & Guidance:</b> Here to answer questions and show you around.\n"
             "• <b>/start:</b> Open Susy welcome dashboard.\n"
-            "• <b>/where:</b> Access group topic threads directory.</blockquote>\n\n"
+            "• <b>/profile:</b> View your YouTopian profile card.\n"
+            "• <b>/help:</b> Open Susy hostess guide.</blockquote>\n\n"
             f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
             "Sharing God's Love All The Way 💜"
         )
 
+        reply_markup = get_community_links_keyboard() if is_callback else build_susy_reply_keyboard()
         await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
-            reply_markup=get_community_links_keyboard(),
+            reply_markup=reply_markup,
         )
 
     @router.callback_query(F.data == "susy_community_links")
