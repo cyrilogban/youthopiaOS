@@ -23,6 +23,15 @@ logger = logging.getLogger(__name__)
 
 from core.telegram_runtime import build_router
 from shared.services.container import ServiceContainer
+from shared.utils.ui import (
+    BOT_FAMILY_DIRECTORY_TEXT,
+    get_community_links_keyboard,
+    render_shared_profile_card,
+)
+from bots.eddy.utils.keyboards import (
+    build_eddy_reply_keyboard,
+    build_event_card_inline_keyboard,
+)
 
 
 class EventCreation(StatesGroup):
@@ -40,34 +49,31 @@ def build_eddy_router(description: str) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot) -> None:
-        # Define the exact sidebar commands requested for DMs
+        # Define sidebar commands for DMs per spec
         private_commands = [
-            BotCommand(command="start", description="Open the Main Dashboard"),
-            BotCommand(command="help", description="Show Ed's instructions"),
-            BotCommand(command="calendar", description="View all upcoming events"),
+            BotCommand(command="start", description="Open Ed main dashboard"),
+            BotCommand(command="calendar", description="View this week's event schedule"),
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),
+            BotCommand(command="profile", description="View your profile"),
+            BotCommand(command="help", description="Show Ed's instructions"),
         ]
 
-        # Define the commands allowed in groups (exclude start/help/my_events)
         group_commands = [
             BotCommand(command="calendar", description="View all upcoming events"),
         ]
         
-        # Apply them to DMs and Groups separately
-        await bot.delete_my_commands()
+        try:
+            await bot.delete_my_commands()
+        except Exception:
+            pass
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
-        # ----------------------------------------------------
-        # THE INVISIBLE ADMIN COMMAND
-        # ----------------------------------------------------
+        # Admin commands registration
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS")
         if admin_ids_str:
-            # Could be multiple IDs separated by commas (e.g. "123,456")
             admin_ids = [aid.strip() for aid in admin_ids_str.split(",") if aid.strip().isdigit()]
-            
-            # Register the new_event command for EVERY admin in the list
             admin_commands = private_commands + [
                 BotCommand(command="new_event", description="[Admin] Create a pop-up event")
             ]
@@ -77,13 +83,12 @@ def build_eddy_router(description: str) -> Router:
                 except Exception as e:
                     logger.error(f"Failed to set admin commands for {admin_id}: {e}")
 
-        # Start the background scheduler
+        # Start background scheduler
         from bots.eddy.services.scheduler import setup_eddy_scheduler
         setup_eddy_scheduler(bot)
 
     @router.message(Command("start"))
     async def handle_start(message: Message, services: ServiceContainer) -> None:
-        # Temporary cleanup if in a group
         if message.chat.type != "private":
             try:
                 await message.delete()
@@ -91,36 +96,112 @@ def build_eddy_router(description: str) -> Router:
                 pass
             return
             
-        # Register the user so their RSVPs and profile can be stored
         try:
             await services.identity.resolve_telegram_user(message.from_user)
         except Exception as e:
-            logger.error(f"Failed to register user in Eddy /start: {e}")
+            logger.error(f"Failed to register user in Ed /start: {e}")
 
+        first_name = message.from_user.first_name or "Friend"
         welcome_text = (
-            "<b>Welcome to the YouThopia Weekly Calendar! 📅</b>\n"
-            "<blockquote>I am Eddy, your community manager. Click a button below to check your schedule!</blockquote>"
+            f"<b>Welcome to the YouThopia Weekly Calendar, {first_name}! 📅</b>\n"
+            "<blockquote>I am Ed (Eddy), your community manager and event scheduler.\n\n"
+            "Use the menu below to view upcoming events, check your RSVPs, or register your birthday!</blockquote>"
         )
 
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="📅 View Calendar"),
-                    KeyboardButton(text="🎫 My Events")
-                ],
-                [
-                    KeyboardButton(text="🎂 Add Birthday"),
-                    KeyboardButton(text="🔔 Reminders")
-                ],
-                [
-                    KeyboardButton(text="About Community")
-                ]
-            ],
-            resize_keyboard=True,
-            persistent=True
-        )
-
+        markup = build_eddy_reply_keyboard()
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
+
+    # -------------------------------------------------------------------------
+    # GLOBAL BUTTON 1: 👤 My Profile / /profile
+    # -------------------------------------------------------------------------
+    @router.message(F.text == "👤 My Profile")
+    @router.message(Command("profile"))
+    async def profile_handler(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
+        await send_eddy_profile(message, services)
+
+    async def send_eddy_profile(message: Message, services: ServiceContainer) -> None:
+        user = await services.identity.resolve_telegram_user(message.from_user)
+        user_id = user["id"]
+
+        # Fetch birthday if registered
+        profile_rec = await services.supabase.find_one_multi("user_profiles", {"user_id": user_id})
+        birthday_str = "Not set (Use 🎂 Add Birthday)"
+        if profile_rec and profile_rec.get("birthday"):
+            birthday_str = profile_rec["birthday"]
+
+        # Fetch RSVPs count
+        rsvps = await services.supabase.find_many("event_rsvps", {"user_id": user_id})
+        rsvp_count = len(rsvps) if rsvps else 0
+
+        # Ed-specific stats for profile card
+        bot_stats = [
+            f"🎂 Birthday: <b>{birthday_str}</b>",
+            f"🎫 Event RSVPs: <b>{rsvp_count} events</b>",
+        ]
+
+        card_text = render_shared_profile_card(
+            user_data=user,
+            telegram_first_name=message.from_user.first_name or "Friend",
+            bot_specific_stats=bot_stats
+        )
+
+        await message.answer(card_text, parse_mode="HTML", reply_markup=build_eddy_reply_keyboard())
+
+    # -------------------------------------------------------------------------
+    # GLOBAL BUTTON 2: ℹ️ Help / /help
+    # -------------------------------------------------------------------------
+    @router.message(F.text == "ℹ️ Help")
+    @router.message(Command("help"))
+    async def help_handler(message: Message) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
+        await send_eddy_help(message)
+
+    async def send_eddy_help(message: Message) -> None:
+        help_text = (
+            "<b>📅 Ed | Events Bot Help Guide</b>\n"
+            "<blockquote>I am Ed (@iamedyybot), your event scheduler and community manager in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Ed Features & Commands</b>\n"
+            "• 📅 <b>View Calendar:</b> Check this week's official community events.\n"
+            "• 🎫 <b>My Events:</b> View events you have RSVP'd for.\n"
+            "• 🎂 <b>Add Birthday:</b> Register your birthday for community shoutouts.\n"
+            "• 🔔 <b>Reminders:</b> Toggle event notifications.\n"
+            "• <b>/calendar:</b> Display weekly schedule in DM or group.\n"
+            "• <b>/my_events:</b> List your RSVPs.\n"
+            "• <b>/addbirthday:</b> Register your birthday date.</blockquote>\n\n"
+            f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
+            "Sharing God's Love All The Way 💜"
+        )
+        await message.answer(
+            help_text,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=get_community_links_keyboard(),
+        )
+
+    # -------------------------------------------------------------------------
+    # GLOBAL BUTTON 3: 🌐 Community Links
+    # -------------------------------------------------------------------------
+    @router.message(F.text == "🌐 Community Links")
+    async def community_links_handler(message: Message) -> None:
+        if message.chat.type != "private":
+            return
+        await message.answer(
+            "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
+            "<blockquote>Connect with us across all platforms to stay updated, fellowship, and grow together! 💜</blockquote>",
+            parse_mode="HTML",
+            reply_markup=get_community_links_keyboard()
+        )
 
 
     @router.message(Command("calendar"))
