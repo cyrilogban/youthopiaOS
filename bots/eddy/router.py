@@ -118,17 +118,24 @@ def build_eddy_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     @router.message(F.text == "👤 My Profile")
     @router.message(Command("profile"))
-    async def profile_handler(message: Message, services: ServiceContainer) -> None:
+    @router.callback_query(F.data == "eddy_profile")
+    async def profile_handler(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+        is_callback = isinstance(event, CallbackQuery)
+        message = event.message if is_callback else event
+
+        if is_callback:
+            await event.answer()
+
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
             return
-        await send_eddy_profile(message, services)
+        await send_eddy_profile(message, event.from_user, services)
 
-    async def send_eddy_profile(message: Message, services: ServiceContainer) -> None:
-        user = await services.identity.resolve_telegram_user(message.from_user)
+    async def send_eddy_profile(message: Message, from_user: Any, services: ServiceContainer) -> None:
+        user = await services.identity.resolve_telegram_user(from_user)
         user_id = user["id"]
 
         # Fetch birthday if registered
@@ -149,7 +156,7 @@ def build_eddy_router(description: str) -> Router:
 
         card_text = render_shared_profile_card(
             user_data=user,
-            telegram_first_name=message.from_user.first_name or "Friend",
+            telegram_first_name=from_user.first_name or "Friend",
             bot_specific_stats=bot_stats
         )
 

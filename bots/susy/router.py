@@ -29,6 +29,7 @@ from shared.utils.ui import (
     handle_global_onboarding_callback,
 )
 from bots.susy.utils.keyboards import (
+    build_susy_reply_keyboard,
     build_susy_start_inline_keyboard,
     build_onboarding_tour_keyboard,
     build_topic_directory_keyboard,
@@ -144,27 +145,29 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "<blockquote>I am Susy, your first friend and community hostess here in the YouThopia ecosystem.\n\n"
             "We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it!</blockquote>\n\n"
             "<b>Getting Started</b>\n"
-            "<blockquote>I'm here to show you around! If you are new here, my job is to make sure you know exactly how everything works.\n\n"
-            "Tap <b>🌸 Explore the Community</b> below to start your orientation!</blockquote>\n\n"
+            "<blockquote>I'm here to show you around! Use the menu buttons below to check your profile, explore the community, or ask for help!</blockquote>\n\n"
             "Sharing God's Love All The Way 💜"
         )
         
-        markup = build_susy_start_inline_keyboard()
+        reply_menu = build_susy_reply_keyboard()
+        inline_menu = build_susy_start_inline_keyboard()
         
         if SUSY_PHOTO:
             await message.answer_photo(
                 photo=SUSY_PHOTO,
                 caption=welcome_text,
                 parse_mode="HTML",
-                reply_markup=markup
+                reply_markup=inline_menu
             )
         else:
             await message.answer(
                 welcome_text,
                 parse_mode="HTML",
                 disable_web_page_preview=True,
-                reply_markup=markup
+                reply_markup=inline_menu
             )
+        
+        await message.answer("🌸 Use the persistent menu below to navigate Susy's hostess controls:", reply_markup=reply_menu)
 
     @router.message(Command("where"))
     async def on_where_command(message: Message):
@@ -268,6 +271,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
     # -------------------------------------------------------------------------
+    @router.message(F.text == "👤 My Profile")
     @router.message(Command("profile"))
     @router.callback_query(F.data == "susy_profile")
     async def handle_susy_profile(event: Message | CallbackQuery, services: ServiceContainer) -> None:
