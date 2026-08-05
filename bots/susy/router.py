@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from datetime import datetime
 from pathlib import Path
 import httpx
 from aiogram import F, Router, Bot
@@ -290,10 +291,40 @@ def build_susy_router(description: str, music_service=None) -> Router:
             return
 
         user = await services.identity.resolve_telegram_user(user_from)
+        engagement = user.get("engagement_level", "new")
+        trust = user.get("trust_score", 100)
+
+        # 1. Orientation status
+        orientation_str = "Completed 🎉" if engagement == "onboarded" else "Pending (Tap 🌐 Community)"
+
+        # 2. Dynamic Community Status
+        if trust >= 100 and engagement == "onboarded":
+            status_str = "Verified Member"
+        elif trust >= 80:
+            status_str = "Active YouTopian"
+        else:
+            status_str = "Under Observation"
+
+        # 3. Dynamic Joined Date
+        created_at_raw = user.get("created_at")
+        joined_str = "Aug 2026"
+        if created_at_raw:
+            try:
+                dt = datetime.fromisoformat(str(created_at_raw).replace("Z", "+00:00"))
+                joined_str = dt.strftime("%b %Y")
+            except Exception:
+                pass
+
+        bot_stats = [
+            f"🌸 Orientation: <b>{orientation_str}</b>",
+            f"✨ Community Status: <b>{status_str}</b>",
+            f"📅 Joined YouThopia: <b>{joined_str}</b>",
+        ]
 
         card_text = render_shared_profile_card(
             user_data=user,
-            telegram_first_name=user_from.first_name or "Friend"
+            telegram_first_name=user_from.first_name or "Friend",
+            bot_specific_stats=bot_stats
         )
 
         await message.answer(card_text, parse_mode="HTML", reply_markup=build_susy_reply_keyboard())
