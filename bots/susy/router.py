@@ -292,11 +292,21 @@ def build_susy_router(description: str, music_service=None) -> Router:
         engagement = user.get("engagement_level", "new")
         trust = user.get("trust_score", 100)
 
+        # Dual-check: check engagement_level OR moderation_actions for orientation_completed
+        is_onboarded = (engagement == "onboarded")
+        if not is_onboarded:
+            try:
+                actions = await services.supabase.find_many("moderation_actions", {"user_id": user["id"], "action_type": "orientation_completed"})
+                if actions:
+                    is_onboarded = True
+            except Exception as e:
+                logger.warning(f"Failed to check moderation_actions for orientation: {e}")
+
         # 1. Orientation status
-        orientation_str = "Completed 🎉" if engagement == "onboarded" else "Pending (Tap 🌐 Community)"
+        orientation_str = "Completed 🎉" if is_onboarded else "Pending (Tap 🌐 Community)"
 
         # 2. Dynamic Community Status
-        if trust >= 100 and engagement == "onboarded":
+        if trust >= 100 and is_onboarded:
             status_str = "Verified Member"
         elif trust >= 80:
             status_str = "Active YouTopian"
