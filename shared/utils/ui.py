@@ -171,13 +171,20 @@ async def handle_global_onboarding_callback(callback_query: CallbackQuery, servi
 
         # Check if user has already completed orientation globally in Supabase
         if user.get("engagement_level") != "onboarded":
-            await services.moderation.record_action(
-                user_id=user["id"],
-                action_type="orientation_completed",
-                reason="Completed community exploration guide.",
-                trust_delta=50
-            )
-            await services.users.set_engagement_level(user["id"], "onboarded")
+            try:
+                await services.users.set_engagement_level(user["id"], "onboarded")
+            except Exception as e:
+                logger.warning(f"Failed to set engagement_level: {e}")
+
+            try:
+                await services.moderation.record_action(
+                    user_id=user["id"],
+                    action_type="orientation_completed",
+                    reason="Completed community exploration guide.",
+                    trust_delta=50
+                )
+            except Exception as e:
+                logger.warning(f"Failed to record orientation action: {e}")
 
             finish_text = (
                 "<b>Exploration Complete! 🎉</b>\n"
