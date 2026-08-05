@@ -408,58 +408,6 @@ def pete_menu() -> ReplyKeyboardMarkup:
 class AppealState(StatesGroup):
     waiting_for_appeal = State()
 
-@router.message(Command("profile"))
-async def handle_youtopianstatus(message: Message, services: ServiceContainer) -> None:
-    if message.chat.type != "private":
-        try:
-            await message.delete()
-        except Exception:
-            pass
-        return
-        
-    target_record = await services.identity.resolve_telegram_user(message.from_user)
-    
-    trust_score = int(target_record.get("trust_score", 100))
-    warnings = await services.moderation.get_user_warnings_count(target_record["id"])
-    
-    # Calculate Progress Bars
-    filled_trust = int(max(0, min(100, trust_score)) // 10)
-    trust_bar = "█" * filled_trust + "░" * (10 - filled_trust)
-    
-    warn_clamped = max(0, min(5, warnings))
-    warn_bar = "█" * warn_clamped + "░" * (5 - warn_clamped)
-
-    # Kingdom Theme Logic
-    if trust_score == 100 and warnings == 0:
-        title = "Kingdom Ambassador"
-    elif trust_score >= 80:
-        title = "Noble YouTopian"
-    elif trust_score >= 50:
-        title = "Citizen"
-    elif trust_score > 0:
-        title = "Under Surveillance"
-    else:
-        title = "Exiled"
-        
-    status_card = (
-        "<b>MY PROFILE</b>\n\n"
-        "<blockquote>"
-        f"<b>Name:</b> {message.from_user.first_name}\n"
-        f"<b>Trust:</b> {trust_score}/100 <code>[{trust_bar}]</code>\n"
-        f"<b>Status:</b> {title}\n"
-        f"<b>Warnings:</b> {warnings}/5 <code>[{warn_bar}]</code>\n"
-        "</blockquote>"
-    )
-    
-    markup = None
-    if trust_score < 100 or warnings > 0:
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📝 Submit Apology / Appeal", callback_data="appeal_init")]
-        ])
-        
-    sent_msg = await message.reply(status_card, parse_mode="HTML", reply_markup=markup)
-    # Removed group auto-delete (command is now private only)
-
 @router.callback_query(F.data == "appeal_init")
 async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -> None:
     # Ensure they are appealing in DMs so they don't spam the group with their appeal text
@@ -469,12 +417,6 @@ async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -
         
     await start_appeal_flow(callback_query.message, state)
     await callback_query.answer()
-
-@router.message(F.text == "My profile")
-async def handle_youtopianstatus_menu(message: Message, services: ServiceContainer) -> None:
-    if message.chat.type != "private":
-        return
-    await handle_youtopianstatus(message, services)
 
 @router.message(F.text == "📝 Submit Appeal")
 async def handle_submit_appeal_menu(message: Message, state: FSMContext) -> None:
