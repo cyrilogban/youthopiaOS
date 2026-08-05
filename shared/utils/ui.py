@@ -170,7 +170,7 @@ async def handle_global_onboarding_callback(callback_query: CallbackQuery, servi
         user = await services.identity.resolve_telegram_user(callback_query.from_user)
 
         # Check if user has already completed orientation globally in Supabase
-        if user.get("engagement_level") in ["new", None]:
+        if user.get("engagement_level") != "onboarded":
             await services.moderation.record_action(
                 user_id=user["id"],
                 action_type="orientation_completed",
