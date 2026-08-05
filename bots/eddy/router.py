@@ -138,17 +138,21 @@ def build_eddy_router(description: str) -> Router:
         user = await services.identity.resolve_telegram_user(from_user)
         user_id = user["id"]
 
-        # Fetch birthday if registered
-        profile_rec = await services.supabase.find_one_multi("user_profiles", {"user_id": user_id})
         birthday_str = "Not set (Use 🎂 Add Birthday)"
-        if profile_rec and profile_rec.get("birthday"):
-            birthday_str = profile_rec["birthday"]
+        try:
+            profile_rec = await services.supabase.find_one_multi("user_profiles", {"user_id": user_id})
+            if profile_rec and profile_rec.get("birthday"):
+                birthday_str = profile_rec["birthday"]
+        except Exception as e:
+            logger.warning(f"Failed to fetch user profile for birthday: {e}")
 
-        # Fetch RSVPs count
-        rsvps = await services.supabase.find_many("event_rsvps", {"user_id": user_id})
-        rsvp_count = len(rsvps) if rsvps else 0
+        rsvp_count = 0
+        try:
+            rsvps = await services.supabase.find_many("event_rsvps", {"user_id": user_id})
+            rsvp_count = len(rsvps) if rsvps else 0
+        except Exception as e:
+            logger.warning(f"Failed to fetch event rsvps: {e}")
 
-        # Ed-specific stats for profile card
         bot_stats = [
             f"🎂 Birthday: <b>{birthday_str}</b>",
             f"🎫 Event RSVPs: <b>{rsvp_count} events</b>",
