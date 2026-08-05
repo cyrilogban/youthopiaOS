@@ -4,14 +4,14 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 def build_pete_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Pete DM /start Card Inline Keyboard per YouThopiaOS UI Spec:
-    [ 👤 My Profile ]  [ ℹ️ Help ]  [ 🌐 Community Links ]
+    [ 👤 My Profile ]  [ ℹ️ Help ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="👤 My Profile", callback_data="pete_profile"),
                 InlineKeyboardButton(text="ℹ️ Help", callback_data="pete_help"),
-                InlineKeyboardButton(text="🌐 Community Links", callback_data="pete_community_links"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
             ]
         ]
     )

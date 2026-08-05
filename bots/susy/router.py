@@ -25,6 +25,8 @@ from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
     render_shared_profile_card,
+    send_community_exploration_page,
+    handle_global_onboarding_callback,
 )
 from bots.susy.utils.keyboards import (
     build_susy_start_inline_keyboard,
@@ -246,89 +248,22 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     # --- ONBOARDING PAGINATION LOGIC ---
     
+    # -------------------------------------------------------------------------
+    # GLOBAL BUTTON 3: 🌐 Community
+    # -------------------------------------------------------------------------
+    @router.message(F.text == "🌐 Community")
+    @router.message(F.text == "🌐 Community Links")
+    async def community_handler(message: Message) -> None:
+        if message.chat.type != "private":
+            return
+        await send_community_exploration_page(message, 1)
+
     async def send_onboarding_page(message: Message, page: int, edit: bool = False) -> None:
-        if page == 1:
-            text = (
-                "<b>Welcome to YOUTHOPIA! 🤍 (1/3)</b>\n"
-                "<blockquote>We are a cross-platform Gen Z Christian community. This is a space where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
-                "<i>Click Next to read our community guidelines.</i>"
-            )
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_2")]
-            ])
-        elif page == 2:
-            text = (
-                "<b>The Core Rules 📜 (2/3)</b>\n"
-                "<blockquote><b>1. Love & Respect:</b> Treat everyone with Christ-like love.\n"
-                "<b>2. No Spam:</b> Keep the chat clean and focused on growth.\n"
-                "<b>3. Guard the Vibe:</b> Keep conversations edifying and uplifting.</blockquote>\n\n"
-                "<i>Click Next to meet the YouThopia Bot Family!</i>"
-            )
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_1"),
-                    InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_3")
-                ]
-            ])
-        elif page == 3:
-            text = (
-                "<b>Meet the Bot Family 🤖 (3/3)</b>\n"
-                "<blockquote><b>Theo</b> (@iamtheobot) - Your daily devotional companion.\n"
-                "<b>Lusy</b> (@iamlusybot) - Play games and earn YP!\n"
-                "<b>Pete</b> (@iampetebot) - The security guard.\n"
-                "<b>Ed</b> (@iamedyybot) - Announcements and events.\n"
-                "<b>Susy</b> (Me!) - Your guide and friend.</blockquote>\n\n"
-                "<i>Click Finish to complete your orientation!</i>"
-            )
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_2"),
-                    InlineKeyboardButton(text="Finish Exploring", callback_data="onboarding_finish")
-                ]
-            ])
-            
-        if edit:
-            await message.edit_text(text, parse_mode="HTML", reply_markup=markup)
-        else:
-            await message.answer(text, parse_mode="HTML", reply_markup=markup)
+        await send_community_exploration_page(message, page, edit=edit)
 
     @router.callback_query(F.data.startswith("onboarding_"))
     async def handle_onboarding_callbacks(callback_query: CallbackQuery, services: ServiceContainer) -> None:
-        action = callback_query.data.split("_")[1]
-        
-        if action in ["1", "2", "3"]:
-            await send_onboarding_page(callback_query.message, int(action), edit=True)
-            await callback_query.answer()
-        elif action == "finish":
-            user = await services.identity.resolve_telegram_user(callback_query.from_user)
-            
-            # Check if they have already completed orientation
-            if user.get("engagement_level") in ["new", None]:
-                # Grant 50 initial points for completing orientation via moderation service
-                await services.moderation.record_action(
-                    user_id=user["id"],
-                    action_type="orientation_completed",
-                    reason="Completed the Susy onboarding guide.",
-                    trust_delta=50
-                )
-                await services.users.set_engagement_level(user["id"], "onboarded")
-                
-                finish_text = (
-                    "<b>Exploration Complete! 🎉</b>\n"
-                    "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your exploration.</blockquote>\n\n"
-                    "Head back to the main group and start <a href=\"https://t.me/youthopiabiblecommunity\">fellowship!</a>"
-                )
-                await callback_query.answer("Exploration Complete! +50 Trust Points!")
-            else:
-                # They already did it
-                finish_text = (
-                    "<b>Exploration Reviewed!</b>\n"
-                    "<blockquote>It looks like you've already completed your official exploration! No extra points were granted, but it's always great to refresh your memory about the community.</blockquote>\n\n"
-                    "Head back to the main group and start <a href=\"https://t.me/youthopiabiblecommunity\">fellowship!</a>"
-                )
-                await callback_query.answer("Exploration Reviewed!")
-                
-            await callback_query.message.edit_text(finish_text, parse_mode="HTML")
+        await handle_global_onboarding_callback(callback_query, services)
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile

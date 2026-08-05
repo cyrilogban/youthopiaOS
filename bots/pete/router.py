@@ -13,6 +13,8 @@ from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
     render_shared_profile_card,
+    send_community_exploration_page,
+    handle_global_onboarding_callback,
 )
 from bots.pete.utils.keyboards import (
     build_pete_start_inline_keyboard,
@@ -658,12 +660,11 @@ async def handle_pete_help(event: Message | CallbackQuery) -> None:
 @router.callback_query(F.data == "pete_community_links")
 async def handle_pete_community_links(callback: CallbackQuery) -> None:
     await callback.answer()
-    await callback.message.answer(
-        "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
-        "<blockquote>Connect with us across all platforms to stay updated, fellowship, and grow together! 💜</blockquote>",
-        parse_mode="HTML",
-        reply_markup=get_community_links_keyboard()
-    )
+    await send_community_exploration_page(callback.message, 1)
+
+@router.callback_query(F.data.startswith("onboarding_"))
+async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
+    await handle_global_onboarding_callback(callback_query, services)
 
 # -----------------------------------------------------------------------------
 # AUTOMATED JUSTICE ENGINE (ACTIVE LISTENER)

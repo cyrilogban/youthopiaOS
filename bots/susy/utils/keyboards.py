@@ -21,7 +21,7 @@ def build_susy_start_inline_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="Join Threads", callback_data="global_ignore"),
             ],
             [
-                InlineKeyboardButton(text="🌸 Explore the Community", callback_data="onboarding_1")
+                InlineKeyboardButton(text="🌐 Community", callback_data="onboarding_1")
             ],
             [
                 InlineKeyboardButton(text="👤 My Profile", callback_data="susy_profile"),

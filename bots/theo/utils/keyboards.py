@@ -13,15 +13,14 @@ class SavedVersesPage(CallbackData, prefix="sv_page"):
 
 def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
     """
-    Theo persistent reply keyboard standard per YouThopiaOS UI Spec:
-    Row 1 (Bot Specific): [ 📖 Daily Verse ]  [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
-    Row 2 (Global):        [ 👤 My Profile ]  [ ℹ️ Help ]              [ 🌐 Community Links ]
+    Theo persistent reply keyboard:
+    Row 1 (Bot Specific): [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
+    Row 2 (Global):        [ 👤 My Profile ]      [ ℹ️ Help ]           [ 🌐 Community Links ]
     Row 3 (Settings):      [ 🌐 Translation ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="📖 Daily Verse"),
                 KeyboardButton(text="🔍 Search Scripture"),
                 KeyboardButton(text="🔖 Saved Verses"),
             ],
@@ -38,14 +37,14 @@ def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
 
 def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     """
-    Theo /start Welcome Card inline keyboard per spec:
-    [ 📖 Daily Verse ]  [ 🌐 Translation ]
-    [ 👤 My Profile  ]  [ 🌐 Community Links ]
+    Theo /start Welcome Card inline keyboard:
+    [ 🔍 Search Scripture ]  [ 🌐 Translation ]
+    [ 👤 My Profile       ]  [ 🌐 Community Links ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📖 Daily Verse", callback_data="theo_daily_verse"),
+                InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ],
             [

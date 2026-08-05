@@ -21,6 +21,8 @@ from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
     render_shared_profile_card,
+    send_community_exploration_page,
+    handle_global_onboarding_callback,
 )
 from bots.lusy.handlers.quizzes import quiz_router
 from bots.lusy.utils.keyboards import (
@@ -196,18 +198,18 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         )
 
     # -------------------------------------------------------------------------
-    # GLOBAL BUTTON 3: 🌐 Community Links
+    # GLOBAL BUTTON 3: 🌐 Community
     # -------------------------------------------------------------------------
+    @router.message(F.text == "🌐 Community")
     @router.message(F.text == "🌐 Community Links")
-    async def community_links_handler(message: Message) -> None:
+    async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
-        await message.answer(
-            "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
-            "<blockquote>Connect with us across all platforms to stay updated, fellowship, and grow together! 💜</blockquote>",
-            parse_mode="HTML",
-            reply_markup=get_community_links_keyboard()
-        )
+        await send_community_exploration_page(message, 1)
+
+    @router.callback_query(F.data.startswith("onboarding_"))
+    async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
+        await handle_global_onboarding_callback(callback_query, services)
 
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 1: 🎮 Play Games / /playgame

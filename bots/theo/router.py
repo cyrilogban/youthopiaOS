@@ -19,6 +19,8 @@ from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
     render_shared_profile_card,
+    send_community_exploration_page,
+    handle_global_onboarding_callback,
 )
 from bots.theo.handlers.messages import handle_bible_detection
 from bots.theo.services.devotional_service import VOTDService
@@ -194,7 +196,6 @@ def build_theo_router(description: str) -> Router:
             "<b>📖 Theo | Daily Word Help Guide</b>\n"
             "<blockquote>I am Theo (@iamtheobot), your devotional companion in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Theo Features & Commands</b>\n"
-            "• 📖 <b>Daily Verse:</b> Get today's verse on demand.\n"
             "• 🔍 <b>Search Scripture:</b> Type any reference in chat (e.g. John 3:16).\n"
             "• 🔖 <b>Saved Verses:</b> View your saved bookmarks.\n"
             "• 🌐 <b>Translation:</b> Switch between KJV, ASV, WEB, and BBE.\n"
@@ -211,18 +212,14 @@ def build_theo_router(description: str) -> Router:
         )
 
     # -------------------------------------------------------------------------
-    # GLOBAL BUTTON 3: 🌐 Community Links
+    # GLOBAL BUTTON 3: 🌐 Community
     # -------------------------------------------------------------------------
+    @router.message(F.text == "🌐 Community")
     @router.message(F.text == "🌐 Community Links")
-    async def community_links_handler(message: Message) -> None:
+    async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
-        await message.answer(
-            "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
-            "<blockquote>Connect with us across all platforms to stay updated, fellowship, and grow together! 💜</blockquote>",
-            parse_mode="HTML",
-            reply_markup=get_community_links_keyboard()
-        )
+        await send_community_exploration_page(message, 1)
 
     @router.callback_query(F.data == "theo_community_links")
     async def inline_community_links_handler(callback: CallbackQuery) -> None:
@@ -234,52 +231,26 @@ def build_theo_router(description: str) -> Router:
             reply_markup=get_community_links_keyboard()
         )
 
+    @router.callback_query(F.data.startswith("onboarding_"))
+    async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
+        await handle_global_onboarding_callback(callback_query, services)
+
     @router.callback_query(F.data == "global_ignore")
     async def inline_global_ignore(callback: CallbackQuery) -> None:
         await callback.answer("Threads community link coming soon!", show_alert=True)
 
     # -------------------------------------------------------------------------
-    # BOT-SPECIFIC BUTTON 1: 📖 Daily Verse
+    # BOT-SPECIFIC BUTTON: 🔍 Search Scripture
     # -------------------------------------------------------------------------
-    @router.message(F.text == "📖 Daily Verse")
-    @router.callback_query(F.data == "theo_daily_verse")
-    async def daily_verse_handler(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+    @router.message(F.text == "🔍 Search Scripture")
+    @router.callback_query(F.data == "theo_search_scripture")
+    async def search_scripture_handler(event: Message | CallbackQuery) -> None:
         is_callback = isinstance(event, CallbackQuery)
         message = event.message if is_callback else event
 
         if is_callback:
             await event.answer()
 
-        user = await services.identity.resolve_telegram_user(event.from_user)
-        user_state = await services.users.get_user_state(user["id"], "theo")
-        translation = user_state.get("translation", "kjv") if user_state else "kjv"
-
-        votd_service = VOTDService(services.supabase)
-        votd_data = await votd_service.get_today_votd(translation=translation)
-
-        if votd_data:
-            ref = votd_data["reference"]
-            text = votd_data["text"]
-            reflection = votd_data.get("reflection", "")
-
-            reply_text = (
-                f"<b>📖 Daily Verse of the Day</b>\n\n"
-                f"<b>{ref} ({translation.upper()})</b>\n"
-                f"<blockquote>{text}</blockquote>"
-            )
-            if reflection:
-                reply_text += f"\n\n💭 <b>Reflection:</b>\n<i>{reflection}</i>"
-
-            markup = build_verse_actions_keyboard(category="votd", reference=ref)
-            await message.answer(reply_text, parse_mode="HTML", reply_markup=markup)
-        else:
-            await message.answer("⚠️ Unable to fetch today's Daily Verse. Please try again in a moment.")
-
-    # -------------------------------------------------------------------------
-    # BOT-SPECIFIC BUTTON 2: 🔍 Search Scripture
-    # -------------------------------------------------------------------------
-    @router.message(F.text == "🔍 Search Scripture")
-    async def search_scripture_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
         prompt_text = (
