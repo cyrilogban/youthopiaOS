@@ -21,6 +21,17 @@ from aiogram.types import (
 )
 
 from shared.services.container import ServiceContainer
+from shared.utils.ui import (
+    BOT_FAMILY_DIRECTORY_TEXT,
+    get_community_links_keyboard,
+    render_shared_profile_card,
+)
+from bots.susy.utils.keyboards import (
+    build_susy_start_inline_keyboard,
+    build_onboarding_tour_keyboard,
+    build_topic_directory_keyboard,
+    build_susy_group_welcome_keyboard,
+)
 
 from core.telegram_runtime import build_router
 from aiogram.filters import Command, CommandObject
@@ -36,6 +47,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         private_commands = [
             BotCommand(command="start", description="Meet Susy & Welcome"),
             BotCommand(command="where", description="Community Topic Directory"),
+            BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
@@ -45,7 +57,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
-        await bot.delete_my_commands()
+        try:
+            await bot.delete_my_commands()
+        except Exception:
+            pass
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
@@ -61,15 +76,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 f"I'm here to make sure every member feels welcomed, connected, and guided across our community!"
             )
             
-            welcome_markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot")
-                ],
-                [
-                    InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
-                ]
-            ])
-            
+            welcome_markup = build_susy_group_welcome_keyboard()
             try:
                 await bot.send_message(
                     chat_id=event.chat.id,
@@ -78,8 +85,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                     reply_markup=welcome_markup
                 )
             except Exception as e:
-                print(f"SUSY BOT ADDED WELCOME NOTICE: {e}")
-
+                logger.error(f"SUSY BOT ADDED WELCOME NOTICE: {e}")
 
     async def send_group_welcome_card(message: Message) -> None:
         first_name = message.from_user.first_name if message.from_user else "Friend"
@@ -91,14 +97,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             f"I am here to welcome you, answer your questions, and guide you around!"
         )
 
-        welcome_markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot")
-            ],
-            [
-                InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
-            ]
-        ])
+        welcome_markup = build_susy_group_welcome_keyboard()
 
         banner_url = "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=1200&q=80"
         try:
@@ -120,7 +119,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     @router.message(Command("start"))
     async def handle_start(message: Message, command: CommandObject, services: ServiceContainer) -> None:
-        # Group Cleanup & Targeted Start Mechanism
         if message.chat.type != "private":
             is_targeted = message.text and ("susy" in message.text.lower() or "@" in message.text)
             if not is_targeted:
@@ -132,7 +130,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await send_group_welcome_card(message)
             return
                 
-        # Check if deep link from Pete
         if message.text and "onboarding" in message.text:
             await send_onboarding_page(message, 1)
             return
@@ -142,27 +139,15 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         welcome_text = (
             f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🤍</b>\n"
-            "<blockquote>I am Susy, your first friend and guide here in the YouThopia ecosystem.\n\n"
+            "<blockquote>I am Susy, your first friend and community hostess here in the YouThopia ecosystem.\n\n"
             "We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it!</blockquote>\n\n"
             "<b>Getting Started</b>\n"
             "<blockquote>I'm here to show you around! If you are new here, my job is to make sure you know exactly how everything works.\n\n"
-            "Whenever you feel lost, just ask me for help!</blockquote>\n\n"
-            "Sharing God's Love All The Way. 💜"
+            "Tap <b>🌸 Explore the Community</b> below to start your orientation!</blockquote>\n\n"
+            "Sharing God's Love All The Way 💜"
         )
         
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
-                InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
-            ],
-            [
-                InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
-                InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
-            ],
-            [
-                InlineKeyboardButton(text="Explore the Community", callback_data="onboarding_1")
-            ]
-        ])
+        markup = build_susy_start_inline_keyboard()
         
         if SUSY_PHOTO:
             await message.answer_photo(
@@ -178,8 +163,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 disable_web_page_preview=True,
                 reply_markup=markup
             )
-            
-
 
     @router.message(Command("where"))
     async def on_where_command(message: Message):
@@ -193,9 +176,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "💬 <b>General Fellowship:</b> Connect and chat with fellow YouTopians!\n\n"
             "<i>Tap below to jump right into the main group! 💜</i>"
         )
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="💬 Open YouThopia Group", url="https://t.me/youthopiabiblecommunity")]
-        ])
+        markup = build_topic_directory_keyboard()
         await message.answer(directory_text, parse_mode="HTML", reply_markup=markup)
 
     @router.message(F.text == "Community")
@@ -349,52 +330,93 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 
             await callback_query.message.edit_text(finish_text, parse_mode="HTML")
 
-    @router.message(Command("help"))
-    @router.message(F.text == "Help")
-    async def handle_help(message: Message, services: ServiceContainer) -> None:
-        # Group Cleanup Mechanism
+    # -------------------------------------------------------------------------
+    # GLOBAL BUTTON 1: 👤 My Profile / /profile
+    # -------------------------------------------------------------------------
+    @router.message(Command("profile"))
+    @router.callback_query(F.data == "susy_profile")
+    async def handle_susy_profile(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+        is_callback = isinstance(event, CallbackQuery)
+        message = event.message if is_callback else event
+        user_from = event.from_user
+
+        if is_callback:
+            await event.answer()
+
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
             return
-                
-        first_name = message.from_user.first_name or "Friend"
+
+        user = await services.identity.resolve_telegram_user(user_from)
+        engagement = user.get("engagement_level", "new")
+        onboarding_status = "Onboarded ✨" if engagement == "onboarded" else "Pending Orientation"
+
+        bot_stats = [
+            f"🌸 Onboarding Status: <b>{onboarding_status}</b>",
+            f"✨ Tour Trust Bonus: <b>{'+50 Points Granted' if engagement == 'onboarded' else 'Available (Tap Tour)'}</b>",
+        ]
+
+        card_text = render_shared_profile_card(
+            user_data=user,
+            telegram_first_name=user_from.first_name or "Friend",
+            bot_specific_stats=bot_stats
+        )
+
+        await message.answer(card_text, parse_mode="HTML", reply_markup=build_susy_start_inline_keyboard())
+
+    # -------------------------------------------------------------------------
+    # GLOBAL BUTTON 2: ℹ️ Help / /help
+    # -------------------------------------------------------------------------
+    @router.message(Command("help"))
+    @router.message(F.text == "Help")
+    @router.callback_query(F.data == "susy_help")
+    async def handle_susy_help(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+        is_callback = isinstance(event, CallbackQuery)
+        message = event.message if is_callback else event
+
+        if is_callback:
+            await event.answer()
+
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            return
+
+        first_name = event.from_user.first_name or "Friend"
         help_text = (
-            f"<b>Susy's Help Guide, {first_name}!</b>\n"
-            "<blockquote>I'm Susy (@iamsusiebot). I am your onboarding specialist and guide to the community!</blockquote>\n\n"
-            "<b>Meet the YouThopia Bot Family</b>\n"
-            "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
-            "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
-            "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
-            "Games, YP, and fun! Earn points and grow your rank.\n\n"
-            "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
-            "Security and moderation. Keeping our community safe.\n\n"
-            "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"
-            "Events and announcements. Never miss what is happening.</blockquote>\n\n"
+            f"<b>🎵 Susy | Welcome Bot Help Guide, {first_name}!</b>\n"
+            "<blockquote>I am Susy (@iamsusiebot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Susy Features & Commands</b>\n"
+            "• 🌸 <b>Explore the Community:</b> Interactive 3-step tour for new YouTopians (+50 Trust Points).\n"
+            "• 🗺️ <b>Topic Directory (/where):</b> Direct links to all group threads.\n"
+            "• 🤝 <b>Hospitality & Guidance:</b> Here to answer questions and show you around.\n"
+            "• <b>/start:</b> Open Susy welcome dashboard.\n"
+            "• <b>/where:</b> Access group topic threads directory.</blockquote>\n\n"
+            f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
             "Sharing God's Love All The Way 💜"
         )
-        
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
-                InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
-            ],
-            [
-                InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
-                InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
-            ]
-        ])
-        
-        sent_msg = await message.answer(
+
+        await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
-            reply_markup=markup
+            reply_markup=get_community_links_keyboard(),
         )
-        
-        # Removed group auto-delete (command is now private only)
+
+    @router.callback_query(F.data == "susy_community_links")
+    async def handle_susy_community_links(callback: CallbackQuery) -> None:
+        await callback.answer()
+        await callback.message.answer(
+            "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
+            "<blockquote>Connect with us across all platforms to stay updated, fellowship, and grow together! 💜</blockquote>",
+            parse_mode="HTML",
+            reply_markup=get_community_links_keyboard()
+        )
 
     def _get_dm_music_controls_keyboard(is_saved: bool = False) -> InlineKeyboardMarkup:
         save_text = "💜 Saved in Playlist" if is_saved else "💜 Save to Favorites"
