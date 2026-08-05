@@ -138,24 +138,31 @@ def build_eddy_router(description: str) -> Router:
         user = await services.identity.resolve_telegram_user(from_user)
         user_id = user["id"]
 
+        # 1. Fetch Birthday from bot_user_state
         birthday_str = "Not set (Use 🎂 Add Birthday)"
         try:
-            profile_rec = await services.supabase.find_one_multi("user_profiles", {"user_id": user_id})
-            if profile_rec and profile_rec.get("birthday"):
-                birthday_str = profile_rec["birthday"]
+            state_rec = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
+            if state_rec and state_rec.get("state"):
+                b_state = state_rec["state"]
+                b_month = b_state.get("birthday_month")
+                b_day = b_state.get("birthday_day")
+                if b_month and b_day:
+                    from calendar import month_name
+                    birthday_str = f"{month_name[int(b_month)]} {b_day}"
         except Exception as e:
-            logger.warning(f"Failed to fetch user profile for birthday: {e}")
+            logger.warning(f"Failed to fetch user state for birthday: {e}")
 
+        # 2. Fetch Event RSVPs from EventService
         rsvp_count = 0
         try:
-            rsvps = await services.supabase.find_many("event_rsvps", {"user_id": user_id})
-            rsvp_count = len(rsvps) if rsvps else 0
+            events = await services.events.get_user_upcoming_events(from_user.id)
+            rsvp_count = len(events) if events else 0
         except Exception as e:
-            logger.warning(f"Failed to fetch event rsvps: {e}")
+            logger.warning(f"Failed to fetch user upcoming events for profile: {e}")
 
         bot_stats = [
             f"🎂 Birthday: <b>{birthday_str}</b>",
-            f"🎫 Event RSVPs: <b>{rsvp_count} events</b>",
+            f"🎫 Event RSVPs: <b>{rsvp_count} event{'s' if rsvp_count != 1 else ''}</b>",
         ]
 
         card_text = render_shared_profile_card(
