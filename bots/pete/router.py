@@ -418,6 +418,7 @@ async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -
     await start_appeal_flow(callback_query.message, state)
     await callback_query.answer()
 
+@router.message(Command("appeal"))
 @router.message(F.text == "📝 Submit Appeal")
 async def handle_submit_appeal_menu(message: Message, state: FSMContext) -> None:
     if message.chat.type != "private":
@@ -593,6 +594,7 @@ async def handle_pete_help(event: Message | CallbackQuery) -> None:
         "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
         "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"
         "• 📜 <b>Moderation Record:</b> Transparent warning system.\n"
+        "• 📝 <b>Submit Appeal:</b> Appeal a warning or penalty directly to community admins.\n"
         "• <b>/warn:</b> Issue warning to a member (Admin).\n"
         "• <b>/mute /unmute:</b> Restrict or restore chat rights (Admin).\n"
         "• <b>/kick /ban /unban:</b> Remove or restrict disruptive accounts (Admin).\n"
@@ -906,9 +908,10 @@ async def on_startup(bot: Bot) -> None:
     ]
     
     user_commands = [
-        BotCommand(command="start", description="Wake up pete"),
-        BotCommand(command="profile", description="Check your Profile"),
-        BotCommand(command="help", description="Show Pete's instructions")
+        BotCommand(command="start", description="Meet Pete"),
+        BotCommand(command="appeal", description="Submit Appeal"),
+        BotCommand(command="profile", description="View your profile"),
+        BotCommand(command="help", description="Pete Safety Guide")
     ]
     
     try:
