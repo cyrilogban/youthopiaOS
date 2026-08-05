@@ -17,6 +17,7 @@ from shared.utils.ui import (
     handle_global_onboarding_callback,
 )
 from bots.pete.utils.keyboards import (
+    build_pete_reply_keyboard,
     build_pete_start_inline_keyboard,
     build_pete_captcha_inline_keyboard,
     build_pete_post_captcha_group_keyboard,
@@ -578,17 +579,20 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🛡️</b>\n"
         "<blockquote>I am Pete (Peter, High King), the silent guardian of the YouThopia bot family.\n\n"
         "I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure!</blockquote>\n\n"
-        "Use the buttons below to check your profile or get help:"
+        "Use the persistent menu below to check your profile or get help:"
     )
     
-    markup = build_pete_start_inline_keyboard()
+    reply_menu = build_pete_reply_keyboard()
+    inline_menu = build_pete_start_inline_keyboard()
     await message.answer(
         welcome_text, 
         parse_mode="HTML", 
         disable_web_page_preview=True, 
-        reply_markup=markup
+        reply_markup=inline_menu
     )
+    await message.answer("🛡️ Use the menu below to navigate Pete's security controls:", reply_markup=reply_menu)
 
+@router.message(F.text == "👤 My Profile")
 @router.message(Command("profile"))
 @router.callback_query(F.data == "pete_profile")
 async def handle_pete_profile(event: Message | CallbackQuery, services: ServiceContainer) -> None:
@@ -620,8 +624,9 @@ async def handle_pete_profile(event: Message | CallbackQuery, services: ServiceC
         bot_specific_stats=bot_stats
     )
 
-    await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_start_inline_keyboard())
+    await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_reply_keyboard())
 
+@router.message(F.text == "ℹ️ Help")
 @router.message(Command("help"))
 @router.callback_query(F.data == "pete_help")
 async def handle_pete_help(event: Message | CallbackQuery) -> None:
@@ -638,14 +643,18 @@ async def handle_pete_help(event: Message | CallbackQuery) -> None:
             pass
         return
 
+    first_name = event.from_user.first_name or "Friend"
     help_text = (
-        "<b>🛡️ Pete | Safety Bot Help Guide</b>\n"
-        "<blockquote>I am Pete (@iampetebot), the security and moderation bot for YOUTHOPIA BIBLE COMMUNITY.\n\n"
+        f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
+        "<blockquote>I am Pete (@iampetebot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
         "<b>Pete Features & Commands</b>\n"
-        "• 🛡️ <b>Automated Justice:</b> Filters profanity, flood spam, and unauthorized invite links.\n"
-        "• 🔑 <b>Perimeter Defense:</b> Verification captcha challenges for new group members.\n"
-        "• 👤 <b>/profile:</b> Check your Trust Score and active warnings.\n"
-        "• 👑 <b>Admin Commands:</b> /warn, /mute, /unmute, /kick, /ban, /unban, /lock, /unlock, /biblestudy, /endbiblestudy.</blockquote>\n\n"
+        "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
+        "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"
+        "• 📜 <b>Moderation Record:</b> Transparent warning system.\n"
+        "• <b>/warn:</b> Issue warning to a member (Admin).\n"
+        "• <b>/mute /unmute:</b> Restrict or restore chat rights (Admin).\n"
+        "• <b>/kick /ban /unban:</b> Remove or restrict disruptive accounts (Admin).\n"
+        "• <b>/lock /unlock:</b> Lock or open group chat (Admin).</blockquote>\n\n"
         f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
         "Sharing God's Love All The Way 💜"
     )
@@ -654,7 +663,7 @@ async def handle_pete_help(event: Message | CallbackQuery) -> None:
         help_text,
         parse_mode="HTML",
         disable_web_page_preview=True,
-        reply_markup=get_community_links_keyboard(),
+        reply_markup=build_pete_reply_keyboard(),
     )
 
 @router.callback_query(F.data == "pete_community_links")

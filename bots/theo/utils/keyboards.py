@@ -39,17 +39,12 @@ def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Theo /start Welcome Card inline keyboard:
     [ 🔍 Search Scripture ]  [ 🌐 Translation ]
-    [ 👤 My Profile       ]  [ 🌐 Community Links ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
-            ],
-            [
-                InlineKeyboardButton(text="👤 My Profile", callback_data="theo_profile"),
-                InlineKeyboardButton(text="🌐 Community Links", callback_data="theo_community_links"),
             ]
         ]
     )

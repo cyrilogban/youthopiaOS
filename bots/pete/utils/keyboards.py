@@ -1,17 +1,33 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from shared.utils.ui import GLOBAL_REPLY_BUTTONS
+
+
+def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
+    """
+    Pete persistent reply grid keyboard:
+    Row 1 (Global): [ 👤 My Profile ]  [ ℹ️ Help ]  [ 🌐 Community ]
+    """
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            GLOBAL_REPLY_BUTTONS
+        ],
+        resize_keyboard=True,
+        persistent=True,
+        input_field_placeholder="Choose a Pete action..."
+    )
 
 
 def build_pete_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
-    Pete DM /start Card Inline Keyboard per YouThopiaOS UI Spec:
-    [ 👤 My Profile ]  [ ℹ️ Help ]  [ 🌐 Community ]
+    Pete DM /start Card Inline Keyboard (Cleaned):
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="👤 My Profile", callback_data="pete_profile"),
-                InlineKeyboardButton(text="ℹ️ Help", callback_data="pete_help"),
-                InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
+                InlineKeyboardButton(
+                    text="💬 Open Main Group",
+                    url="https://t.me/youthopiabiblecommunity"
+                )
             ]
         ]
     )
