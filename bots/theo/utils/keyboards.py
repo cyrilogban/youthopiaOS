@@ -14,17 +14,17 @@ class SavedVersesPage(CallbackData, prefix="sv_page"):
 def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
     """
     Theo persistent reply keyboard:
-    Row 1 (Bot Specific): [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
-    Row 2 (Global):        [ 👤 My Profile ]      [ ℹ️ Help ]           [ 🌐 Community Links ]
+    Row 1 (Global):        [ 👤 My Profile ]      [ ℹ️ Help ]  [ 🌐 Community ]
+    Row 2 (Bot Specific): [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
     Row 3 (Settings):      [ 🌐 Translation ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
+            GLOBAL_REPLY_BUTTONS,
             [
                 KeyboardButton(text="🔍 Search Scripture"),
                 KeyboardButton(text="🔖 Saved Verses"),
             ],
-            GLOBAL_REPLY_BUTTONS,
             [
                 KeyboardButton(text="🌐 Translation"),
             ]

@@ -4,18 +4,18 @@ from shared.utils.ui import GLOBAL_REPLY_BUTTONS
 
 def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
     """
-    Lusy persistent reply keyboard standard per YouThopiaOS UI Spec:
-    Row 1 (Bot Specific): [ 🎮 Play Games ]  [ 🏆 Leaderboard ]  [ ⭐ My Points ]
-    Row 2 (Global):        [ 👤 My Profile ]  [ ℹ️ Help ]         [ 🌐 Community Links ]
+    Lusy persistent reply keyboard:
+    Row 1 (Global):        [ 👤 My Profile ]  [ ℹ️ Help ]         [ 🌐 Community ]
+    Row 2 (Bot Specific): [ 🎮 Play Games ]  [ 🏆 Leaderboard ]  [ ⭐ My Points ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
+            GLOBAL_REPLY_BUTTONS,
             [
                 KeyboardButton(text="🎮 Play Games"),
                 KeyboardButton(text="🏆 Leaderboard"),
                 KeyboardButton(text="⭐ My Points"),
             ],
-            GLOBAL_REPLY_BUTTONS,
         ],
         resize_keyboard=True,
         persistent=True,
