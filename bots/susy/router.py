@@ -362,12 +362,11 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "Sharing God's Love All The Way 💜"
         )
 
-        reply_markup = get_community_links_keyboard() if is_callback else build_susy_reply_keyboard()
         await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
-            reply_markup=reply_markup,
+            reply_markup=get_community_links_keyboard(),
         )
 
     @router.callback_query(F.data == "susy_community_links")

@@ -607,7 +607,7 @@ async def handle_pete_help(event: Message | CallbackQuery) -> None:
         help_text,
         parse_mode="HTML",
         disable_web_page_preview=True,
-        reply_markup=build_pete_reply_keyboard(),
+        reply_markup=get_community_links_keyboard(),
     )
 
 @router.callback_query(F.data == "pete_community_links")
