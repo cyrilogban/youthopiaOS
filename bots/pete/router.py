@@ -9,6 +9,16 @@ import asyncio
 import os
 from shared.services.container import ServiceContainer
 from core.telegram_runtime import register_group_chat
+from shared.utils.ui import (
+    BOT_FAMILY_DIRECTORY_TEXT,
+    get_community_links_keyboard,
+    render_shared_profile_card,
+)
+from bots.pete.utils.keyboards import (
+    build_pete_start_inline_keyboard,
+    build_pete_captcha_inline_keyboard,
+    build_pete_post_captcha_group_keyboard,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -541,7 +551,7 @@ async def handle_appeal_reject(callback_query: CallbackQuery) -> None:
 # Captcha Memory Store: {user_id: {"chat_id": int, "msg_id": int}}
 PENDING_CAPTCHAS = {}
 
-@router.message(Command("start", "help"))
+@router.message(Command("start"))
 async def handle_start(message: Message, services: ServiceContainer) -> None:
     if message.chat.type != "private":
         try:
@@ -553,54 +563,106 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
     # Check if this is a Deep Link Captcha verification
     if message.text and message.text.startswith("/start verify_"):
         chat_id_str = message.text.split("_")[1]
-        
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🛡️ Tap here to prove you are human", callback_data=f"captcha|{chat_id_str}")]
-        ])
-        
-        await message.answer("Please click the button below to verify your account and unlock your chat permissions.", reply_markup=markup)
+        markup = build_pete_captcha_inline_keyboard(chat_id_str)
+        await message.answer(
+            "Please click the button below to verify your account and unlock your chat permissions.",
+            reply_markup=markup
+        )
         return
 
-    # Standard welcome for normal DMs or help commands
+    # Standard welcome for normal DMs
     first_name = message.from_user.first_name or "Friend"
     welcome_text = (
-        f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}!</b>\n"
-        "<blockquote>We are a cross-platform Gen Z Christian community where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
-        "<b>You're currently talking to Pete</b>\n"
-        "<blockquote>Pete (High King Peter) is the silent guardian of the YouThopia bot family. He protects the spiritual atmosphere by enforcing rules, filtering spam, and keeping our borders secure.</blockquote>\n\n"
-        "<b>Meet the YouThopia Bot Family</b>\n"
-        "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
-        "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
-        "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
-        "Games, YP, and fun! Earn points and grow your rank.\n\n"
-        "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
-        "Security and moderation. Keeping our community safe.\n\n"
-        "<b>Ed</b> - <a href=\"https://t.me/iamedyybot\">@iamedyybot</a>\n"
-        "Events and announcements. Never miss what is happening.\n\n"
-        "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
-        "Your first friend here. Welcomes new YouTopians.</blockquote>\n\n"
-        "<b>How to Use Pete</b>\n"
-        "<blockquote>Pete operates silently in the background to keep the community safe. You can check your profile and submit appeals using the menu below.\n\n"
-        "If you are an administrator, Pete provides a suite of moderation commands to maintain order.</blockquote>\n\n"
-        "Sharing God's Love All The Way 💜"
+        f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🛡️</b>\n"
+        "<blockquote>I am Pete (Peter, High King), the silent guardian of the YouThopia bot family.\n\n"
+        "I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure!</blockquote>\n\n"
+        "Use the buttons below to check your profile or get help:"
     )
     
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
-            InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
-        ],
-        [
-            InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
-            InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
-        ]
-    ])
-    
-    sent_msg = await message.answer(
+    markup = build_pete_start_inline_keyboard()
+    await message.answer(
         welcome_text, 
         parse_mode="HTML", 
         disable_web_page_preview=True, 
         reply_markup=markup
+    )
+
+@router.message(Command("profile"))
+@router.callback_query(F.data == "pete_profile")
+async def handle_pete_profile(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+    is_callback = isinstance(event, CallbackQuery)
+    message = event.message if is_callback else event
+    user_from = event.from_user
+
+    if is_callback:
+        await event.answer()
+
+    if message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        return
+
+    user = await services.identity.resolve_telegram_user(user_from)
+    warnings = await services.moderation.get_user_warnings_count(user["id"])
+
+    bot_stats = [
+        f"🛡️ Active Warnings: <b>{warnings}/5</b>",
+        f"📜 Safety Status: <b>{'Clean Record' if warnings == 0 else 'Under Observation'}</b>",
+    ]
+
+    card_text = render_shared_profile_card(
+        user_data=user,
+        telegram_first_name=user_from.first_name or "Friend",
+        bot_specific_stats=bot_stats
+    )
+
+    await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_start_inline_keyboard())
+
+@router.message(Command("help"))
+@router.callback_query(F.data == "pete_help")
+async def handle_pete_help(event: Message | CallbackQuery) -> None:
+    is_callback = isinstance(event, CallbackQuery)
+    message = event.message if is_callback else event
+
+    if is_callback:
+        await event.answer()
+
+    if message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        return
+
+    help_text = (
+        "<b>🛡️ Pete | Safety Bot Help Guide</b>\n"
+        "<blockquote>I am Pete (@iampetebot), the security and moderation bot for YOUTHOPIA BIBLE COMMUNITY.\n\n"
+        "<b>Pete Features & Commands</b>\n"
+        "• 🛡️ <b>Automated Justice:</b> Filters profanity, flood spam, and unauthorized invite links.\n"
+        "• 🔑 <b>Perimeter Defense:</b> Verification captcha challenges for new group members.\n"
+        "• 👤 <b>/profile:</b> Check your Trust Score and active warnings.\n"
+        "• 👑 <b>Admin Commands:</b> /warn, /mute, /unmute, /kick, /ban, /unban, /lock, /unlock, /biblestudy, /endbiblestudy.</blockquote>\n\n"
+        f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
+        "Sharing God's Love All The Way 💜"
+    )
+
+    await message.answer(
+        help_text,
+        parse_mode="HTML",
+        disable_web_page_preview=True,
+        reply_markup=get_community_links_keyboard(),
+    )
+
+@router.callback_query(F.data == "pete_community_links")
+async def handle_pete_community_links(callback: CallbackQuery) -> None:
+    await callback.answer()
+    await callback.message.answer(
+        "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
+        "<blockquote>Connect with us across all platforms to stay updated, fellowship, and grow together! 💜</blockquote>",
+        parse_mode="HTML",
+        reply_markup=get_community_links_keyboard()
     )
 
 # -----------------------------------------------------------------------------
@@ -713,9 +775,7 @@ async def captcha_callback_handler(callback_query: CallbackQuery) -> None:
                 pass
                 
         # 4. Drop the public confirmation in the group
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="👋 Meet Susy (Your Guide)", url="https://t.me/iamsusiebot?start=onboarding")]
-        ])
+        markup = build_pete_post_captcha_group_keyboard()
         success_msg = await callback_query.bot.send_message(
             chat_id=chat_id, 
             text=f"✅ **{callback_query.from_user.first_name}** has passed verification and been granted entry!", 
