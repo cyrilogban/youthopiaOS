@@ -290,21 +290,13 @@ def build_susy_router(description: str, music_service=None) -> Router:
             return
 
         user = await services.identity.resolve_telegram_user(user_from)
-        engagement = user.get("engagement_level", "new")
-        onboarding_status = "Onboarded ✨" if engagement == "onboarded" else "Pending Orientation"
-
-        bot_stats = [
-            f"🌸 Onboarding Status: <b>{onboarding_status}</b>",
-            f"✨ Tour Trust Bonus: <b>{'+50 Points Granted' if engagement == 'onboarded' else 'Available (Tap Tour)'}</b>",
-        ]
 
         card_text = render_shared_profile_card(
             user_data=user,
-            telegram_first_name=user_from.first_name or "Friend",
-            bot_specific_stats=bot_stats
+            telegram_first_name=user_from.first_name or "Friend"
         )
 
-        await message.answer(card_text, parse_mode="HTML", reply_markup=build_susy_start_inline_keyboard())
+        await message.answer(card_text, parse_mode="HTML", reply_markup=build_susy_reply_keyboard())
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
