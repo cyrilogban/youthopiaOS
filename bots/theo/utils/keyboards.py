@@ -51,7 +51,7 @@ def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
 
 
 def build_verse_actions_keyboard(category: str, reference: str) -> InlineKeyboardMarkup:
-    """Builds the inline action keyboard for verse cards: [ 💜 Save ] [ 🔄 Next Verse ]."""
+    """Builds the inline action keyboard for verse cards: [ 💜 Save ] [ Next Verse ] [ Share ]."""
     clean_ref = reference.replace(" ", "_")
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -65,12 +65,16 @@ def build_verse_actions_keyboard(category: str, reference: str) -> InlineKeyboar
                     ).pack()
                 ),
                 InlineKeyboardButton(
-                    text="🔄 Next Verse",
+                    text="Next Verse",
                     callback_data=VerseAction(
                         action="next", 
                         category=category, 
                         reference=clean_ref
                     ).pack()
+                ),
+                InlineKeyboardButton(
+                    text="Share",
+                    switch_inline_query=reference
                 ),
             ]
         ]
