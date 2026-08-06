@@ -13,6 +13,7 @@ THEO_COMMANDS = [
     BotCommand(command="help", description="Show help information"),
     BotCommand(command="subscribe", description="Subscribe to daily verses"),
     BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
+    BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
 ]
 
 
