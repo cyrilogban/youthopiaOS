@@ -57,6 +57,7 @@ def build_eddy_router(description: str) -> Router:
             BotCommand(command="calendar", description="View this week's event schedule"),
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),
+            BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Show Ed's instructions"),
         ]
@@ -739,6 +740,133 @@ def build_eddy_router(description: str) -> Router:
             await message.answer("Oh no, something went wrong while saving your birthday. Please try again later!")
             
         await state.clear()
+
+    @router.message(Command("upcomingbirthday", "upcomingbirthdays"))
+    @router.message(F.text == "🎂 Upcoming Birthdays")
+    async def show_upcoming_birthdays(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            return
+
+        from datetime import datetime, timezone
+        from calendar import month_name
+
+        now_utc = datetime.now(timezone.utc)
+        current_year = now_utc.year
+        today_date = now_utc.date()
+
+        try:
+            records = await services.supabase.find_many("bot_user_state", {"bot_name": "eddy"})
+        except Exception as e:
+            logger.error(f"Failed to fetch bot_user_state for upcoming birthdays: {e}")
+            records = []
+
+        upcoming_list = []
+        for rec in records:
+            state = rec.get("state") or {}
+            b_month = state.get("birthday_month")
+            b_day = state.get("birthday_day")
+            user_id = rec.get("user_id")
+
+            if not (b_month and b_day and user_id):
+                continue
+
+            try:
+                b_month = int(b_month)
+                b_day = int(b_day)
+
+                # Fetch display name
+                try:
+                    user_rec = await services.supabase.get_by_id("users", user_id)
+                    display_name = user_rec.get("display_name") or "YouTopian"
+                except Exception:
+                    display_name = "YouTopian"
+
+                # Calculate next birthday date in UTC
+                try:
+                    b_date_this_year = datetime(current_year, b_month, b_day).date()
+                except ValueError:
+                    b_date_this_year = datetime(current_year, b_month, 28).date()
+
+                if b_date_this_year >= today_date:
+                    next_bdate = b_date_this_year
+                else:
+                    try:
+                        next_bdate = datetime(current_year + 1, b_month, b_day).date()
+                    except ValueError:
+                        next_bdate = datetime(current_year + 1, b_month, 28).date()
+
+                days_until = (next_bdate - today_date).days
+                m_short = month_name[b_month][:3]
+
+                upcoming_list.append({
+                    "display_name": display_name,
+                    "month": b_month,
+                    "day": b_day,
+                    "month_short": m_short,
+                    "days_until": days_until,
+                    "next_bdate": next_bdate,
+                })
+            except Exception:
+                continue
+
+        if not upcoming_list:
+            await message.answer(
+                "<b>🎂 Upcoming Community Birthdays! 🎉</b>\n\n"
+                "<i>No registered birthdays found yet.</i>\n\n"
+                "💡 Be the first! Register yours with /addbirthday or <b>🎂 Add Birthday</b> button.",
+                parse_mode="HTML"
+            )
+            return
+
+        # Sort chronologically by days_until
+        upcoming_list.sort(key=lambda x: x["days_until"])
+
+        this_week = []
+        later_this_month = []
+
+        for item in upcoming_list:
+            if item["days_until"] == 0:
+                day_str = "<b>Today! 🎉</b>"
+            elif item["days_until"] == 1:
+                day_str = "<b>Tomorrow! 🎈</b>"
+            else:
+                day_str = f"<b>{item['days_until']} days away</b>"
+
+            entry = f"• <b>{item['display_name']}</b> - {item['month_short']} {item['day']} ({day_str})"
+
+            if item["days_until"] <= 7:
+                this_week.append(entry)
+            elif item["days_until"] <= 30:
+                later_this_month.append(entry)
+
+        lines = ["<b>🎂 Upcoming Community Birthdays! 🎉</b>", "━━━━━━━━━━━━━━━━"]
+
+        if this_week:
+            lines.append("<b>🎈 THIS WEEK:</b>")
+            lines.extend(this_week)
+            lines.append("")
+
+        if later_this_month:
+            lines.append("<b>🗓️ LATER THIS MONTH:</b>")
+            lines.extend(later_this_month)
+            lines.append("")
+
+        if not this_week and not later_this_month:
+            lines.append("<b>🗓️ UPCOMING:</b>")
+            for item in upcoming_list[:5]:
+                if item["days_until"] == 0:
+                    day_str = "<b>Today! 🎉</b>"
+                elif item["days_until"] == 1:
+                    day_str = "<b>Tomorrow! 🎈</b>"
+                else:
+                    day_str = f"<b>{item['days_until']} days away</b>"
+                lines.append(f"• <b>{item['display_name']}</b> - {item['month_short']} {item['day']} ({day_str})")
+            lines.append("")
+
+        lines.append("━━━━━━━━━━━━━━━━")
+        lines.append("💡 <i>Register yours anytime with /addbirthday!</i>")
+
+        await message.answer("\n".join(lines), parse_mode="HTML")
 
     # ----------------------------------------------------------------------
     # CHANNEL-TO-TOPIC MIRROR (YouThopia Channel -> Group Topic Thread)
