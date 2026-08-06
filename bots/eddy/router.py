@@ -64,6 +64,7 @@ def build_eddy_router(description: str) -> Router:
 
         group_commands = [
             BotCommand(command="calendar", description="View all upcoming events"),
+            BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
         ]
         
         try:
@@ -744,9 +745,6 @@ def build_eddy_router(description: str) -> Router:
     @router.message(Command("upcomingbirthday", "upcomingbirthdays"))
     @router.message(F.text == "🎂 Upcoming Birthdays")
     async def show_upcoming_birthdays(message: Message, services: ServiceContainer) -> None:
-        if message.chat.type != "private":
-            return
-
         from datetime import datetime, timezone
         from calendar import month_name
 
@@ -863,10 +861,23 @@ def build_eddy_router(description: str) -> Router:
                 lines.append(f"• <b>{item['display_name']}</b> - {item['month_short']} {item['day']} ({day_str})")
             lines.append("")
 
-        lines.append("━━━━━━━━━━━━━━━━")
-        lines.append("💡 <i>Register yours anytime with /addbirthday!</i>")
+        sent_msg = await message.answer("\n".join(lines), parse_mode="HTML")
 
-        await message.answer("\n".join(lines), parse_mode="HTML")
+        if message.chat.type in {"group", "supergroup"}:
+            import asyncio
+
+            async def auto_delete():
+                await asyncio.sleep(300)
+                try:
+                    await sent_msg.delete()
+                except Exception:
+                    pass
+                try:
+                    await message.delete()
+                except Exception:
+                    pass
+
+            asyncio.create_task(auto_delete())
 
     # ----------------------------------------------------------------------
     # CHANNEL-TO-TOPIC MIRROR (YouThopia Channel -> Group Topic Thread)
