@@ -1,9 +1,25 @@
 import aiohttp
 import asyncio
-from datetime import date
-from typing import Optional
+import random
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
-from shared.db.supabase import SupabaseGateway
+WAT_TZ = ZoneInfo("Africa/Lagos")
+
+FALLBACK_VOTD = [
+    {"reference": "John 14:27", "category": "peace"},
+    {"reference": "Philippians 4:6", "category": "peace"},
+    {"reference": "Hebrews 11:1", "category": "faith"},
+    {"reference": "2 Corinthians 5:7", "category": "faith"},
+    {"reference": "Jeremiah 29:11", "category": "hope"},
+    {"reference": "Psalm 42:11", "category": "hope"},
+    {"reference": "1 Corinthians 13:4", "category": "love"},
+    {"reference": "John 3:16", "category": "love"},
+    {"reference": "Nehemiah 8:10", "category": "joy"},
+    {"reference": "Psalm 16:11", "category": "joy"},
+    {"reference": "Ephesians 4:32", "category": "forgiveness"},
+    {"reference": "James 1:3", "category": "patience"},
+]
 
 
 class VOTDService:
@@ -15,18 +31,27 @@ class VOTDService:
         self.db = db
 
     async def get_todays_reference(self) -> Optional[dict]:
-        """Fetches today's scheduled verse reference from Supabase."""
-        today_str = date.today().isoformat()
+        """Fetches today's scheduled verse reference from Supabase (Africa/Lagos WAT date)."""
+        today_str = datetime.now(WAT_TZ).date().isoformat()
 
         def run() -> Optional[dict]:
-            response = (
-                self.db._client()
-                .table("verse_of_the_day")
-                .select("*")
-                .eq("scheduled_date", today_str)
-                .execute()
-            )
-            return response.data[0] if response.data else None
+            try:
+                response = (
+                    self.db._client()
+                    .table("verse_of_the_day")
+                    .select("*")
+                    .eq("scheduled_date", today_str)
+                    .execute()
+                )
+                if response.data:
+                    return response.data[0]
+            except Exception:
+                pass
+            
+            # Rotational fallback so Theo never misses a day even if table has no entry
+            day_of_year = datetime.now(WAT_TZ).timetuple().tm_yday
+            fallback = FALLBACK_VOTD[day_of_year % len(FALLBACK_VOTD)]
+            return {"reference": fallback["reference"], "category": fallback["category"], "scheduled_date": today_str}
 
         return await asyncio.to_thread(run)
 

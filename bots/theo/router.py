@@ -57,6 +57,24 @@ def build_translation_selection_keyboard() -> InlineKeyboardMarkup:
 def build_theo_router(description: str) -> Router:
     router = build_router("theo", description, include_base_commands=False)
 
+    @router.startup()
+    async def on_startup(bot: Bot, services: ServiceContainer) -> None:
+        from bots.theo.services.scheduler import setup_theo_scheduler
+        setup_theo_scheduler(bot, services)
+
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /send_votd or /broadcast_votd
+    # -------------------------------------------------------------------------
+    @router.message(Command("send_votd"))
+    @router.message(Command("broadcast_votd"))
+    async def handle_manual_votd_broadcast(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            return
+        from bots.theo.services.scheduler import trigger_daily_votd
+        msg = await message.answer("🔄 Initiating Verse of the Day broadcast...")
+        res = await trigger_daily_votd(bot, services)
+        await msg.edit_text(f"✅ VOTD Broadcast Complete:\n<code>{res}</code>", parse_mode="HTML")
+
     # -------------------------------------------------------------------------
     # COMMAND: /start
     # -------------------------------------------------------------------------
