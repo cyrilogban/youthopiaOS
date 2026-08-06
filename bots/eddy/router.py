@@ -58,6 +58,7 @@ def build_eddy_router(description: str) -> Router:
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
+            BotCommand(command="deletebirthday", description="Delete your registered birthday"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Show Ed's instructions"),
         ]
@@ -878,6 +879,87 @@ def build_eddy_router(description: str) -> Router:
                     pass
 
             asyncio.create_task(auto_delete())
+
+    # ----------------------------------------------------------------------
+    # DELETE BIRTHDAY FEATURE
+    # ----------------------------------------------------------------------
+    @router.message(Command("deletebirthday", "removebirthday"))
+    async def prompt_delete_birthday(message: Message, services: ServiceContainer) -> None:
+        user = await services.identity.resolve_telegram_user(message.from_user)
+        user_id = user["id"]
+
+        try:
+            state_rec = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
+        except Exception:
+            state_rec = None
+
+        state_data = (state_rec.get("state") or {}) if state_rec else {}
+        b_month = state_data.get("birthday_month")
+        b_day = state_data.get("birthday_day")
+
+        if not (b_month and b_day):
+            await message.answer(
+                "ℹ️ You don't have a registered birthday saved yet!\n\n"
+                "💡 Use /addbirthday or tap <b>🎂 Add Birthday</b> to set yours.",
+                parse_mode="HTML"
+            )
+            return
+
+        from calendar import month_name
+        m_name = month_name[int(b_month)]
+
+        text = (
+            "<b>🗑️ Delete Registered Birthday</b>\n\n"
+            f"Are you sure you want to remove your birthday (<b>{m_name} {b_day}</b>)?\n"
+            "You will no longer receive birthday shoutouts or appear in upcoming community birthdays."
+        )
+
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🗑️ Yes, Delete My Birthday", callback_data="eddy_confirm_del_bday"),
+                InlineKeyboardButton(text="❌ Cancel", callback_data="eddy_cancel_del_bday")
+            ]
+        ])
+
+        await message.answer(text, parse_mode="HTML", reply_markup=markup)
+
+    @router.callback_query(F.data == "eddy_confirm_del_bday")
+    async def handle_confirm_delete_birthday(callback: CallbackQuery, services: ServiceContainer) -> None:
+        user = await services.identity.resolve_telegram_user(callback.from_user)
+        user_id = user["id"]
+
+        try:
+            state_rec = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
+            bot_state = (state_rec.get("state") or {}) if state_rec else {}
+
+            bot_state.pop("birthday_month", None)
+            bot_state.pop("birthday_day", None)
+            bot_state.pop("birthday_photo_id", None)
+
+            await services.supabase.upsert(
+                "bot_user_state",
+                {"user_id": user_id, "bot_name": "eddy", "state": bot_state},
+                on_conflict="user_id, bot_name"
+            )
+
+            await callback.answer("Birthday deleted successfully!")
+            await callback.message.edit_text(
+                "✅ <b>Birthday Removed</b>\n\n"
+                "Your birthday has been removed from Ed's records. You will no longer receive shoutouts or appear in upcoming birthdays.\n\n"
+                "💡 <i>You can add it back anytime using /addbirthday!</i>",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.error(f"Failed to delete birthday for user {user_id}: {e}")
+            await callback.answer("An error occurred while deleting your birthday.", show_alert=True)
+
+    @router.callback_query(F.data == "eddy_cancel_del_bday")
+    async def handle_cancel_delete_birthday(callback: CallbackQuery) -> None:
+        await callback.answer("Deletion cancelled.")
+        await callback.message.edit_text(
+            "👍 <b>Cancelled.</b> Your registered birthday is safe and remains saved!",
+            parse_mode="HTML"
+        )
 
     # ----------------------------------------------------------------------
     # CHANNEL-TO-TOPIC MIRROR (YouThopia Channel -> Group Topic Thread)
