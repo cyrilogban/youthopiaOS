@@ -51,7 +51,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-              You&apos;re signed in to YOUTHOPIA BIBLE COMMUNITY
+              You&apos;re signed in to YouThopiaOS
               {user.isPremium ? ' — thanks for being a Telegram Premium member! ⭐' : '.'}
             </p>
           </>
@@ -67,8 +67,11 @@ const App: React.FC = () => {
 
       <p style={{ textAlign: 'center', fontSize: '12px', color: '#94a3b8', marginTop: '16px' }}>
         {isInsideTelegram
-          ? '🟢 Connected to Telegram'
+          ? '🟢 Connected through Telegram'
           : '⚪ Running outside Telegram (dev preview)'}
+      </p>
+      <p style={{ textAlign: 'center', fontSize: '11px', color: '#cbd5e1', marginTop: '6px' }}>
+        Powered by YouThopia Bible Community
       </p>
     </div>
   );
