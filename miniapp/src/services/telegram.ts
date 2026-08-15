@@ -19,9 +19,9 @@ import type { TelegramUser } from '../types/telegram';
 const MOCK_INIT_DATA = new URLSearchParams({
   user: JSON.stringify({
     id: 99281,
-    first_name: 'Dev',
-    last_name: 'Preview',
-    username: 'dev_preview',
+    first_name: 'Cyril',
+    last_name: 'Ogban',
+    username: 'cyrilogban',
     language_code: 'en',
     is_premium: false,
   }),
