@@ -1,0 +1,14 @@
+# Dependencies — never committed; regenerate with `npm install`
+node_modules
+
+# Production build output — regenerate with `npm run build`
+dist
+dist-ssr
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local env files & OS/editor cruft
+*.local
+.DS_Store
