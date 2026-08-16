@@ -7,6 +7,7 @@ from core.identity import IdentityResolver
 from core.permissions import PermissionService
 from shared.db.mongo import TelemetryMongoGateway
 from shared.db.supabase import SupabaseGateway
+from shared.services.admin_service import AdminService
 from shared.services.analytics_service import AnalyticsService
 from shared.services.chat_service import ChatService
 from shared.services.event_service import EventService
@@ -29,6 +30,7 @@ class ServiceContainer:
     moderation: ModerationService
     analytics: AnalyticsService
     quizzes: QuizService
+    admin: AdminService
     app_config: Any = None
 
 
@@ -46,4 +48,5 @@ def build_services(supabase: SupabaseGateway, telemetry: TelemetryMongoGateway) 
         moderation=ModerationService(supabase),
         analytics=AnalyticsService(supabase, telemetry),
         quizzes=QuizService(supabase),
+        admin=AdminService(supabase),
     )

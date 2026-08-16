@@ -1,3 +1,4 @@
+import os
 import logging
 from aiogram.types import Message
 from aiogram.filters import Filter
@@ -17,3 +18,14 @@ class IsAdminFilter(Filter):
         except Exception as e:
             logger.error(f"Failed to check admin status: {e}")
             return False
+
+
+class IsGlobalAdminFilter(Filter):
+    """Filter to restrict commands to global system admins/owners set in env."""
+    async def __call__(self, message: Message) -> bool:
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+        if not admin_ids:
+            # Fallback for development if not explicitly configured
+            return True
+        return message.from_user.id in admin_ids
