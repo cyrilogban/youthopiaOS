@@ -42,6 +42,18 @@ async def register_chat(
             chat["id"],
             DEFAULT_BOT_SETTINGS.get(bot_name, {}),
         )
+    if bot_name == "theo":
+        try:
+            existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
+            if not existing_sub:
+                await services.chats.set_subscription(
+                    bot_name="theo",
+                    chat_id=chat["id"],
+                    subscription_type="daily_devotional",
+                    enabled=True,
+                )
+        except Exception:
+            pass
     return chat
 
 

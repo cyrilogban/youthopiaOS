@@ -62,6 +62,25 @@ def build_theo_router(description: str) -> Router:
         from bots.theo.services.scheduler import setup_theo_scheduler
         setup_theo_scheduler(bot, services)
 
+        # Backfill: Auto-subscribe all existing users and chats in Supabase to Theo's VOTD
+        try:
+            users = await services.supabase.find_many("users", {})
+            for u in users:
+                user_id = u["id"]
+                sub = await services.users.get_subscription(user_id, "theo", "daily_devotional")
+                if not sub:
+                    await services.users.set_subscription(user_id, "theo", "daily_devotional", enabled=True)
+
+            chats = await services.supabase.find_many("group_chats", {})
+            for c in chats:
+                chat_id = c["id"]
+                sub = await services.chats.get_subscription("theo", chat_id, "daily_devotional")
+                if not sub:
+                    await services.chats.set_subscription("theo", chat_id, "daily_devotional", enabled=True)
+            logger.info("Theo startup: Successfully backfilled VOTD subscriptions for all users and chats.")
+        except Exception as e:
+            logger.warning(f"Theo startup backfill warning: {e}")
+
     # -------------------------------------------------------------------------
     # ADMIN COMMAND: /send_votd or /broadcast_votd
     # -------------------------------------------------------------------------
@@ -90,6 +109,14 @@ def build_theo_router(description: str) -> Router:
         await register_group_chat(message, services, "theo")
         user = await services.identity.resolve_telegram_user(message.from_user)
         first_name = message.from_user.first_name or "Friend"
+
+        # Auto-subscribe user to Theo's Daily Verse of the Day on /start
+        try:
+            existing_sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
+            if not existing_sub:
+                await services.users.set_subscription(user["id"], "theo", "daily_devotional", enabled=True)
+        except Exception as e:
+            logger.warning(f"Failed to auto-subscribe user {user['id']} on /start: {e}")
 
         if user.get("engagement_level") == "new":
             welcome_text = (
