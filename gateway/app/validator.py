@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import time
 from urllib.parse import parse_qsl
 
 
@@ -49,3 +50,25 @@ def verify_init_data(raw_init_data: str, bot_tokens: dict[str, str]) -> str | No
             return bot_name  # authentic — and we now know which door
 
     return None  # matched no trusted token -> forged or corrupt
+
+
+def is_fresh(raw_init_data: str, max_age_seconds: int = 86400, now_ts: float | None = None) -> bool:
+    """Return True if initData's auth_date is recent enough to accept.
+
+    The HMAC proves Telegram signed the data; it does NOT prove the data is
+    recent. Without this check, an attacker could replay a validly-signed
+    initData captured long ago. Reject anything older than max_age_seconds
+    (default 24h). We bound only the upper age: a future-dated but authentic
+    payload is not a replay threat, and a lower bound would false-reject under
+    minor clock skew. `now_ts` is injectable so the check is unit-testable.
+    """
+    pairs = dict(parse_qsl(raw_init_data, keep_blank_values=True))
+    raw_auth_date = pairs.get("auth_date")
+    if not raw_auth_date:
+        return False  # no timestamp -> cannot establish freshness -> reject
+    try:
+        auth_date = int(raw_auth_date)
+    except ValueError:
+        return False
+    now = now_ts if now_ts is not None else time.time()
+    return (now - auth_date) <= max_age_seconds

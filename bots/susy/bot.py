@@ -24,60 +24,28 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     if os.path.exists(bin_dir):
         os.environ["PATH"] = f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"
     
-    # Initialize Music Subsystem
-    pyrogram = PyrogramClientManager(config=app_config)
-    calls = PyTgCallsClient(pyrogram_manager=pyrogram)
+    # MUSIC SUBSYSTEM (DISABLED - PRESERVED FOR FUTURE REUSE)
+    # pyrogram = PyrogramClientManager(config=app_config)
+    # calls = PyTgCallsClient(pyrogram_manager=pyrogram)
+    # music_service = MusicService(...)
     
-    downloads_dir = os.path.join(os.getcwd(), "downloads")
-    processed_dir = os.path.join(downloads_dir, "processed")
-    os.makedirs(processed_dir, exist_ok=True)
-    
-    # Resolve cookies path to bypass YouTube 403 Forbidden blocks
-    cookies_path = os.getenv("YOUTUBE_COOKIES_PATH")
-    if not cookies_path:
-        secret_dir = "/etc/secrets"
-        if os.path.exists(secret_dir) and os.path.isdir(secret_dir):
-            secret_files = [os.path.join(secret_dir, f) for f in os.listdir(secret_dir) if os.path.isfile(os.path.join(secret_dir, f))]
-            if secret_files:
-                cookies_path = secret_files[0]
-        if not cookies_path and os.path.exists("cookies.txt"):
-            cookies_path = "cookies.txt"
-            
-    if cookies_path:
-        print(f"SUSY MUSIC ENGINE: Using cookies file at -> {cookies_path}")
-    else:
-        print("SUSY MUSIC ENGINE: WARNING - No cookies file detected!")
-            
-    music_service = MusicService(
-        downloader=YtDlpDownloader(
-            download_dir=downloads_dir,
-            retries=3,
-            socket_timeout=15,
-            extractor_retries=3,
-            cookiefile=cookies_path,
-        ),
-        audio_processor=FFmpegAudioProcessor(output_dir=processed_dir),
-        stream_client=calls,
-    )
+    music_service = None
 
     from aiogram.types import BotCommand
     susy_commands = [
-        BotCommand(command="start", description="Meet Susy"),
-        BotCommand(command="playsong", description="Play a song in group"),
-        BotCommand(command="skip", description="Skip the current track"),
-        BotCommand(command="pause", description="Pause music playback"),
-        BotCommand(command="resume", description="Resume music playback"),
-        BotCommand(command="stop", description="Stop music and clear queue"),
-        BotCommand(command="help", description="Show Susy host & music features"),
+        BotCommand(command="start", description="Meet Susy & Community Welcome"),
+        BotCommand(command="where", description="Community topic directory & guide"),
+        BotCommand(command="help", description="Show Susy hostess & community features"),
     ]
 
-    susy_router = build_susy_router("Susy onboarding and engagement bot", music_service=music_service)
+    susy_router = build_susy_router("Susy onboarding and engagement bot", music_service=None)
 
-    try:
-        await pyrogram.start()
-        await calls.start()
-    except Exception as e:
-        print(f"SUSY VOICE STREAM NOTICE (Native Audio Mode Active): {e}")
+    # PyTgCalls and Pyrogram disabled
+    # try:
+    #     await pyrogram.start()
+    #     await calls.start()
+    # except Exception as e:
+    #     print(f"SUSY VOICE STREAM NOTICE: {e}")
 
     try:
         await run_polling_bot(
@@ -88,8 +56,4 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
             commands=susy_commands,
         )
     finally:
-        try:
-            await calls.stop()
-            await pyrogram.stop()
-        except Exception:
-            pass
+        pass

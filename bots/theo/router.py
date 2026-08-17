@@ -160,10 +160,7 @@ def build_theo_router(description: str) -> Router:
             )
             
         # Send persistent reply keyboard menu
-        await message.answer(
-            "Navigation Menu Loaded 👇",
-            reply_markup=reply_menu
-        )
+        await message.answer("\u200b", reply_markup=reply_menu)
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
