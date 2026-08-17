@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import os
 import logging
-from aiogram import Router
+from aiogram import Bot, Router
 from aiogram.filters import Command
-from aiogram.types import Message
-
+from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeChat
 from core.filters import IsGlobalAdminFilter
 from shared.services.container import ServiceContainer
 
@@ -14,6 +14,32 @@ logger = logging.getLogger(__name__)
 def create_admin_router(bot_name: str = "global") -> Router:
     """Creates a fresh router with admin commands attached for a given bot."""
     router = Router(name=f"{bot_name}_admin_commands")
+
+    @router.startup()
+    async def on_admin_startup(bot: Bot) -> None:
+        admin_commands_list = [
+            BotCommand(command="stats", description="👑 Global Admin Statistics"),
+            BotCommand(command="botstats", description="🤖 Per-Bot Performance Breakdown"),
+            BotCommand(command="groups", description="🏰 Active Groups Directory"),
+        ]
+
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+
+        for admin_id in admin_ids:
+            try:
+                # Fetch existing private chat commands configured by this bot
+                existing_cmds = await bot.get_my_commands(scope=BotCommandScopeAllPrivateChats())
+                existing_names = {c.command for c in (existing_cmds or [])}
+
+                # Append admin commands without overwriting or duplicating existing commands
+                new_cmds = [c for c in admin_commands_list if c.command not in existing_names]
+                full_admin_menu = list(existing_cmds or []) + new_cmds
+
+                await bot.set_my_commands(full_admin_menu, scope=BotCommandScopeChat(chat_id=admin_id))
+                logger.info("Registered admin menu commands for admin %d on %s.", admin_id, bot_name)
+            except Exception as e:
+                logger.warning(f"Failed to set admin commands menu for admin_id {admin_id}: {e}")
 
     @router.message(Command("stats"), IsGlobalAdminFilter())
     async def handle_global_stats(message: Message, services: ServiceContainer) -> None:
