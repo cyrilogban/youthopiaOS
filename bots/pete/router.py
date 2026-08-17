@@ -521,8 +521,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
     welcome_text = (
         f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🛡️</b>\n"
         "<blockquote>I am Pete (Peter, High King), the silent guardian of the YouThopia bot family.\n\n"
-        "I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure!</blockquote>\n\n"
-        "Use the persistent menu below to check your profile or get help:"
+        "I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure!</blockquote>"
     )
     
     reply_menu = build_pete_reply_keyboard()
@@ -533,7 +532,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         disable_web_page_preview=True, 
         reply_markup=inline_menu
     )
-    await message.answer("🛡️ Use the menu below to navigate Pete's security controls:", reply_markup=reply_menu)
+    await message.answer("\u200b", reply_markup=reply_menu)
 
 @router.message(F.text == "👤 My Profile")
 @router.message(Command("profile"))
@@ -609,6 +608,13 @@ async def handle_pete_help(event: Message | CallbackQuery) -> None:
         disable_web_page_preview=True,
         reply_markup=get_community_links_keyboard(),
     )
+
+@router.message(F.text == "🌐 Community")
+@router.message(F.text == "🌐 Community Links")
+async def community_handler(message: Message) -> None:
+    if message.chat.type != "private":
+        return
+    await send_community_exploration_page(message, 1)
 
 @router.callback_query(F.data == "pete_community_links")
 async def handle_pete_community_links(callback: CallbackQuery) -> None:

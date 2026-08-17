@@ -166,7 +166,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 reply_markup=inline_menu
             )
         
-        await message.answer("🌸 Use the persistent menu below to navigate Susy's hostess controls:", reply_markup=reply_menu)
+        await message.answer("\u200b", reply_markup=reply_menu)
 
     @router.message(Command("where"))
     async def on_where_command(message: Message):
