@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import os
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import Command
-from aiogram.types import BotCommand, Chat, ChatMemberUpdated, Message
+from aiogram.types import BotCommand, Chat, ChatMemberUpdated, Message, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators, BotCommandScopeChat
 
 from core.config import BotConfig
 from core.admin_commands import create_admin_router
@@ -131,8 +132,7 @@ async def run_polling_bot(
     print(f"DEBUG: run_polling_bot for '{config.name}' received router: {router}")
     dispatcher.include_router(router or build_router(config.name, description))
 
-    if commands:
-        from aiogram.types import BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators
+    if commands is not None:
         try:
             # Wipe out any ghost menus stuck in these specific layers
             await bot.delete_my_commands(scope=BotCommandScopeAllPrivateChats())
@@ -142,7 +142,26 @@ async def run_polling_bot(
             pass
         
         await bot.set_my_commands(commands)
-        logger.info("Registered %d menu commands for %s.", len(commands), config.name)
+        logger.info("Registered %d base menu commands for %s.", len(commands), config.name)
+
+    # Set up admin menu commands specifically for admin chat IDs
+    admin_commands_list = [
+        BotCommand(command="stats", description="👑 Global Admin Statistics"),
+        BotCommand(command="botstats", description="🤖 Per-Bot Performance Breakdown"),
+        BotCommand(command="groups", description="🏰 Active Groups Directory"),
+    ]
+
+    admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+    admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+
+    for admin_id in admin_ids:
+        try:
+            base_cmds = commands or []
+            full_admin_menu = base_cmds + admin_commands_list
+            await bot.set_my_commands(full_admin_menu, scope=BotCommandScopeChat(chat_id=admin_id))
+            logger.info("Registered admin menu commands for admin %d on %s.", admin_id, config.name)
+        except Exception as e:
+            logger.warning(f"Failed to set admin commands menu for admin_id {admin_id}: {e}")
 
     logger.info("Starting %s bot polling.", config.name)
     await dispatcher.start_polling(bot, allowed_updates=dispatcher.resolve_used_update_types())
