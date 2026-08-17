@@ -85,7 +85,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         reply_markup = build_lusy_reply_keyboard()
 
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
-        await message.answer("\u200b", reply_markup=reply_markup)
+        await message.answer("👇", reply_markup=reply_markup)
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile

@@ -532,7 +532,7 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
         disable_web_page_preview=True, 
         reply_markup=inline_menu
     )
-    await message.answer("\u200b", reply_markup=reply_menu)
+    await message.answer("👇", reply_markup=reply_menu)
 
 @router.message(F.text == "👤 My Profile")
 @router.message(Command("profile"))
