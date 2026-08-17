@@ -71,7 +71,7 @@ def build_theo_router(description: str) -> Router:
                 if not sub:
                     await services.users.set_subscription(user_id, "theo", "daily_devotional", enabled=True)
 
-            chats = await services.supabase.find_many("group_chats", {})
+            chats = await services.supabase.find_many("telegram_chats", {})
             for c in chats:
                 chat_id = c["id"]
                 sub = await services.chats.get_subscription("theo", chat_id, "daily_devotional")
