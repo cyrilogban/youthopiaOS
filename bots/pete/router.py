@@ -525,14 +525,12 @@ async def handle_start(message: Message, services: ServiceContainer) -> None:
     )
     
     reply_menu = build_pete_reply_keyboard()
-    inline_menu = build_pete_start_inline_keyboard()
     await message.answer(
         welcome_text, 
         parse_mode="HTML", 
         disable_web_page_preview=True, 
-        reply_markup=inline_menu
+        reply_markup=reply_menu
     )
-    await message.answer("👇", reply_markup=reply_menu)
 
 @router.message(F.text == "👤 My Profile")
 @router.message(Command("profile"))

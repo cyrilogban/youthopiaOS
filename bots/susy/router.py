@@ -162,17 +162,15 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 photo=SUSY_PHOTO,
                 caption=welcome_text,
                 parse_mode="HTML",
-                reply_markup=inline_menu
+                reply_markup=reply_menu
             )
         else:
             await message.answer(
                 welcome_text,
                 parse_mode="HTML",
                 disable_web_page_preview=True,
-                reply_markup=inline_menu
+                reply_markup=reply_menu
             )
-        
-        await message.answer("👇", reply_markup=reply_menu)
 
     @router.message(Command("where"))
     async def on_where_command(message: Message):
