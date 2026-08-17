@@ -78,6 +78,14 @@ def create_admin_router(bot_name: str = "global") -> Router:
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
         admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
 
+        if bot_name.lower() != "eddy":
+            for admin_id in admin_ids:
+                try:
+                    await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=admin_id))
+                except Exception:
+                    pass
+            return
+
         native_cmds = BOT_NATIVE_COMMANDS.get(bot_name.lower(), [])
 
         for admin_id in admin_ids:

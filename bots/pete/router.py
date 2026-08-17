@@ -920,6 +920,17 @@ async def on_startup(bot: Bot) -> None:
         BotCommand(command="help", description="Pete Safety Guide")
     ]
     
+    # Clear any stale admin chat scope overrides for Pete
+    import os
+    from aiogram.types import BotCommandScopeChat
+    admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+    admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+    for admin_id in admin_ids:
+        try:
+            await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=admin_id))
+        except Exception:
+            pass
+
     # Set public commands for Private DMs only
     await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
     

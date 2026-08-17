@@ -51,6 +51,16 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             BotCommand(command="playgame", description="Choose and start a Bible game"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
         ]
+        import os
+        from aiogram.types import BotCommandScopeChat
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+        for admin_id in admin_ids:
+            try:
+                await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=admin_id))
+            except Exception:
+                pass
+
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
