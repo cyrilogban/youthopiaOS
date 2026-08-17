@@ -6,10 +6,14 @@ def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
     """
     Pete persistent reply grid keyboard:
     Row 1 (Global): [ 👤 My Profile ]  [ ℹ️ Help ]  [ 🌐 Community ]
+    Row 2 (Pete Specific): [ 📝 Submit Appeal ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
-            GLOBAL_REPLY_BUTTONS
+            GLOBAL_REPLY_BUTTONS,
+            [
+                KeyboardButton(text="📝 Submit Appeal")
+            ]
         ],
         resize_keyboard=True,
         persistent=True,
