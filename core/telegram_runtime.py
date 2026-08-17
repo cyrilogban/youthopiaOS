@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.types import BotCommand, Chat, ChatMemberUpdated, Message
 
 from core.config import BotConfig
-from core.admin_commands import admin_router
+from core.admin_commands import create_admin_router
 from shared.logging.logger import get_logger
 from shared.services.container import ServiceContainer
 
@@ -68,7 +68,7 @@ async def register_group_chat(
 
 def build_router(bot_name: str, description: str, *, include_base_commands: bool = True) -> Router:
     router = Router(name=bot_name)
-    router.include_router(admin_router)
+    router.include_router(create_admin_router(bot_name))
 
     if include_base_commands:
         @router.message(Command("start"))
