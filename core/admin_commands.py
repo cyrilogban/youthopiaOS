@@ -4,11 +4,63 @@ import os
 import logging
 from aiogram import Bot, Router
 from aiogram.filters import Command
-from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeChat
+from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeChat, Message
 from core.filters import IsGlobalAdminFilter
 from shared.services.container import ServiceContainer
 
 logger = logging.getLogger(__name__)
+
+# Native side menu commands for each bot to merge with admin commands
+BOT_NATIVE_COMMANDS = {
+    "theo": [
+        BotCommand(command="start", description="Wake Up Theo"),
+        BotCommand(command="help", description="Show help information"),
+        BotCommand(command="subscribe", description="Subscribe to daily verses"),
+        BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
+        BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
+    ],
+    "pete": [
+        BotCommand(command="start", description="Meet Pete"),
+        BotCommand(command="appeal", description="Submit Appeal"),
+        BotCommand(command="profile", description="View your profile"),
+        BotCommand(command="help", description="Pete Safety Guide"),
+        BotCommand(command="warn", description="Issue a warning"),
+        BotCommand(command="mute", description="Revoke typing permissions"),
+        BotCommand(command="kick", description="Remove user from group"),
+        BotCommand(command="ban", description="Permanently ban user"),
+        BotCommand(command="unban", description="Lift a ban"),
+        BotCommand(command="unmute", description="Lift a mute"),
+        BotCommand(command="lock", description="Lock the group chat"),
+        BotCommand(command="unlock", description="Unlock the group chat"),
+        BotCommand(command="biblestudy", description="Silence chat for teaching"),
+        BotCommand(command="endbiblestudy", description="Unlock chat after teaching"),
+    ],
+    "lusy": [
+        BotCommand(command="start", description="Meet Lusy"),
+        BotCommand(command="games", description="Browse Bible Games"),
+        BotCommand(command="playgame", description="Choose and start a Bible game"),
+        BotCommand(command="leaderboard", description="View global leaderboard"),
+        BotCommand(command="yp", description="Check your current YP and Level"),
+        BotCommand(command="profile", description="View your profile"),
+        BotCommand(command="help", description="How to play and earn YP"),
+    ],
+    "susy": [
+        BotCommand(command="start", description="Meet Susy"),
+        BotCommand(command="where", description="Community topic directory & guide"),
+        BotCommand(command="profile", description="View your profile"),
+        BotCommand(command="help", description="Susy Hostess Guide"),
+    ],
+    "eddy": [
+        BotCommand(command="start", description="Open Ed main dashboard"),
+        BotCommand(command="calendar", description="View this week's event schedule"),
+        BotCommand(command="my_events", description="View events I am attending"),
+        BotCommand(command="addbirthday", description="Add your birthday"),
+        BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
+        BotCommand(command="deletebirthday", description="Delete your registered birthday"),
+        BotCommand(command="profile", description="View your profile"),
+        BotCommand(command="help", description="Show Ed's instructions"),
+    ],
+}
 
 
 def create_admin_router(bot_name: str = "global") -> Router:
@@ -26,18 +78,20 @@ def create_admin_router(bot_name: str = "global") -> Router:
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
         admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
 
+        native_cmds = BOT_NATIVE_COMMANDS.get(bot_name.lower(), [])
+
         for admin_id in admin_ids:
             try:
-                # Fetch existing private chat commands configured by this bot
+                # Fetch existing private chat commands configured by this bot, fallback to static mapping
                 existing_cmds = await bot.get_my_commands(scope=BotCommandScopeAllPrivateChats())
-                existing_names = {c.command for c in (existing_cmds or [])}
+                base_cmds = existing_cmds if existing_cmds else native_cmds
 
-                # Append admin commands without overwriting or duplicating existing commands
+                existing_names = {c.command for c in (base_cmds or [])}
                 new_cmds = [c for c in admin_commands_list if c.command not in existing_names]
-                full_admin_menu = list(existing_cmds or []) + new_cmds
+                full_admin_menu = list(base_cmds or []) + new_cmds
 
                 await bot.set_my_commands(full_admin_menu, scope=BotCommandScopeChat(chat_id=admin_id))
-                logger.info("Registered admin menu commands for admin %d on %s.", admin_id, bot_name)
+                logger.info("Registered admin menu commands (%d items) for admin %d on %s.", len(full_admin_menu), admin_id, bot_name)
             except Exception as e:
                 logger.warning(f"Failed to set admin commands menu for admin_id {admin_id}: {e}")
 

@@ -920,11 +920,6 @@ async def on_startup(bot: Bot) -> None:
         BotCommand(command="help", description="Pete Safety Guide")
     ]
     
-    try:
-        await bot.delete_my_commands()
-    except Exception:
-        pass
-        
     # Set public commands for Private DMs only
     await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
     

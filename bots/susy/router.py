@@ -59,10 +59,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
             BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
-        try:
-            await bot.delete_my_commands()
-        except Exception:
-            pass
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 

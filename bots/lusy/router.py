@@ -51,10 +51,6 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             BotCommand(command="playgame", description="Choose and start a Bible game"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
         ]
-        try:
-            await bot.delete_my_commands()
-        except Exception:
-            pass
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 

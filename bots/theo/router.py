@@ -59,6 +59,23 @@ def build_theo_router(description: str) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:
+        private_commands = [
+            BotCommand(command="start", description="Wake Up Theo"),
+            BotCommand(command="help", description="Show help information"),
+            BotCommand(command="subscribe", description="Subscribe to daily verses"),
+            BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
+            BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
+        ]
+        group_commands = [
+            BotCommand(command="start", description="Wake Up Theo"),
+            BotCommand(command="help", description="Show help information"),
+        ]
+        try:
+            await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+            await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+        except Exception as e:
+            logger.warning(f"Failed to set Theo commands: {e}")
+
         from bots.theo.services.scheduler import setup_theo_scheduler
         setup_theo_scheduler(bot, services)
 

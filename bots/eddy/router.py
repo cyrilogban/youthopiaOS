@@ -68,10 +68,6 @@ def build_eddy_router(description: str) -> Router:
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
         ]
         
-        try:
-            await bot.delete_my_commands()
-        except Exception:
-            pass
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
