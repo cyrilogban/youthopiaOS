@@ -410,6 +410,9 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
             [
                 InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
                 InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ],
+            [
+                InlineKeyboardButton(text="🛑 Quit Game", callback_data="lusy_quit_game_dm")
             ]
         ])
         
@@ -503,6 +506,9 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
         [
             InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
             InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+        ],
+        [
+            InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")
         ]
     ])
     
@@ -582,6 +588,9 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
             [
                 InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
                 InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ],
+            [
+                InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{poll_answer.user.id}")
             ]
         ])
         await bot.send_message(
@@ -733,6 +742,9 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
             [
                 InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race"),
                 InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ],
+            [
+                InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")
             ]
         ])
         
@@ -815,6 +827,9 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
             [
                 InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race"),
                 InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            ],
+            [
+                InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")
             ]
         ])
         
@@ -1014,9 +1029,12 @@ async def execute_quit_game(
     if chat_id in ACTIVE_GROUP_QUIZZES:
         del ACTIVE_GROUP_QUIZZES[chat_id]
 
+    from bots.lusy.utils.keyboards import build_game_selection_inline_keyboard
+    game_mode_markup = build_game_selection_inline_keyboard()
+
     user_first = user.first_name or "Player"
     if is_private:
-        confirm_text = "🛑 <b>Game Ended</b>\n\nYou have quit the active game session. Use /playgame to start a new game whenever you are ready!"
+        confirm_text = "🛑 <b>Game Ended</b>\n\nYou have quit the game. Select a game mode below whenever you're ready to play again! 🎮"
     else:
         confirm_text = f"🛑 <b>Game Stopped</b>\n\nThe active game session was ended by <b>{user_first}</b>."
 
@@ -1025,6 +1043,6 @@ async def execute_quit_game(
             await callback.answer("Game quit successfully.")
         except Exception:
             pass
-        await callback.message.answer(confirm_text, parse_mode="HTML")
+        await callback.message.answer(confirm_text, parse_mode="HTML", reply_markup=game_mode_markup)
     elif message:
-        await message.answer(confirm_text, parse_mode="HTML")
+        await message.answer(confirm_text, parse_mode="HTML", reply_markup=game_mode_markup)
