@@ -36,24 +36,32 @@ async def start_auto_game_scheduler(bot: Bot, services: ServiceContainer) -> Non
 
 async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
     """
-    Finds active groups where auto_game is enabled and drops a casual question.
+    Finds active groups where Lusy is present and drops a casual question (ON by default unless /autogame off).
     """
     try:
-        active_subs = await services.chats.get_active_subscriptions("lusy", "auto_game")
+        active_memberships = await services.chats.get_enabled_bot_chats("lusy")
     except Exception as e:
-        logger.error(f"Failed to fetch auto_game subscriptions: {e}")
+        logger.error(f"Failed to fetch Lusy bot memberships: {e}")
         return
 
-    if not active_subs:
+    if not active_memberships:
         return
 
-    for sub in active_subs:
+    for membership in active_memberships:
         try:
-            telegram_chat_id_str = sub.get("chat_id")
+            telegram_chat_id_str = membership.get("chat_id")
             if not telegram_chat_id_str:
                 continue
 
-            chat_id = int(telegram_chat_id_str)
+            # Check if group admin explicitly turned /autogame off
+            sub = await services.chats.get_subscription("lusy", telegram_chat_id_str, "auto_game")
+            if sub and sub.get("enabled") is False:
+                continue
+
+            try:
+                chat_id = int(telegram_chat_id_str)
+            except ValueError:
+                continue
 
             # Skip if a manual quiz is ALREADY running in this group
             if chat_id in ACTIVE_GROUP_QUIZZES:
