@@ -111,7 +111,10 @@ def build_router(bot_name: str, description: str, *, include_base_commands: bool
 
     @_fallback.message()
     async def track_group(message: Message, services: ServiceContainer) -> None:
-        await register_group_chat(message, services, bot_name)
+        try:
+            await register_group_chat(message, services, bot_name)
+        except Exception as e:
+            logger.warning(f"Failed to register group chat for {bot_name}: {e}")
 
     router.include_router(_fallback)
 

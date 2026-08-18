@@ -34,8 +34,11 @@ logger = logging.getLogger(__name__)
 
 
 def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
-    router = build_router("lusy", description, include_base_commands=False)
+    router = Router(name="lusy_root")
     router.include_router(quiz_router)
+
+    base_router = build_router("lusy", description, include_base_commands=False)
+    router.include_router(base_router)
 
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:
