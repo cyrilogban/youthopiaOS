@@ -38,7 +38,11 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     router.include_router(quiz_router)
 
     @router.startup()
-    async def on_startup(bot: Bot) -> None:
+    async def on_startup(bot: Bot, services: ServiceContainer) -> None:
+        import asyncio
+        from bots.lusy.services.scheduler import start_auto_game_scheduler
+        asyncio.create_task(start_auto_game_scheduler(bot, services))
+
         private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
             BotCommand(command="playgame", description="Choose and start a Bible game"),
