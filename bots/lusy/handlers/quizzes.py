@@ -234,6 +234,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
                     row = []
             if row:
                 choices_buttons.append(row)
+            choices_buttons.append([InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")])
                 
             xp_reward = 15 if difficulty == "easy" else (25 if difficulty == "medium" else 35)
             
@@ -263,6 +264,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
                 "is_group": is_group,
                 "chat_id": chat_id,
                 "message_id": sent_msg.message_id,
+                "host_id": callback.from_user.id,
                 "locked_out": set(),
                 "start_time": time.time(),
                 "closed": False,
@@ -340,6 +342,7 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
             "is_group": is_group,
             "chat_id": chat_id,
             "message_id": sent_poll.message_id,
+            "host_id": callback.from_user.id,
             "user_id": None if is_group else user_id,
             "duration": duration,
             "votes": {}, # user_id -> { "display_name": str, "is_correct": bool }
@@ -900,3 +903,128 @@ async def on_scramble_command(message: Message, services: ServiceContainer):
         parse_mode="HTML",
         reply_markup=markup
     )
+
+
+# -----------------------------------------------------------------------------
+# QUIT GAME FEATURE (HYBRID APPROACH: /quit, /stopgame, /endgame, Inline Button)
+# -----------------------------------------------------------------------------
+
+@quiz_router.message(Command("quit"))
+@quiz_router.message(Command("stopgame"))
+@quiz_router.message(Command("endgame"))
+@quiz_router.message(F.text == "🛑 Quit Game")
+async def cmd_quit_game(message: Message, bot: Bot):
+    await execute_quit_game(message.chat.id, message.from_user, bot, message=message)
+
+
+@quiz_router.callback_query(F.data.startswith("lusy_quit_game"))
+async def callback_quit_game(callback: CallbackQuery, bot: Bot):
+    await execute_quit_game(callback.message.chat.id, callback.from_user, bot, callback=callback)
+
+
+async def execute_quit_game(
+    chat_id: int,
+    user: Any,
+    bot: Bot,
+    message: Message | None = None,
+    callback: CallbackQuery | None = None
+) -> None:
+    is_private = (message and message.chat.type == "private") or (callback and callback.message.chat.type == "private")
+
+    # 1. Find active session for this chat_id
+    active_poll_id = ACTIVE_GROUP_QUIZZES.get(chat_id)
+    active_race_key = None
+    active_race_data = None
+
+    for r_key, r_data in list(ACTIVE_RACES.items()):
+        if r_data.get("chat_id") == chat_id and not r_data.get("closed", False):
+            active_race_key = r_key
+            active_race_data = r_data
+            break
+
+    active_poll_data = ACTIVE_POLLS.get(active_poll_id) if active_poll_id else None
+
+    # If no poll found in ACTIVE_GROUP_QUIZZES, search ACTIVE_POLLS by chat_id
+    if not active_poll_data:
+        for p_id, p_data in list(ACTIVE_POLLS.items()):
+            if p_data.get("chat_id") == chat_id and not p_data.get("closed", False):
+                active_poll_id = p_id
+                active_poll_data = p_data
+                break
+
+    if not active_poll_data and not active_race_data:
+        msg_text = "⚠️ No active game is currently running in this chat."
+        if callback:
+            await callback.answer(msg_text, show_alert=True)
+        elif message:
+            await message.answer(msg_text)
+        return
+
+    # 2. Permission check for group chats
+    if not is_private:
+        host_id = (active_poll_data.get("host_id") if active_poll_data else active_race_data.get("host_id"))
+        is_host = (host_id is not None and user.id == host_id)
+
+        is_admin = False
+        import os
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+        if user.id in admin_ids:
+            is_admin = True
+        else:
+            try:
+                chat_member = await bot.get_chat_member(chat_id, user.id)
+                if chat_member.status in ("administrator", "creator"):
+                    is_admin = True
+            except Exception:
+                pass
+
+        if not is_host and not is_admin:
+            denial = "⚠️ Only the game host or group administrators can end this game."
+            if callback:
+                await callback.answer(denial, show_alert=True)
+            elif message:
+                await message.answer(denial)
+            return
+
+    # 3. Terminate active session
+    if active_poll_data:
+        active_poll_data["closed"] = True
+        p_msg_id = active_poll_data.get("message_id")
+        if p_msg_id:
+            try:
+                await bot.stop_poll(chat_id=chat_id, message_id=p_msg_id)
+            except Exception:
+                pass
+
+    if active_race_data:
+        active_race_data["closed"] = True
+        r_msg_id = active_race_data.get("message_id")
+        if r_msg_id:
+            try:
+                await bot.edit_message_text(
+                    text=f"🛑 <b>Game Stopped Early</b>\n\nThis Trivia Race was ended by <b>{user.first_name}</b>.",
+                    chat_id=chat_id,
+                    message_id=r_msg_id,
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+
+    if chat_id in ACTIVE_GROUP_QUIZZES:
+        del ACTIVE_GROUP_QUIZZES[chat_id]
+
+    user_first = user.first_name or "Player"
+    if is_private:
+        confirm_text = "🛑 <b>Game Ended</b>\n\nYou have quit the active game session. Use /playgame to start a new game whenever you are ready!"
+    else:
+        confirm_text = f"🛑 <b>Game Stopped</b>\n\nThe active game session was ended by <b>{user_first}</b>."
+
+    if callback:
+        try:
+            await callback.answer("Game quit successfully.")
+        except Exception:
+            pass
+        await callback.message.answer(confirm_text, parse_mode="HTML")
+    elif message:
+        await message.answer(confirm_text, parse_mode="HTML")

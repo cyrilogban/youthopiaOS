@@ -7,6 +7,7 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
     Lusy persistent reply keyboard:
     Row 1 (Global):        [ 👤 My Profile ]  [ ℹ️ Help ]         [ 🌐 Community ]
     Row 2 (Bot Specific): [ 🎮 Play Games ]  [ 🏆 Leaderboard ]  [ ⭐ My Points ]
+    Row 3 (Control):       [ 🛑 Quit Game ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -16,6 +17,9 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
                 KeyboardButton(text="🏆 Leaderboard"),
                 KeyboardButton(text="⭐ My Points"),
             ],
+            [
+                KeyboardButton(text="🛑 Quit Game"),
+            ]
         ],
         resize_keyboard=True,
         persistent=True,

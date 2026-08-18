@@ -42,6 +42,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         private_commands = [
             BotCommand(command="start", description="Open the Game Dashboard"),
             BotCommand(command="playgame", description="Choose and start a Bible game"),
+            BotCommand(command="quit", description="Quit active game session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
             BotCommand(command="yp", description="Check your current YP and Level"),
             BotCommand(command="profile", description="View your profile"),
@@ -49,6 +50,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         ]
         group_commands = [
             BotCommand(command="playgame", description="Choose and start a Bible game"),
+            BotCommand(command="quit", description="Quit active game session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
         ]
         import os

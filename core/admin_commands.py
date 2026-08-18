@@ -39,6 +39,7 @@ BOT_NATIVE_COMMANDS = {
         BotCommand(command="start", description="Meet Lusy"),
         BotCommand(command="games", description="Browse Bible Games"),
         BotCommand(command="playgame", description="Choose and start a Bible game"),
+        BotCommand(command="quit", description="Quit active game session"),
         BotCommand(command="leaderboard", description="View global leaderboard"),
         BotCommand(command="yp", description="Check your current YP and Level"),
         BotCommand(command="profile", description="View your profile"),
