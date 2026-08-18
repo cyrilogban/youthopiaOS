@@ -399,7 +399,7 @@ async def render_post_quiz_card(
     if explanation:
         card += f"\n💡 <i>{explanation}</i>\n"
 
-    card += "\n🌟 <b>Global Leaderboard (Supabase Standings):</b>\n"
+    card += "\n🌟 <b>Global Leaderboard:</b>\n"
     try:
         top_users = await services.users.get_leaderboard(limit=10)
         if top_users:
