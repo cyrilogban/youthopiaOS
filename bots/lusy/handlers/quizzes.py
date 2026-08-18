@@ -374,6 +374,52 @@ async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay: 
         pass
 
 
+async def render_post_quiz_card(
+    services: ServiceContainer,
+    round_title: str,
+    correct_text: str | None = None,
+    winners: list[str] | None = None,
+    user_result_text: str | None = None,
+    explanation: str | None = None,
+) -> str:
+    card = f"🎮 <b>{round_title}</b>\n"
+    if correct_text:
+        card += f"Correct Answer: <b>{correct_text}</b>\n"
+    if user_result_text:
+        card += f"\n{user_result_text}\n"
+    if winners:
+        card += f"\n<b>Round Winners:</b>\n"
+        medals = ["🥇", "🥈", "🥉"]
+        for idx, winner in enumerate(winners):
+            medal = medals[idx] if idx < len(medals) else "🔹"
+            card += f"{medal} {winner}\n"
+    elif winners is not None and not winners:
+        card += "\nNo correct answers this time! 😢\n"
+
+    if explanation:
+        card += f"\n💡 <i>{explanation}</i>\n"
+
+    card += "\n🌟 <b>Global Top YouTopians (Supabase Standings):</b>\n"
+    try:
+        top_users = await services.users.get_leaderboard(limit=5)
+        if top_users:
+            num_medals = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+            for idx, u in enumerate(top_users):
+                name = u.get("display_name") or u.get("first_name") or "Anonymous"
+                xp = u.get("total_xp", 0)
+                lvl = u.get("level", 1)
+                m = num_medals[idx] if idx < len(num_medals) else f"#{idx+1}"
+                card += f"{m} <b>{name}</b> — <code>{xp} YP</code> (Lvl {lvl})\n"
+        else:
+            card += "<i>No scores recorded yet in database!</i>\n"
+    except Exception as e:
+        logger.error(f"Failed to fetch leaderboard for post-quiz card: {e}")
+        card += "<i>Global leaderboard unavailable</i>\n"
+
+    card += "\nReady for the next round? Tap below!"
+    return card
+
+
 async def group_poll_timeout(poll_id: str, chat_id: int, message_id: int, services: ServiceContainer, bot: Bot, duration: int):
     # Wait for duration + 1s buffer for network latency
     await asyncio.sleep(duration + 1)
@@ -416,10 +462,16 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
             ]
         ])
         
+        timeout_text = await render_post_quiz_card(
+            services=services,
+            round_title=f"{game_label} Timeout",
+            user_result_text=f"⏰ <b>Time's up!</b> You didn't answer within {duration} seconds. (0 YP earned)"
+        )
+        
         try:
             await bot.send_message(
                 chat_id=chat_id,
-                text=f"⏰ <b>Time's up!</b> You didn't answer the {game_label} within {duration} seconds. (0 YP earned)\n\nReady to try again?",
+                text=timeout_text,
                 parse_mode="HTML",
                 reply_markup=markup
             )
@@ -451,8 +503,10 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
     # 2. Fetch correct answer details for display
     q_resp = await services.quizzes.get_question_by_id(question_id)
     correct_text = "Unknown"
+    explanation = None
     if q_resp:
         correct_text = q_resp.get("correct_answer", "Unknown")
+        explanation = q_resp.get("explanation")
         
     # 3. Award XP and compile winners list
     winners = []
@@ -487,20 +541,13 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
         next_callback = "lusy_play_quiz"
         title = "Quiz"
         
-    leaderboard_text = f"<b>🏆 {title} Completed!</b>\n"
-    leaderboard_text += f"Correct Answer: <b>{correct_text}</b>\n\n"
-    
-    if winners:
-        leaderboard_text += f"<b>Winners (+{base_xp} YP):</b>\n"
-        medals = ["🥇", "🥈", "🥉"]
-        for idx, winner in enumerate(winners):
-            medal = medals[idx] if idx < len(medals) else "🔹"
-            leaderboard_text += f"{medal} {winner}\n"
-    else:
-        leaderboard_text += "No correct answers this time! 😢\n"
-        
-    leaderboard_text += f"\n<i>Total participants: {len(votes)}</i>\n\n"
-    leaderboard_text += "Ready for the next round? Tap below!"
+    leaderboard_text = await render_post_quiz_card(
+        services=services,
+        round_title=f"🏆 {title} Completed!",
+        correct_text=correct_text,
+        winners=winners,
+        explanation=explanation
+    )
     
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -579,11 +626,22 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
         game_type = poll_info.get("game_type")
         if game_type == "fill_in_the_blank":
             next_callback = "lusy_play_fill_blank"
+            g_title = "Verse Completion"
         elif game_type == "verse_completion":
             next_callback = "lusy_play_scramble"
+            g_title = "Verse Scramble"
         else:
             next_callback = "lusy_play_quiz"
+            g_title = "Bible Challenge"
             
+        card_text = await render_post_quiz_card(
+            services=services,
+            round_title=f"{g_title} Result",
+            correct_text=correct_text,
+            user_result_text=result_text,
+            explanation=q_resp.get("explanation")
+        )
+        
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
@@ -595,7 +653,7 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
         ])
         await bot.send_message(
             chat_id=poll_answer.user.id,
-            text=f"<b>{result_text}</b>\n\nDo you want to play another one?",
+            text=card_text,
             parse_mode="HTML",
             reply_markup=markup
         )
@@ -727,16 +785,13 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
         correct_text = q_resp.get("correct_answer", "Unknown") if q_resp else "Unknown"
         explanation = race_info.get("explanation", "")
         
-        timeout_text = (
-            "⚡ <b>BIBLE TRIVIA RACE!</b>\n"
-            f"<i>({race_info['difficulty'].upper()} difficulty)</i>\n\n"
-            f"<b>Question:</b>\n"
-            f"<blockquote>{race_info['text']}</blockquote>\n\n"
-            "⏰ <b>Time's Up!</b> Nobody answered correctly in time.\n"
-            f"The correct answer was: <b>{correct_text}</b>\n"
+        timeout_text = await render_post_quiz_card(
+            services=services,
+            round_title=f"⚡ Trivia Race Timeout ({race_info['difficulty'].upper()})",
+            correct_text=correct_text,
+            user_result_text=f"⏰ <b>Time's Up!</b> Nobody answered correctly in time.",
+            explanation=explanation
         )
-        if explanation:
-            timeout_text += f"💡 <i>{explanation}</i>\n"
             
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
@@ -812,16 +867,13 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
         
         winner_name = callback.from_user.first_name or callback.from_user.username or "Anonymous"
         
-        win_text = (
-            "⚡ <b>BIBLE TRIVIA RACE!</b>\n"
-            f"<i>({race_info['difficulty'].upper()} difficulty)</i>\n\n"
-            f"<b>Question:</b>\n"
-            f"<blockquote>{race_info['text']}</blockquote>\n"
-            f"🏆 <b>Winner:</b> {winner_name} (+{base_xp} YP) in <b>{time_taken}s</b>!\n"
-            f"Correct Answer: <b>{correct_text}</b>\n"
+        win_text = await render_post_quiz_card(
+            services=services,
+            round_title=f"⚡ Trivia Race ({race_info['difficulty'].upper()})",
+            correct_text=correct_text,
+            winners=[f"{winner_name} (+{base_xp} YP in {time_taken}s)"],
+            explanation=explanation
         )
-        if explanation:
-            win_text += f"💡 <i>{explanation}</i>\n"
             
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
