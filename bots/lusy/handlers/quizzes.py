@@ -399,11 +399,11 @@ async def render_post_quiz_card(
     if explanation:
         card += f"\n💡 <i>{explanation}</i>\n"
 
-    card += "\n🌟 <b>Global Top YouTopians (Supabase Standings):</b>\n"
+    card += "\n🌟 <b>Global Leaderboard (Supabase Standings):</b>\n"
     try:
-        top_users = await services.users.get_leaderboard(limit=5)
+        top_users = await services.users.get_leaderboard(limit=10)
         if top_users:
-            num_medals = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+            num_medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
             for idx, u in enumerate(top_users):
                 name = u.get("display_name") or u.get("first_name") or "Anonymous"
                 xp = u.get("total_xp", 0)
@@ -416,7 +416,8 @@ async def render_post_quiz_card(
         logger.error(f"Failed to fetch leaderboard for post-quiz card: {e}")
         card += "<i>Global leaderboard unavailable</i>\n"
 
-    card += "\nReady for the next round? Tap below!"
+    card += "\n<i>🧹 This leaderboard card will self-destruct in 5 minutes...</i>\n"
+    card += "Ready for the next round? Tap below!"
     return card
 
 
@@ -469,12 +470,13 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
         )
         
         try:
-            await bot.send_message(
+            sent_msg = await bot.send_message(
                 chat_id=chat_id,
                 text=timeout_text,
                 parse_mode="HTML",
                 reply_markup=markup
             )
+            asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 300))
         except Exception:
             pass
             
@@ -560,12 +562,13 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
     ])
     
     try:
-        await bot.send_message(
+        sent_msg = await bot.send_message(
             chat_id=chat_id,
             text=leaderboard_text,
             parse_mode="HTML",
             reply_markup=markup
         )
+        asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 300))
     except Exception:
         pass
     
@@ -651,12 +654,13 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
                 InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{poll_answer.user.id}")
             ]
         ])
-        await bot.send_message(
+        sent_msg = await bot.send_message(
             chat_id=poll_answer.user.id,
             text=card_text,
             parse_mode="HTML",
             reply_markup=markup
         )
+        asyncio.create_task(self_destruct_message(bot, poll_answer.user.id, sent_msg.message_id, 300))
     else:
         # Group poll flow: Accumulate votes in memory
         display_name = poll_answer.user.first_name or poll_answer.user.username or "Anonymous"
@@ -811,6 +815,7 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
                 parse_mode="HTML",
                 reply_markup=markup
             )
+            asyncio.create_task(self_destruct_message(bot, chat_id, message_id, 300))
         except Exception:
             pass
             
@@ -822,7 +827,7 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
 
 
 @quiz_router.callback_query(F.data.startswith("lusy_race_choice_"))
-async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer):
+async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer, bot: Bot):
     user = await services.identity.resolve_telegram_user(callback.from_user)
     user_id = user["id"]
     chat_id = callback.message.chat.id
@@ -891,6 +896,7 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
                 parse_mode="HTML",
                 reply_markup=markup
             )
+            asyncio.create_task(self_destruct_message(bot, chat_id, message_id, 300))
         except Exception:
             pass
             
