@@ -967,16 +967,8 @@ async def execute_quit_game(
                 active_poll_data = p_data
                 break
 
-    if not active_poll_data and not active_race_data:
-        msg_text = "⚠️ No active game is currently running in this chat."
-        if callback:
-            await callback.answer(msg_text, show_alert=True)
-        elif message:
-            await message.answer(msg_text)
-        return
-
-    # 2. Permission check for group chats
-    if not is_private:
+    # 2. Permission check for group chats (ONLY if an active game is currently running)
+    if not is_private and (active_poll_data or active_race_data):
         host_id = (active_poll_data.get("host_id") if active_poll_data else active_race_data.get("host_id"))
         is_host = (host_id is not None and user.id == host_id)
 
@@ -1002,7 +994,7 @@ async def execute_quit_game(
                 await message.answer(denial)
             return
 
-    # 3. Terminate active session
+    # 3. Terminate active session if one exists
     if active_poll_data:
         active_poll_data["closed"] = True
         p_msg_id = active_poll_data.get("message_id")
@@ -1029,20 +1021,30 @@ async def execute_quit_game(
     if chat_id in ACTIVE_GROUP_QUIZZES:
         del ACTIVE_GROUP_QUIZZES[chat_id]
 
+    # 4. Return to Game Mode Selection Menu unconditionally
     from bots.lusy.utils.keyboards import build_game_selection_inline_keyboard
     game_mode_markup = build_game_selection_inline_keyboard()
 
     user_first = user.first_name or "Player"
     if is_private:
-        confirm_text = "🛑 <b>Game Ended</b>\n\nYou have quit the game. Select a game mode below whenever you're ready to play again! 🎮"
+        confirm_text = (
+            "🛑 <b>Game Stopped</b>\n\n"
+            "Select a game mode below whenever you're ready to play again! 🎮"
+        )
     else:
-        confirm_text = f"🛑 <b>Game Stopped</b>\n\nThe active game session was ended by <b>{user_first}</b>."
+        confirm_text = (
+            f"🛑 <b>Game Stopped</b>\n\n"
+            f"The active game session was ended by <b>{user_first}</b>. Select a game mode below to start a new round!"
+        )
 
     if callback:
         try:
-            await callback.answer("Game quit successfully.")
+            await callback.answer("Game stopped!")
         except Exception:
             pass
-        await callback.message.answer(confirm_text, parse_mode="HTML", reply_markup=game_mode_markup)
+        try:
+            await callback.message.answer(confirm_text, parse_mode="HTML", reply_markup=game_mode_markup)
+        except Exception:
+            pass
     elif message:
         await message.answer(confirm_text, parse_mode="HTML", reply_markup=game_mode_markup)
