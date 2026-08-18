@@ -99,10 +99,20 @@ class ChatService:
             on_conflict="chat_id,bot_name",
         )
 
+    async def _resolve_chat_uuid(self, chat_id_input: str | int) -> str:
+        val_str = str(chat_id_input).strip()
+        if val_str.lstrip("-").isdigit():
+            chat = await self.db.find_one("telegram_chats", "telegram_chat_id", int(val_str))
+            if chat and "id" in chat:
+                return chat["id"]
+            chat = await self.upsert_chat(int(val_str), "group")
+            return chat["id"]
+        return val_str
+
     async def set_subscription(
         self,
         bot_name: str,
-        chat_id: str,
+        chat_id: str | int,
         subscription_type: str,
         *,
         enabled: bool = True,
@@ -111,11 +121,12 @@ class ChatService:
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         self._validate_bot_name(bot_name)
+        db_chat_id = await self._resolve_chat_uuid(chat_id)
         return await self.db.upsert(
             "chat_subscriptions",
             {
                 "bot_name": bot_name,
-                "chat_id": chat_id,
+                "chat_id": db_chat_id,
                 "subscription_type": subscription_type,
                 "enabled": enabled,
                 "schedule": schedule,
@@ -155,12 +166,14 @@ class ChatService:
         return settings_row.get("settings") or {}
 
     async def get_subscription(
-        self, bot_name: str, chat_id: str, subscription_type: str
+        self, bot_name: str, chat_id: str | int, subscription_type: str
     ) -> dict[str, Any] | None:
         """Fetch subscription record for a bot in a specific chat."""
+        self._validate_bot_name(bot_name)
+        db_chat_id = await self._resolve_chat_uuid(chat_id)
         return await self.db.find_one_multi(
             "chat_subscriptions",
-            {"chat_id": chat_id, "bot_name": bot_name, "subscription_type": subscription_type}
+            {"chat_id": db_chat_id, "bot_name": bot_name, "subscription_type": subscription_type}
         )
 
     def _validate_bot_name(self, bot_name: str) -> None:

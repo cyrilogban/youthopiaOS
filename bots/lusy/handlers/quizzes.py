@@ -1114,62 +1114,69 @@ async def execute_quit_game(
 
 @quiz_router.message(Command("autogame"))
 async def autogame_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
-    chat_id = message.chat.id
-    if message.chat.type == "private":
-        await message.answer("⚠️ Auto Game is a group feature! Add Lusy to your group chat to use /autogame.")
-        return
-
-    args = message.text.strip().split()
-    subcommand = args[1].lower() if len(args) > 1 else "status"
-
-    if subcommand in ("on", "off", "enable", "disable"):
-        is_admin = False
-        import os
-        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
-        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
-        if message.from_user and message.from_user.id in admin_ids:
-            is_admin = True
-        else:
-            try:
-                member = await bot.get_chat_member(chat_id, message.from_user.id)
-                if member.status in ("administrator", "creator"):
-                    is_admin = True
-            except Exception:
-                pass
-
-        if not is_admin:
-            await message.answer("⚠️ Only group administrators or owners can toggle Auto Game settings!")
+    try:
+        chat_id = message.chat.id
+        if message.chat.type == "private":
+            await message.answer("⚠️ Auto Game is a group feature! Add Lusy to your group chat to use /autogame.")
             return
 
-        enable_flag = subcommand in ("on", "enable")
-        await services.chats.set_subscription(
-            bot_name="lusy",
-            chat_id=str(chat_id),
-            subscription_type="auto_game",
-            enabled=enable_flag
-        )
+        args = message.text.strip().split()
+        subcommand = args[1].lower() if len(args) > 1 else "status"
 
-        status_text = "ENABLED 🟢" if enable_flag else "DISABLED 🔴"
-        await message.answer(
-            f"🎮 <b>Auto Game Updated!</b>\n\n"
-            f"Auto Game is now <b>{status_text}</b> for this group.\n"
-            f"When enabled, Lusy will automatically drop 10–15 casual Bible games daily!",
-            parse_mode="HTML"
-        )
-    else:
-        sub = await services.chats.get_subscription("lusy", str(chat_id), "auto_game")
-        is_enabled = sub.get("enabled", True) if sub else True
-        status_text = "ENABLED 🟢" if is_enabled else "DISABLED 🔴"
+        if subcommand in ("on", "off", "enable", "disable"):
+            is_admin = False
+            import os
+            admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+            admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+            if message.from_user and message.from_user.id in admin_ids:
+                is_admin = True
+            else:
+                try:
+                    member = await bot.get_chat_member(chat_id, message.from_user.id)
+                    if member.status in ("administrator", "creator"):
+                        is_admin = True
+                except Exception:
+                    pass
 
-        await message.answer(
-            f"🎮 <b>AUTO GAME STATUS</b>\n"
-            f"───────────────────────────\n"
-            f"Status: <b>{status_text}</b>\n"
-            f"Daily Drops: <code>10–15 casual games / day</code>\n"
-            f"Self-Destruct: <code>5 minutes</code>\n\n"
-            f"<b>Admin Commands:</b>\n"
-            f"• <code>/autogame on</code> — Enable Auto Game\n"
-            f"• <code>/autogame off</code> — Disable Auto Game\n"
-            f"───────────────────────────",
-            parse_mode="HTML"
-        )
+            if not is_admin:
+                await message.answer("⚠️ Only group administrators or owners can toggle Auto Game settings!")
+                return
+
+            enable_flag = subcommand in ("on", "enable")
+            await services.chats.set_subscription(
+                bot_name="lusy",
+                chat_id=chat_id,
+                subscription_type="auto_game",
+                enabled=enable_flag
+            )
+
+            status_text = "ENABLED 🟢" if enable_flag else "DISABLED 🔴"
+            await message.answer(
+                f"🎮 <b>Auto Game Updated!</b>\n\n"
+                f"Auto Game is now <b>{status_text}</b> for this group.\n"
+                f"When enabled, Lusy will automatically drop 10–15 casual Bible games daily!",
+                parse_mode="HTML"
+            )
+        else:
+            sub = await services.chats.get_subscription("lusy", chat_id, "auto_game")
+            is_enabled = sub.get("enabled", True) if sub else True
+            status_text = "ENABLED 🟢" if is_enabled else "DISABLED 🔴"
+
+            await message.answer(
+                f"🎮 <b>AUTO GAME STATUS</b>\n"
+                f"───────────────────────────\n"
+                f"Status: <b>{status_text}</b>\n"
+                f"Daily Drops: <code>10–15 casual games / day</code>\n"
+                f"Self-Destruct: <code>5 minutes</code>\n\n"
+                f"<b>Admin Commands:</b>\n"
+                f"• <code>/autogame on</code> — Enable Auto Game\n"
+                f"• <code>/autogame off</code> — Disable Auto Game\n"
+                f"───────────────────────────",
+                parse_mode="HTML"
+            )
+    except Exception as e:
+        logger.error(f"Error in autogame_handler: {e}")
+        try:
+            await message.answer("⚠️ Error updating Auto Game settings. Please try again.")
+        except Exception:
+            pass
