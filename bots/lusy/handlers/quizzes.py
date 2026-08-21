@@ -372,6 +372,8 @@ async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay: 
         await bot.delete_message(chat_id=chat_id, message_id=message_id)
     except Exception:
         pass
+    if chat_id in ACTIVE_GROUP_QUIZZES:
+        del ACTIVE_GROUP_QUIZZES[chat_id]
 
 
 async def render_post_quiz_card(

@@ -8,7 +8,14 @@ from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from shared.services.container import ServiceContainer
-from bots.lusy.handlers.quizzes import ACTIVE_GROUP_QUIZZES, ACTIVE_POLLS, ACTIVE_RACES, self_destruct_message
+from bots.lusy.handlers.quizzes import (
+    ACTIVE_GROUP_QUIZZES,
+    ACTIVE_POLLS,
+    ACTIVE_RACES,
+    self_destruct_message,
+    group_poll_timeout,
+    race_timeout_task,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +149,8 @@ async def trigger_auto_quiz_cycle(bot: Bot, services: ServiceContainer) -> None:
                     "difficulty": difficulty
                 }
 
-                # Self destruct unanswered race card after 5 minutes (300s)
+                # Schedule race timeout and self destruct cleanup after 5 minutes (300s)
+                asyncio.create_task(race_timeout_task(race_key, services, bot, 300))
                 asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 300))
 
             # Mode 2: Native Quiz Polls
@@ -181,7 +189,8 @@ async def trigger_auto_quiz_cycle(bot: Bot, services: ServiceContainer) -> None:
                     "closed": False
                 }
 
-                # Self destruct unanswered poll message after 5 minutes (300s)
+                # Schedule poll timeout and self destruct cleanup after 5 minutes (300s)
+                asyncio.create_task(group_poll_timeout(sent_poll.poll.id, chat_id, sent_poll.message_id, services, bot, 300))
                 asyncio.create_task(self_destruct_message(bot, chat_id, sent_poll.message_id, 300))
 
         except Exception as e:
