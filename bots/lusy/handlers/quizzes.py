@@ -458,10 +458,10 @@ async def dm_poll_timeout(poll_id: str, chat_id: int, message_id: int, services:
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
-                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+                InlineKeyboardButton(text="🔄 Change Quiz", callback_data="lusy_menu_play")
             ],
             [
-                InlineKeyboardButton(text="🛑 Quit Game", callback_data="lusy_quit_game_dm")
+                InlineKeyboardButton(text="🛑 Quit Quiz", callback_data="lusy_quit_game_dm")
             ]
         ])
         
@@ -556,10 +556,10 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
-            InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+            InlineKeyboardButton(text="🔄 Change Quiz", callback_data="lusy_menu_play")
         ],
         [
-            InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")
+            InlineKeyboardButton(text="🛑 Quit Quiz", callback_data=f"lusy_quit_game_{chat_id}")
         ]
     ])
     
@@ -650,10 +650,10 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(text="Next Question ➡️", callback_data=next_callback),
-                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+                InlineKeyboardButton(text="🔄 Change Quiz", callback_data="lusy_menu_play")
             ],
             [
-                InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{poll_answer.user.id}")
+                InlineKeyboardButton(text="🛑 Quit Quiz", callback_data=f"lusy_quit_game_{poll_answer.user.id}")
             ]
         ])
         sent_msg = await bot.send_message(
@@ -802,10 +802,10 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race"),
-                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+                InlineKeyboardButton(text="🔄 Change Quiz", callback_data="lusy_menu_play")
             ],
             [
-                InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")
+                InlineKeyboardButton(text="🛑 Quit Quiz", callback_data=f"lusy_quit_game_{chat_id}")
             ]
         ])
         
@@ -885,10 +885,10 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(text="Next Race ⚡", callback_data="lusy_play_race"),
-                InlineKeyboardButton(text="🔄 Change Game", callback_data="lusy_menu_play")
+                InlineKeyboardButton(text="🔄 Change Quiz", callback_data="lusy_menu_play")
             ],
             [
-                InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")
+                InlineKeyboardButton(text="🛑 Quit Quiz", callback_data=f"lusy_quit_game_{chat_id}")
             ]
         ])
         
@@ -981,13 +981,15 @@ async def on_scramble_command(message: Message, services: ServiceContainer):
 
 
 # -----------------------------------------------------------------------------
-# QUIT GAME FEATURE (HYBRID APPROACH: /quit, /stopgame, /endgame, Inline Button)
+# QUIT QUIZ FEATURE (HYBRID APPROACH: /quit, /stopquiz, /endquiz, Inline Button)
 # -----------------------------------------------------------------------------
 
 @quiz_router.message(Command("quit"))
+@quiz_router.message(Command("stopquiz"))
+@quiz_router.message(Command("endquiz"))
 @quiz_router.message(Command("stopgame"))
 @quiz_router.message(Command("endgame"))
-@quiz_router.message(F.text == "🛑 Quit Game")
+@quiz_router.message(F.text.in_({"🛑 Quit Quiz", "🛑 Quit Game"}))
 async def cmd_quit_game(message: Message, bot: Bot):
     await execute_quit_game(message.chat.id, message.from_user, bot, message=message)
 
@@ -1027,7 +1029,7 @@ async def execute_quit_game(
                 active_poll_data = p_data
                 break
 
-    # 2. Permission check for group chats (ONLY if an active game is currently running)
+    # 2. Permission check for group chats (ONLY if an active quiz is currently running)
     if not is_private and (active_poll_data or active_race_data):
         host_id = (active_poll_data.get("host_id") if active_poll_data else active_race_data.get("host_id"))
         is_host = (host_id is not None and user.id == host_id)
@@ -1047,7 +1049,7 @@ async def execute_quit_game(
                 pass
 
         if not is_host and not is_admin:
-            denial = "⚠️ Only the game host or group administrators can end this game."
+            denial = "⚠️ Only the quiz host or group administrators can end this quiz."
             if callback:
                 await callback.answer(denial, show_alert=True)
             elif message:
@@ -1070,7 +1072,7 @@ async def execute_quit_game(
         if r_msg_id:
             try:
                 await bot.edit_message_text(
-                    text=f"🛑 <b>Game Stopped Early</b>\n\nThis Trivia Race was ended by <b>{user.first_name}</b>.",
+                    text=f"🛑 <b>Quiz Stopped Early</b>\n\nThis Trivia Race was ended by <b>{user.first_name}</b>.",
                     chat_id=chat_id,
                     message_id=r_msg_id,
                     parse_mode="HTML"
@@ -1081,25 +1083,25 @@ async def execute_quit_game(
     if chat_id in ACTIVE_GROUP_QUIZZES:
         del ACTIVE_GROUP_QUIZZES[chat_id]
 
-    # 4. Return to Game Mode Selection Menu unconditionally
+    # 4. Return to Quiz Mode Selection Menu unconditionally
     from bots.lusy.utils.keyboards import build_game_selection_inline_keyboard
     game_mode_markup = build_game_selection_inline_keyboard()
 
     user_first = user.first_name or "Player"
     if is_private:
         confirm_text = (
-            "🛑 <b>Game Stopped</b>\n\n"
-            "Select a game mode below whenever you're ready to play again! 🎮"
+            "🛑 <b>Quiz Stopped</b>\n\n"
+            "Select a quiz mode below whenever you're ready to play again! 🎯"
         )
     else:
         confirm_text = (
-            f"🛑 <b>Game Stopped</b>\n\n"
-            f"The active game session was ended by <b>{user_first}</b>. Select a game mode below to start a new round!"
+            f"🛑 <b>Quiz Stopped</b>\n\n"
+            f"The active quiz session was ended by <b>{user_first}</b>. Select a quiz mode below to start a new round!"
         )
 
     if callback:
         try:
-            await callback.answer("Game stopped!")
+            await callback.answer("Quiz stopped!")
         except Exception:
             pass
         try:

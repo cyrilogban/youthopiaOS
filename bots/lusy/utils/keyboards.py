@@ -6,19 +6,19 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
     """
     Lusy persistent reply keyboard:
     Row 1 (Global):        [ 👤 My Profile ]  [ ℹ️ Help ]         [ 🌐 Community ]
-    Row 2 (Bot Specific): [ 🎮 Play Games ]  [ 🏆 Leaderboard ]  [ ⭐ My Points ]
-    Row 3 (Control):       [ 🛑 Quit Game ]
+    Row 2 (Bot Specific): [ 🎯 Play Quizzes ] [ 🏆 Leaderboard ]  [ ⭐ My Points ]
+    Row 3 (Control):       [ 🛑 Quit Quiz ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
             GLOBAL_REPLY_BUTTONS,
             [
-                KeyboardButton(text="🎮 Play Games"),
+                KeyboardButton(text="🎯 Play Quizzes"),
                 KeyboardButton(text="🏆 Leaderboard"),
                 KeyboardButton(text="⭐ My Points"),
             ],
             [
-                KeyboardButton(text="🛑 Quit Game"),
+                KeyboardButton(text="🛑 Quit Quiz"),
             ]
         ],
         resize_keyboard=True,
@@ -29,7 +29,7 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
 
 def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
     """
-    Lusy Game Mode Selection inline keyboard per spec:
+    Lusy Quiz Mode Selection inline keyboard per spec:
     [ 📖 Bible Challenge ]  [ ✍️ Verse Completion ]
     [ 🔀 Verse Scramble  ]  [ ⚡ Trivia Race      ]
     """
@@ -45,3 +45,6 @@ def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
             ],
         ]
     )
+
+
+build_quiz_selection_inline_keyboard = build_game_selection_inline_keyboard

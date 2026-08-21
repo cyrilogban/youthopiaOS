@@ -47,20 +47,20 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         asyncio.create_task(start_auto_quiz_scheduler(bot, services))
 
         private_commands = [
-            BotCommand(command="start", description="Open the Game Dashboard"),
-            BotCommand(command="playgame", description="Choose and start a Bible game"),
-            BotCommand(command="quit", description="Quit active game session"),
+            BotCommand(command="start", description="Open the Quiz Dashboard"),
+            BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
+            BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
             BotCommand(command="yp", description="Check your current YP and Level"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         group_commands = [
-            BotCommand(command="playgame", description="Choose and start a Bible game"),
+            BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="autoquiz", description="Check Auto Quiz status"),
             BotCommand(command="autoquiz_on", description="Enable 10-15 daily casual quizzes"),
             BotCommand(command="autoquiz_off", description="Disable daily casual quizzes"),
-            BotCommand(command="quit", description="Quit active game session"),
+            BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
         ]
         import os
@@ -227,10 +227,10 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         await handle_global_onboarding_callback(callback_query, services)
 
     # -------------------------------------------------------------------------
-    # BOT-SPECIFIC BUTTON 1: 🎮 Play Games / /playgame
+    # BOT-SPECIFIC BUTTON 1: 🎯 Play Quizzes / /playquiz
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🎮 Play Games")
-    @router.message(Command("playgame"))
+    @router.message(F.text.in_({"🎯 Play Quizzes", "🎮 Play Games"}))
+    @router.message(Command("playquiz", "playgame"))
     @router.callback_query(F.data == "lusy_menu_play")
     async def play_games_handler(event: Message | CallbackQuery) -> None:
         is_callback = isinstance(event, CallbackQuery)
@@ -241,8 +241,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         markup = build_game_selection_inline_keyboard()
         await message.answer(
-            "<b>Choose a Game Mode 🎮</b>\n\n"
-            "Select a game mode below to test your scripture knowledge and earn YP!",
+            "<b>Choose a Quiz Mode 🎯</b>\n\n"
+            "Select a quiz mode below to test your scripture knowledge and earn YP!",
             parse_mode="HTML",
             reply_markup=markup
         )
