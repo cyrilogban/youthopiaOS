@@ -95,11 +95,13 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         welcome_text = (
             f"<b>Think you know the Bible, {first_name}?</b>\n"
             "<blockquote>Prove it. I'm Lusy - and I've got questions that'll test even the sharpest minds. "
-            "Answer right, earn YP, rise through the ranks. Let's go! 🎮</blockquote>\n\n"
-            "<b>Select a Game Mode Below:</b>"
+            "Answer right, earn YP, rise through the ranks. Let's go! 🎯</blockquote>\n\n"
+            "<b>Select a Quiz Mode Below:</b>"
         )
 
+        reply_markup = build_lusy_reply_keyboard()
         inline_markup = build_game_selection_inline_keyboard()
+        await message.answer("🎯 <b>Welcome to Lusy Quiz Dashboard!</b>", parse_mode="HTML", reply_markup=reply_markup)
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
 
     # -------------------------------------------------------------------------
@@ -194,13 +196,13 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
     async def send_lusy_help(message: Message) -> None:
         help_text = (
-            "<b>🎮 Lusy | Games & XP Help Guide</b>\n"
-            "<blockquote>I am Lusy (@iamlusybot), your quiz master and game host in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>🎯 Lusy | Quizzes & XP Help Guide</b>\n"
+            "<blockquote>I am Lusy (@iamlusybot), your quiz master in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Lusy Features & Commands</b>\n"
-            "• 🎮 <b>Play Games:</b> Test your scripture knowledge with quizzes & challenges.\n"
+            "• 🎯 <b>Play Quizzes:</b> Test your scripture knowledge with quizzes & challenges.\n"
             "• 🏆 <b>Leaderboard:</b> View the top 10 YouTopians globally.\n"
             "• ⭐ <b>My Points:</b> Check your YP balance, level, and accuracy rate.\n"
-            "• <b>/playgame:</b> Choose a game mode directly.\n"
+            "• <b>/playquiz:</b> Choose a quiz mode directly.\n"
             "• <b>/yp or /xp:</b> View your player profile and level progress.</blockquote>\n\n"
             f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
             "Sharing God's Love All The Way 💜"
