@@ -416,7 +416,7 @@ async def render_post_quiz_card(
         logger.error(f"Failed to fetch leaderboard for post-quiz card: {e}")
         card += "<i>Global leaderboard unavailable</i>\n"
 
-    card += "\n<i>🧹 This leaderboard card will self-destruct in 5 minutes...</i>\n"
+    card += "\n<i>🧹 This leaderboard card will self-destruct in 3 minutes...</i>\n"
     card += "Ready for the next round? Tap below!"
     return card
 
@@ -568,7 +568,7 @@ async def close_and_reward_group_poll(poll_id: str, services: ServiceContainer, 
             parse_mode="HTML",
             reply_markup=markup
         )
-        asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 300))
+        asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 180))
     except Exception:
         pass
     
@@ -815,7 +815,7 @@ async def race_timeout_task(chat_id: int, message_id: int, services: ServiceCont
                 parse_mode="HTML",
                 reply_markup=markup
             )
-            asyncio.create_task(self_destruct_message(bot, chat_id, message_id, 300))
+            asyncio.create_task(self_destruct_message(bot, chat_id, message_id, 180))
         except Exception:
             pass
             
@@ -896,7 +896,7 @@ async def handle_race_choice(callback: CallbackQuery, services: ServiceContainer
                 parse_mode="HTML",
                 reply_markup=markup
             )
-            asyncio.create_task(self_destruct_message(bot, chat_id, message_id, 300))
+            asyncio.create_task(self_destruct_message(bot, chat_id, message_id, 180))
         except Exception:
             pass
             

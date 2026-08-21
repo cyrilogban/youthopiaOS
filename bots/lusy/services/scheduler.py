@@ -110,11 +110,10 @@ async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
                 choices_buttons.append([InlineKeyboardButton(text="🛑 Quit Game", callback_data=f"lusy_quit_game_{chat_id}")])
 
                 race_text = (
-                    "🎮 <b>CASUAL AUTO GAME!</b>\n"
-                    f"⚡ <b>BIBLE TRIVIA RACE!</b> <i>({difficulty.upper()})</i>\n"
-                    "<i>(First correct answer wins YP! Card self-destructs in 5 mins)</i>\n\n"
-                    f"<b>Question:</b>\n"
-                    f"<blockquote>{text}</blockquote>"
+                    f"⚡ <b>TRIVIA RACE</b> <i>({difficulty.upper()})</i>\n"
+                    "<i>First correct answer wins +20 YP!</i>\n\n"
+                    f"<blockquote>{text}</blockquote>\n\n"
+                    "<i>🧹 Card self-destructs in 3 minutes...</i>"
                 )
 
                 sent_msg = await bot.send_message(
@@ -143,16 +142,17 @@ async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
                     "difficulty": difficulty
                 }
 
+                # Self destruct unanswered race card after 5 minutes (300s)
                 asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 300))
 
             # Mode 2: Native Quiz Polls
             else:
                 if game_type == "fill_in_the_blank":
-                    prefix = "📖 [AUTO GAME: FILL IN THE BLANK]"
+                    prefix = "📖 [VERSE COMPLETION]"
                 elif game_type == "verse_completion":
-                    prefix = "🔠 [AUTO GAME: VERSE SCRAMBLE]"
+                    prefix = "🔠 [VERSE SCRAMBLE]"
                 else:
-                    prefix = f"🎮 [AUTO GAME: {difficulty.upper()}]"
+                    prefix = f"🎯 [BIBLE CHALLENGE: {difficulty.upper()}]"
 
                 sent_poll = await bot.send_poll(
                     chat_id=chat_id,
@@ -162,7 +162,7 @@ async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
                     correct_option_id=correct_idx,
                     explanation=explanation if explanation else None,
                     is_anonymous=False,
-                    open_period=60
+                    open_period=300
                 )
 
                 ACTIVE_GROUP_QUIZZES[chat_id] = sent_poll.poll.id
@@ -175,12 +175,13 @@ async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
                     "message_id": sent_poll.message_id,
                     "host_id": None,
                     "user_id": None,
-                    "duration": 60,
+                    "duration": 300,
                     "votes": {},
                     "max_votes": 5,
                     "closed": False
                 }
 
+                # Self destruct unanswered poll message after 5 minutes (300s)
                 asyncio.create_task(self_destruct_message(bot, chat_id, sent_poll.message_id, 300))
 
         except Exception as e:
