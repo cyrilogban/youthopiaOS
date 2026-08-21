@@ -16,27 +16,27 @@ GAME_MODES = ["multiple_choice", "fill_in_the_blank", "verse_completion", "trivi
 DIFFICULTIES = ["easy", "medium", "hard"]
 
 
-async def start_auto_game_scheduler(bot: Bot, services: ServiceContainer) -> None:
+async def start_auto_quiz_scheduler(bot: Bot, services: ServiceContainer) -> None:
     """
-    Background loop that triggers Auto Game drops 10-15 times per day (approx. every 60-90 minutes).
+    Background loop that triggers Auto Quiz drops 10-15 times per day (approx. every 60-90 minutes).
     """
-    logger.info("🎮 Starting Lusy Auto Game Scheduler...")
+    logger.info("🎮 Starting Lusy Auto Quiz Scheduler...")
     await asyncio.sleep(15)
 
     while True:
         try:
-            await trigger_auto_game_cycle(bot, services)
+            await trigger_auto_quiz_cycle(bot, services)
         except Exception as e:
-            logger.error(f"Error in trigger_auto_game_cycle: {e}")
+            logger.error(f"Error in trigger_auto_quiz_cycle: {e}")
 
         # Sleep between 60 to 90 minutes for 10-15 drops daily
         next_interval = random.randint(3600, 5400)
         await asyncio.sleep(next_interval)
 
 
-async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
+async def trigger_auto_quiz_cycle(bot: Bot, services: ServiceContainer) -> None:
     """
-    Finds active groups where Lusy is present and drops a casual question (ON by default unless /autogame off).
+    Finds active groups where Lusy is present and drops a casual question (ON by default unless /autoquiz off).
     """
     try:
         active_memberships = await services.chats.get_enabled_bot_chats("lusy")
@@ -53,8 +53,8 @@ async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
             if not db_chat_id:
                 continue
 
-            # Check if group admin explicitly turned /autogame off
-            sub = await services.chats.get_subscription("lusy", db_chat_id, "auto_game")
+            # Check if group admin explicitly turned /autoquiz off
+            sub = await services.chats.get_subscription("lusy", db_chat_id, "auto_quiz")
             if sub and sub.get("enabled") is False:
                 continue
 
