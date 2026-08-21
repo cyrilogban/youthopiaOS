@@ -57,7 +57,9 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         ]
         group_commands = [
             BotCommand(command="playgame", description="Choose and start a Bible game"),
-            BotCommand(command="autogame", description="Toggle 10-15 daily casual auto games"),
+            BotCommand(command="autogame", description="Check Auto Game status"),
+            BotCommand(command="autogame_on", description="Enable 10-15 daily casual games"),
+            BotCommand(command="autogame_off", description="Disable daily casual games"),
             BotCommand(command="quit", description="Quit active game session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
         ]

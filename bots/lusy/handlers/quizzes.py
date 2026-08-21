@@ -1112,18 +1112,30 @@ async def execute_quit_game(
 # AUTO GAME ADMIN COMMAND (/autogame on, /autogame off, /autogame)
 # -----------------------------------------------------------------------------
 
-@quiz_router.message(Command("autogame"))
+@quiz_router.message(Command("autogame", "autogame_on", "autogame_off"))
 async def autogame_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
     try:
         chat_id = message.chat.id
         if message.chat.type == "private":
-            await message.answer("⚠️ Auto Game is a group feature! Add Lusy to your group chat to use /autogame.")
+            await message.answer("Auto Game is a group feature. Add Lusy to a group chat to manage Auto Game.")
             return
 
-        args = message.text.strip().split()
-        subcommand = args[1].lower() if len(args) > 1 else "status"
+        text = message.text.strip().lower() if message.text else ""
+        args = text.split()
+        first_cmd = args[0] if args else ""
+        subcommand = args[1] if len(args) > 1 else ""
 
-        if subcommand in ("on", "off", "enable", "disable"):
+        is_toggle = False
+        enable_flag = True
+
+        if "autogame_on" in first_cmd or subcommand in ("on", "enable"):
+            is_toggle = True
+            enable_flag = True
+        elif "autogame_off" in first_cmd or subcommand in ("off", "disable"):
+            is_toggle = True
+            enable_flag = False
+
+        if is_toggle:
             is_admin = False
             import os
             admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
@@ -1139,10 +1151,9 @@ async def autogame_handler(message: Message, bot: Bot, services: ServiceContaine
                     pass
 
             if not is_admin:
-                await message.answer("⚠️ Only group administrators or owners can toggle Auto Game settings!")
+                await message.answer("<blockquote>Only group administrators can toggle Auto Game settings.</blockquote>", parse_mode="HTML")
                 return
 
-            enable_flag = subcommand in ("on", "enable")
             await services.chats.set_subscription(
                 bot_name="lusy",
                 chat_id=chat_id,
@@ -1150,33 +1161,37 @@ async def autogame_handler(message: Message, bot: Bot, services: ServiceContaine
                 enabled=enable_flag
             )
 
-            status_text = "ENABLED 🟢" if enable_flag else "DISABLED 🔴"
-            await message.answer(
-                f"🎮 <b>Auto Game Updated!</b>\n\n"
-                f"Auto Game is now <b>{status_text}</b> for this group.\n"
-                f"When enabled, Lusy will automatically drop 10–15 casual Bible games daily!",
-                parse_mode="HTML"
-            )
+            if enable_flag:
+                confirm_msg = (
+                    "<b>AUTO GAME UPDATED</b>\n\n"
+                    "<blockquote>Auto Game is now <b>ENABLED</b> for this group.\n"
+                    "10–15 casual games will drop automatically throughout the day.</blockquote>"
+                )
+            else:
+                confirm_msg = (
+                    "<b>AUTO GAME UPDATED</b>\n\n"
+                    "<blockquote>Auto Game is now <b>DISABLED</b> for this group.</blockquote>"
+                )
+            await message.answer(confirm_msg, parse_mode="HTML")
         else:
             sub = await services.chats.get_subscription("lusy", chat_id, "auto_game")
             is_enabled = sub.get("enabled", True) if sub else True
-            status_text = "ENABLED 🟢" if is_enabled else "DISABLED 🔴"
+            status_word = "ENABLED" if is_enabled else "DISABLED"
 
-            await message.answer(
-                f"🎮 <b>AUTO GAME STATUS</b>\n"
-                f"───────────────────────────\n"
-                f"Status: <b>{status_text}</b>\n"
-                f"Daily Drops: <code>10–15 casual games / day</code>\n"
-                f"Self-Destruct: <code>5 minutes</code>\n\n"
-                f"<b>Admin Commands:</b>\n"
-                f"• <code>/autogame on</code> — Enable Auto Game\n"
-                f"• <code>/autogame off</code> — Disable Auto Game\n"
-                f"───────────────────────────",
-                parse_mode="HTML"
+            status_card = (
+                "<b>AUTO GAME STATUS</b>\n\n"
+                f"<blockquote><b>Status:</b> {status_word}\n"
+                "<b>Frequency:</b> 10–15 casual games daily\n"
+                "<b>Answer Window:</b> 5 minutes\n"
+                "<b>Self-Destruct:</b> 3 minutes</blockquote>\n\n"
+                "<b>Admin Commands:</b>\n"
+                "• <code>/autogame_on</code> — Enable Auto Game\n"
+                "• <code>/autogame_off</code> — Disable Auto Game"
             )
+            await message.answer(status_card, parse_mode="HTML")
     except Exception as e:
         logger.error(f"Error in autogame_handler: {e}")
         try:
-            await message.answer("⚠️ Error updating Auto Game settings. Please try again.")
+            await message.answer("<blockquote>Error updating Auto Game settings. Please try again.</blockquote>", parse_mode="HTML")
         except Exception:
             pass
