@@ -21,7 +21,7 @@ async def start_auto_game_scheduler(bot: Bot, services: ServiceContainer) -> Non
     Background loop that triggers Auto Game drops 10-15 times per day (approx. every 60-90 minutes).
     """
     logger.info("🎮 Starting Lusy Auto Game Scheduler...")
-    await asyncio.sleep(60)
+    await asyncio.sleep(15)
 
     while True:
         try:
@@ -49,18 +49,23 @@ async def trigger_auto_game_cycle(bot: Bot, services: ServiceContainer) -> None:
 
     for membership in active_memberships:
         try:
-            telegram_chat_id_str = membership.get("chat_id")
-            if not telegram_chat_id_str:
+            db_chat_id = membership.get("chat_id")
+            if not db_chat_id:
                 continue
 
             # Check if group admin explicitly turned /autogame off
-            sub = await services.chats.get_subscription("lusy", telegram_chat_id_str, "auto_game")
+            sub = await services.chats.get_subscription("lusy", db_chat_id, "auto_game")
             if sub and sub.get("enabled") is False:
                 continue
 
+            # Fetch actual Telegram numeric chat ID from telegram_chats table
+            chat_record = await services.chats.get_chat_by_id(db_chat_id)
+            if not chat_record or not chat_record.get("telegram_chat_id"):
+                continue
+
             try:
-                chat_id = int(telegram_chat_id_str)
-            except ValueError:
+                chat_id = int(chat_record["telegram_chat_id"])
+            except (ValueError, TypeError):
                 continue
 
             # Skip if a manual quiz is ALREADY running in this group
