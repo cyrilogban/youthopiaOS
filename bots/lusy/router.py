@@ -25,7 +25,7 @@ from shared.utils.ui import (
     send_community_exploration_page,
     handle_global_onboarding_callback,
 )
-from bots.lusy.handlers.quizzes import quiz_router
+from bots.lusy.handlers.quizzes import quiz_router, self_destruct_message
 from bots.lusy.utils.keyboards import (
     build_game_selection_inline_keyboard,
     build_lusy_reply_keyboard,
@@ -82,10 +82,28 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # COMMAND: /start
     # -------------------------------------------------------------------------
     @router.message(Command("start"))
-    async def handle_start(message: Message, services: ServiceContainer) -> None:
+    async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
+            except Exception:
+                pass
+
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamlusybot?start=dashboard"),
+                    InlineKeyboardButton(text="🎯 Play Group Quiz", callback_data="lusy_menu_play"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>🎯 <b>Lusy Quiz Engine is active in this group!</b>\n"
+                    "Type <b>/playquiz</b> to launch a round, or tap below to open your DM Dashboard.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
             return
@@ -152,13 +170,53 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     @router.message(F.text == "👤 My Profile")
     @router.message(Command("profile"))
-    async def profile_handler(message: Message, services: ServiceContainer) -> None:
+    async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
+
+            user_first = message.from_user.first_name if message.from_user else "Friend"
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="👤 View Player Profile in DM", url="https://t.me/iamlusybot?start=profile")]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    f"<blockquote>👤 <b>{user_first}</b>, your player stats have been sent to your private DM!</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+            except Exception:
+                pass
+
+            # Send profile directly to user's private DM
+            try:
+                user = await services.identity.resolve_telegram_user(message.from_user)
+                level_info = await services.xp.get_level(user["id"])
+                total_xp = level_info["total_xp"]
+                level = level_info["level"]
+                rank_title = "Novice" if level < 2 else ("Scripture Sage" if level < 5 else ("Wisdom Warrior" if level < 10 else "High Priest"))
+                history = await services.quizzes.get_game_history(user["id"])
+                total_quizzes = len(history)
+                correct_answers = len([h for h in history if h.get("is_correct", False)])
+                accuracy = (correct_answers / total_quizzes * 100) if total_quizzes > 0 else 0.0
+                bot_stats = [
+                    f"🎮 Rank: <b>{rank_title}</b>",
+                    f"🎯 Accuracy: <b>{accuracy:.1f}%</b> ({correct_answers}/{total_quizzes} played)",
+                ]
+                card_text = render_shared_profile_card(
+                    user_data=user,
+                    telegram_first_name=user_first,
+                    bot_specific_stats=bot_stats
+                )
+                await bot.send_message(message.from_user.id, card_text, parse_mode="HTML", reply_markup=build_lusy_reply_keyboard())
+            except Exception:
+                pass
             return
+
         await send_lusy_profile(message, services)
 
     @router.callback_query(F.data == "lusy_menu_stats")
@@ -220,13 +278,28 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     @router.message(F.text == "ℹ️ Help")
     @router.message(Command("help"))
-    async def help_handler(message: Message) -> None:
+    async def help_handler(message: Message, bot: Bot) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
+
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="📖 Open Lusy Guide in DM", url="https://t.me/iamlusybot?start=help")]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>📖 <b>Looking for Lusy Help?</b> Tap below to view your full guide in private.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
+            except Exception:
+                pass
             return
+
         await send_lusy_help(message)
 
     @router.callback_query(F.data == "lusy_menu_about")
@@ -349,13 +422,27 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     @router.message(F.text == "⭐ My Points")
     @router.message(Command("yp"))
     @router.message(Command("xp"))
-    async def my_points_handler(message: Message, services: ServiceContainer) -> None:
+    async def my_points_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
-            return
+
+            user_first = message.from_user.first_name if message.from_user else "Friend"
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="👤 View Player Profile in DM", url="https://t.me/iamlusybot?start=profile")]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    f"<blockquote>👤 <b>{user_first}</b>, your player stats have been sent to your private DM!</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+            except Exception:
+                pass
 
         user = await services.identity.resolve_telegram_user(message.from_user)
         user_id = user["id"]
@@ -403,7 +490,13 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             f"───────────────────────────"
         )
 
-        await message.answer(card_text, parse_mode="HTML", reply_markup=build_lusy_reply_keyboard())
+        if message.chat.type != "private":
+            try:
+                await bot.send_message(message.from_user.id, card_text, parse_mode="HTML", reply_markup=build_lusy_reply_keyboard())
+            except Exception:
+                pass
+        else:
+            await message.answer(card_text, parse_mode="HTML", reply_markup=build_lusy_reply_keyboard())
 
     # -------------------------------------------------------------------------
     # EDDY TO LUSY HANDOFF LISTENER
