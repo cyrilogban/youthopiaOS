@@ -82,3 +82,17 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
             ],
         ]
     )
+
+
+def build_lusy_farewell_keyboard() -> InlineKeyboardMarkup:
+    """
+    Compact inline keyboard attached to Lusy's farewell messages.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", url="https://t.me/youthopiaos_bot"),
+                InlineKeyboardButton(text="➕ Re-invite Lusy", url="https://t.me/iamlusybot?startgroup=true"),
+            ],
+        ]
+    )

@@ -31,6 +31,7 @@ from bots.lusy.utils.keyboards import (
     build_lusy_reply_keyboard,
     build_lusy_group_welcome_keyboard,
     build_lusy_member_welcome_keyboard,
+    build_lusy_farewell_keyboard,
 )
 
 logger = logging.getLogger(__name__)
@@ -186,6 +187,113 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 asyncio.create_task(self_destruct_message(bot, event.chat.id, sent_msg.message_id, 5))
             except Exception as e:
                 logger.error(f"Failed to post Lusy admin promotion confirmation: {e}")
+
+        # 3. Trigger DM farewell notification when Lusy is removed/kicked from a group
+        elif old_status in ("member", "administrator") and new_status in ("left", "kicked"):
+            try:
+                chat = await register_chat(event.chat, services, "lusy")
+                if chat:
+                    await services.chats.mark_bot_status("lusy", chat["id"], new_status, enabled=False)
+
+                if event.from_user:
+                    admin_name = event.from_user.first_name or "Friend"
+                    group_title = event.chat.title or "your group"
+                    dm_farewell_text = (
+                        "<b>FAREWELL FROM LUSY</b>\n\n"
+                        f"<blockquote>Hi <b>{admin_name}</b>, Lusy has been removed from <b>{group_title}</b>.\n\n"
+                        "Thank you for having me! All player <b>YouTopian Points (YP)</b> earned by your members remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
+                        "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
+                        "<blockquote>You can still explore or invite our sister bots anytime:\n"
+                        "• 📖 <b>Theo (@iamtheobot):</b> Daily Scripture & Devotionals\n"
+                        "• 🛡️ <b>Pete (@iampetebot):</b> Security & Group Moderation\n"
+                        "• 📅 <b>Eddy (@iamedyybot):</b> Events & Reminders\n"
+                        "• 💬 <b>Susy (@iamsusiebot):</b> Welcome & Onboarding</blockquote>\n\n"
+                        "<i>God Bless You & See You Soon! 💜</i>"
+                    )
+                    markup = build_lusy_farewell_keyboard()
+                    await bot.send_message(
+                        chat_id=event.from_user.id,
+                        text=dm_farewell_text,
+                        parse_mode="HTML",
+                        reply_markup=markup
+                    )
+            except Exception as e:
+                logger.error(f"Failed to handle Lusy group removal event: {e}")
+
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /leave or /remove_lusy (Graceful Group Departure)
+    # -------------------------------------------------------------------------
+    @router.message(Command("leave"))
+    @router.message(Command("remove_lusy"))
+    async def leave_group_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await message.answer("This command is used to remove Lusy from a group chat.")
+            return
+
+        is_admin = False
+        import os
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+        if message.from_user and message.from_user.id in admin_ids:
+            is_admin = True
+        else:
+            try:
+                member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+                if member.status in ("administrator", "creator"):
+                    is_admin = True
+            except Exception:
+                pass
+
+        if not is_admin:
+            await message.answer("<blockquote>Only group administrators can request Lusy to leave the group.</blockquote>", parse_mode="HTML")
+            return
+
+        group_title = message.chat.title or "this group"
+        group_farewell_text = (
+            "<b>FAREWELL FROM LUSY</b>\n\n"
+            f"<blockquote>It has been a true pleasure serving <b>{group_title}</b> with Scripture Mastery & Quizzes!\n\n"
+            "Although I am stepping back from this group, all player <b>YouTopian Points (YP)</b> and global levels remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
+            "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
+            "<blockquote>Feel free to invite our sister bots to your groups or interact with them in private DM:\n"
+            "• 📖 <b>Theo (@iamtheobot):</b> Daily Scripture & Devotionals\n"
+            "• 🛡️ <b>Pete (@iampetebot):</b> Security & Group Moderation\n"
+            "• 📅 <b>Eddy (@iamedyybot):</b> Events & Reminders\n"
+            "• 💬 <b>Susy (@iamsusiebot):</b> Welcome & Onboarding</blockquote>\n\n"
+            "<i>God Bless You All & See You Soon! 💜</i>"
+        )
+        markup = build_lusy_farewell_keyboard()
+
+        try:
+            await message.answer(group_farewell_text, parse_mode="HTML", reply_markup=markup)
+        except Exception:
+            pass
+
+        if message.from_user:
+            try:
+                admin_name = message.from_user.first_name or "Friend"
+                dm_farewell_text = (
+                    "<b>FAREWELL FROM LUSY</b>\n\n"
+                    f"<blockquote>Hi <b>{admin_name}</b>, Lusy has left <b>{group_title}</b> as requested.\n\n"
+                    "Thank you for having me! All player <b>YouTopian Points (YP)</b> earned by your members remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
+                    "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
+                    "<blockquote>You can still explore or invite our sister bots anytime:\n"
+                    "• 📖 <b>Theo (@iamtheobot):</b> Daily Scripture & Devotionals\n"
+                    "• 🛡️ <b>Pete (@iampetebot):</b> Security & Group Moderation\n"
+                    "• 📅 <b>Eddy (@iamedyybot):</b> Events & Reminders\n"
+                    "• 💬 <b>Susy (@iamsusiebot):</b> Welcome & Onboarding</blockquote>\n\n"
+                    "<i>God Bless You & See You Soon! 💜</i>"
+                )
+                await bot.send_message(message.from_user.id, dm_farewell_text, parse_mode="HTML", reply_markup=markup)
+            except Exception:
+                pass
+
+        try:
+            chat = await register_chat(message.chat, services, "lusy")
+            if chat:
+                await services.chats.mark_bot_status("lusy", chat["id"], "left", enabled=False)
+            await bot.leave_chat(message.chat.id)
+        except Exception as e:
+            logger.error(f"Failed to execute Lusy leave_chat: {e}")
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
