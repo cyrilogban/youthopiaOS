@@ -1124,6 +1124,11 @@ async def autoquiz_handler(message: Message, bot: Bot, services: ServiceContaine
             await message.answer("Auto Quiz is a group feature. Add Lusy to a group chat to manage Auto Quiz.")
             return
 
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
         text = message.text.strip().lower() if message.text else ""
         args = text.split()
         first_cmd = args[0] if args else ""
@@ -1155,7 +1160,9 @@ async def autoquiz_handler(message: Message, bot: Bot, services: ServiceContaine
                     pass
 
             if not is_admin:
-                await message.answer("<blockquote>Only group administrators can toggle Auto Quiz settings.</blockquote>", parse_mode="HTML")
+                sent_msg = await message.answer("<blockquote>Only group administrators can toggle Auto Quiz settings.</blockquote>", parse_mode="HTML")
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 10))
                 return
 
             await services.chats.set_subscription(
@@ -1176,7 +1183,9 @@ async def autoquiz_handler(message: Message, bot: Bot, services: ServiceContaine
                     "<b>AUTO QUIZ UPDATED</b>\n\n"
                     "<blockquote>Auto Quiz is now <b>DISABLED</b> for this group.</blockquote>"
                 )
-            await message.answer(confirm_msg, parse_mode="HTML")
+            sent_msg = await message.answer(confirm_msg, parse_mode="HTML")
+            import asyncio
+            asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 10))
         else:
             sub = await services.chats.get_subscription("lusy", chat_id, "auto_quiz")
             is_enabled = sub.get("enabled", True) if sub else True
@@ -1192,10 +1201,15 @@ async def autoquiz_handler(message: Message, bot: Bot, services: ServiceContaine
                 "• <code>/autoquiz_on</code> — Enable Auto Quiz\n"
                 "• <code>/autoquiz_off</code> — Disable Auto Quiz"
             )
-            await message.answer(status_card, parse_mode="HTML")
+            sent_msg = await message.answer(status_card, parse_mode="HTML")
+            import asyncio
+            asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 10))
     except Exception as e:
         logger.error(f"Error in autoquiz_handler: {e}")
         try:
-            await message.answer("<blockquote>Error updating Auto Quiz settings. Please try again.</blockquote>", parse_mode="HTML")
+            sent_msg = await message.answer("<blockquote>Error updating Auto Quiz settings. Please try again.</blockquote>", parse_mode="HTML")
+            import asyncio
+            asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 10))
         except Exception:
+            pass
             pass
