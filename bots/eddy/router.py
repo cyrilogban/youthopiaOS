@@ -12,16 +12,18 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
-    BotCommandScopeChat
+    BotCommandScopeChat,
+    ChatMemberUpdated,
 )
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import os
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
 
-from core.telegram_runtime import build_router
+from core.telegram_runtime import build_router, register_group_chat, register_chat
 from shared.services.container import ServiceContainer
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
@@ -32,8 +34,20 @@ from shared.utils.ui import (
 )
 from bots.eddy.utils.keyboards import (
     build_eddy_reply_keyboard,
+    build_eddy_start_inline_keyboard,
+    build_eddy_group_welcome_keyboard,
+    build_eddy_member_welcome_keyboard,
+    build_eddy_farewell_keyboard,
     build_event_card_inline_keyboard,
 )
+
+
+async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay_seconds: int = 10) -> None:
+    await asyncio.sleep(delay_seconds)
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception:
+        pass
 
 
 class EventCreation(StatesGroup):
@@ -88,29 +102,261 @@ def build_eddy_router(description: str) -> Router:
         from bots.eddy.services.scheduler import setup_eddy_scheduler
         setup_eddy_scheduler(bot)
 
+    # -------------------------------------------------------------------------
+    # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)
+    # -------------------------------------------------------------------------
+    @router.my_chat_member()
+    async def on_eddy_group_join(event: ChatMemberUpdated, bot: Bot, services: ServiceContainer) -> None:
+        old_status = event.old_chat_member.status
+        new_status = event.new_chat_member.status
+
+        # Case 1: Eddy added or promoted in group
+        if new_status in ("member", "administrator"):
+            await register_chat(event.chat, services)
+            chat_id = event.chat.id
+            group_title = event.chat.title or "Group"
+
+            # Status transition: Member -> Admin promotion upgrade
+            if old_status == "member" and new_status == "administrator":
+                try:
+                    sent_msg = await bot.send_message(
+                        chat_id=chat_id,
+                        text=(
+                            f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
+                            f"<blockquote>Thank you for promoting Eddy in <b>{group_title}</b>! "
+                            f"Event management, reminders, and birthday celebrations are now fully active. 📅</blockquote>"
+                        ),
+                        parse_mode="HTML"
+                    )
+                    asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 5))
+                except Exception:
+                    pass
+                return
+
+            # Differentiated Welcome Card based on Admin vs Member status
+            if new_status == "administrator":
+                welcome_text = (
+                    f"<b>EDDY IS HERE 📅</b>\n\n"
+                    f"<blockquote>I am Eddy — your Community Event Manager & Calendar Scheduler in <b>YouThopiaOS</b>.\n\n"
+                    f"I keep our community active across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>EVENTS QUICK START</b>\n"
+                    f"<blockquote>• <b>Weekly Calendar:</b> <code>ACTIVE</code> (Use <code>/calendar</code> anytime).\n"
+                    f"• <b>Birthday Shoutouts:</b> <code>ENABLED</code> (Auto-celebrates YouTopians).\n"
+                    f"• <b>Admins:</b> Create pop-up events using <code>/new_event</code>.</blockquote>\n\n"
+                    f"<i>Sharing God's Love All The Way 💜</i>"
+                )
+                markup = build_eddy_group_welcome_keyboard()
+            else:
+                welcome_text = (
+                    f"<b>EDDY IS HERE 📅</b>\n\n"
+                    f"<blockquote>I am Eddy — your Community Event Manager & Calendar Scheduler in <b>YouThopiaOS</b>.\n\n"
+                    f"I keep our community active across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
+                    f"<blockquote>To pin event reminders and schedule announcements smoothly, please grant Eddy <b>Admin Rights</b>!</blockquote>"
+                )
+                markup = build_eddy_member_welcome_keyboard()
+
+            try:
+                sent_msg = await bot.send_message(
+                    chat_id=chat_id,
+                    text=welcome_text,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                # Auto-delete welcome card after 120s
+                asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 120))
+            except Exception as e:
+                logger.warning(f"Failed to send Eddy group welcome card: {e}")
+
+        # Case 2: Eddy removed or kicked from group
+        elif new_status in ("left", "kicked"):
+            chat_id = event.chat.id
+            group_title = event.chat.title or "your group"
+            try:
+                await services.chats.set_subscription("eddy", chat_id, "events", enabled=False)
+            except Exception:
+                pass
+
+            # Notify Admin in DM
+            admin_user_id = event.from_user.id if event.from_user else None
+            if admin_user_id:
+                try:
+                    farewell_text = (
+                        f"<b>Eddy Departs {group_title} 📅</b>\n\n"
+                        f"<blockquote>Eddy has been removed from <b>{group_title}</b>.\n"
+                        f"Event reminders and birthday broadcasts have been paused for this group. "
+                        f"You can re-invite Eddy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    )
+                    await bot.send_message(
+                        chat_id=admin_user_id,
+                        text=farewell_text,
+                        parse_mode="HTML",
+                        reply_markup=build_eddy_farewell_keyboard()
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not send Eddy farewell DM to admin {admin_user_id}: {e}")
+
+    @router.callback_query(F.data == "eddy_prompt_admin")
+    async def handle_eddy_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
+        await callback.answer()
+        instructions = (
+            "<b>To Promote Eddy to Group Admin:</b>\n\n"
+            "1. Open Group Settings ➔ Administrators\n"
+            "2. Tap <b>Add Administrator</b> and select <b>@iamedyybot</b>\n"
+            "3. Enable Delete Messages & Pin Messages permissions! ⚡"
+        )
+        try:
+            sent_msg = await callback.message.answer(instructions, parse_mode="HTML")
+            asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
+        except Exception:
+            pass
+
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /leave or /remove_eddy
+    # -------------------------------------------------------------------------
+    @router.message(Command("leave"))
+    @router.message(Command("remove_eddy"))
+    async def handle_leave_command(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await message.answer("⚠️ This command is only for group chats.")
+            return
+
+        chat_id = message.chat.id
+        group_title = message.chat.title or "your group"
+        admin_id = message.from_user.id if message.from_user else None
+
+        # Check if user is admin
+        try:
+            member = await bot.get_chat_member(chat_id, admin_id)
+            if member.status not in ("creator", "administrator"):
+                try:
+                    await message.delete()
+                except Exception:
+                    pass
+                msg = await message.answer("⚠️ Only group administrators can use /leave.")
+                asyncio.create_task(self_destruct_message(bot, chat_id, msg.message_id, 5))
+                return
+        except Exception:
+            pass
+
+        # Send DM to admin
+        if admin_id:
+            try:
+                farewell_text = (
+                    f"<b>Eddy Departs {group_title} 📅</b>\n\n"
+                    f"<blockquote>Eddy has left <b>{group_title}</b> as requested.\n"
+                    f"Event reminders and birthday broadcasts have been paused for this group. "
+                    f"You can re-invite Eddy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                )
+                await bot.send_message(
+                    chat_id=admin_id,
+                    text=farewell_text,
+                    parse_mode="HTML",
+                    reply_markup=build_eddy_farewell_keyboard()
+                )
+            except Exception as e:
+                logger.warning(f"Could not send Eddy leave DM to admin {admin_id}: {e}")
+
+        # Leave group cleanly
+        try:
+            await bot.leave_chat(chat_id)
+        except Exception as e:
+            logger.warning(f"Eddy failed to leave chat {chat_id}: {e}")
+
+    # -------------------------------------------------------------------------
+    # COMMAND: /start
+    # -------------------------------------------------------------------------
     @router.message(Command("start"))
-    async def handle_start(message: Message, services: ServiceContainer) -> None:
+    async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
+
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="📅 View Calendar in DM", url="https://t.me/iamedyybot?start=calendar"),
+                    InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/iamedyybot?start=events"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>📅 <b>Eddy Events Engine is active in this group!</b>\n"
+                    "Tap below to open your DM Event Dashboard and view our schedule.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
+            except Exception:
+                pass
             return
-            
-        try:
-            await services.identity.resolve_telegram_user(message.from_user)
-        except Exception as e:
-            logger.error(f"Failed to register user in Ed /start: {e}")
 
+        await register_group_chat(message, services, "eddy")
+        user = await services.identity.resolve_telegram_user(message.from_user)
         first_name = message.from_user.first_name or "Friend"
-        welcome_text = (
-            f"<b>Welcome to the YouThopia Weekly Calendar, {first_name}! 📅</b>\n"
-            "<blockquote>I am Ed (Eddy), your community manager and event scheduler.\n\n"
-            "Use the menu below to view upcoming events, check your RSVPs, or register your birthday!</blockquote>"
-        )
+        user_id = user["id"]
 
-        markup = build_eddy_reply_keyboard()
-        await message.answer(welcome_text, parse_mode="HTML", reply_markup=markup)
+        # Fetch Birthday
+        birthday_str = "Not set (Use 🎂 Add Birthday)"
+        try:
+            state_rec = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
+            if state_rec and state_rec.get("state"):
+                b_state = state_rec["state"]
+                b_month = b_state.get("birthday_month")
+                b_day = b_state.get("birthday_day")
+                if b_month and b_day:
+                    from calendar import month_name
+                    birthday_str = f"{month_name[int(b_month)]} {b_day}"
+        except Exception:
+            pass
+
+        # Fetch RSVPs
+        rsvp_count = 0
+        try:
+            events = await services.events.get_user_upcoming_events(message.from_user.id)
+            rsvp_count = len(events) if events else 0
+        except Exception:
+            pass
+
+        if user.get("engagement_level") == "new":
+            welcome_text = (
+                f"<b>Welcome to YouThopia Events, {first_name}! 📅</b>\n\n"
+                f"<blockquote>I am Eddy (Ed) — event scheduler and community manager in <b>YouThopiaOS</b>.\n\n"
+                f"I keep our community active with weekly calendars, live sessions, RSVPs, and birthday celebrations across all 5 pillar bots:\n"
+                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+            )
+            await services.users.set_engagement_level(user["id"], "active")
+        else:
+            welcome_text = (
+                f"<b>Welcome back, {first_name}! 📅</b>\n\n"
+                f"<blockquote>🎂 <b>Registered Birthday:</b> <code>{birthday_str}</code>\n"
+                f"🎫 <b>Active Event RSVPs:</b> <code>{rsvp_count} event{'s' if rsvp_count != 1 else ''}</code>\n"
+                f"📅 <b>Community Calendar:</b> <code>Updated for this week</code>\n\n"
+                f"Never miss a fellowship, live session, or birthday shoutout!</blockquote>\n\n"
+                f"<b>WHAT WOULD YOU LIKE TO BE REMINDED OF TODAY?</b>"
+            )
+
+        reply_menu = build_eddy_reply_keyboard()
+        inline_menu = build_eddy_start_inline_keyboard()
+
+        await message.answer("📅 <b>Welcome to Eddy Events Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
@@ -118,9 +364,10 @@ def build_eddy_router(description: str) -> Router:
     @router.message(F.text == "👤 My Profile")
     @router.message(Command("profile"))
     @router.callback_query(F.data == "eddy_profile")
-    async def profile_handler(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+    async def profile_handler(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
         is_callback = isinstance(event, CallbackQuery)
         message = event.message if is_callback else event
+        user_from = event.from_user
 
         if is_callback:
             await event.answer()
@@ -130,14 +377,39 @@ def build_eddy_router(description: str) -> Router:
                 await message.delete()
             except Exception:
                 pass
-            return
-        await send_eddy_profile(message, event.from_user, services)
 
-    async def send_eddy_profile(message: Message, from_user: Any, services: ServiceContainer) -> None:
+            user_first = user_from.first_name if user_from else "Friend"
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="📅 View Profile in DM", url="https://t.me/iamedyybot?start=profile"),
+                    InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/iamedyybot?start=events"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    f"<blockquote>👤 <b>{user_first}</b>, your event profile has been sent to your private DM!</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+            except Exception:
+                pass
+
+            if user_from:
+                try:
+                    await send_eddy_profile(message, user_from, services, send_to_dm=True, bot=bot)
+                except Exception as e:
+                    logger.warning(f"Failed to send Eddy profile to DM: {e}")
+            return
+
+        await send_eddy_profile(message, user_from, services)
+
+    async def send_eddy_profile(
+        message: Message, from_user: Any, services: ServiceContainer, send_to_dm: bool = False, bot: Bot | None = None
+    ) -> None:
         user = await services.identity.resolve_telegram_user(from_user)
         user_id = user["id"]
 
-        # 1. Fetch Birthday from bot_user_state
         birthday_str = "Not set (Use 🎂 Add Birthday)"
         try:
             state_rec = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
@@ -151,7 +423,6 @@ def build_eddy_router(description: str) -> Router:
         except Exception as e:
             logger.warning(f"Failed to fetch user state for birthday: {e}")
 
-        # 2. Fetch Event RSVPs from EventService
         rsvp_count = 0
         try:
             events = await services.events.get_user_upcoming_events(from_user.id)
@@ -170,17 +441,40 @@ def build_eddy_router(description: str) -> Router:
             bot_specific_stats=bot_stats
         )
 
-        await message.answer(card_text, parse_mode="HTML", reply_markup=build_eddy_reply_keyboard())
+        if send_to_dm and bot and from_user:
+            await bot.send_message(
+                chat_id=from_user.id,
+                text=card_text,
+                parse_mode="HTML",
+                reply_markup=build_eddy_reply_keyboard()
+            )
+        else:
+            await message.answer(card_text, parse_mode="HTML", reply_markup=build_eddy_reply_keyboard())
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
     @router.message(F.text == "ℹ️ Help")
     @router.message(Command("help"))
-    async def help_handler(message: Message) -> None:
+    async def help_handler(message: Message, bot: Bot) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
+            except Exception:
+                pass
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="📅 Open Eddy Guide in DM", url="https://t.me/iamedyybot?start=help"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>📅 <b>Eddy Events Help Guide</b>\n"
+                    "Tap below to view full features and calendar options in DM.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
             return
