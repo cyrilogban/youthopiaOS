@@ -873,7 +873,7 @@ async def captcha_callback_handler(callback_query: CallbackQuery) -> None:
         logger.error(f"Failed to unlock user {user_id} after Captcha: {e}")
         await callback_query.answer("❌ Error unlocking permissions. Ensure I am an admin in the group.", show_alert=True)
 
-@router.message()
+@router.message(F.chat.type.in_({"group", "supergroup"}), F.text)
 async def automated_justice_filter(message: Message, services: ServiceContainer) -> None:
     """Scans every message sent in the chat for forbidden language and unauthorized links."""
     # Only process text messages in groups
