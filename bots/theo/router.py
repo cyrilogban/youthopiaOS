@@ -67,25 +67,28 @@ def build_theo_router(description: str) -> Router:
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
             BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
+        ]
+        admin_private_commands = private_commands + [
             BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
         ]
         group_commands = [
             BotCommand(command="start", description="Wake Up Theo"),
             BotCommand(command="help", description="Show help information"),
         ]
-        import os
-        from aiogram.types import BotCommandScopeChat
-        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
-        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
-        for admin_id in admin_ids:
-            try:
-                await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=admin_id))
-            except Exception:
-                pass
 
         try:
             await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
             await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+
+            import os
+            from aiogram.types import BotCommandScopeChat
+            admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+            admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+            for admin_id in admin_ids:
+                try:
+                    await bot.set_my_commands(admin_private_commands, scope=BotCommandScopeChat(chat_id=admin_id))
+                except Exception:
+                    pass
         except Exception as e:
             logger.warning(f"Failed to set Theo commands: {e}")
 
