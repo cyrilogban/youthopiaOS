@@ -251,24 +251,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             return
 
         group_title = message.chat.title or "this group"
-        group_farewell_text = (
-            "<b>FAREWELL FROM LUSY</b>\n\n"
-            f"<blockquote>It has been a true pleasure serving <b>{group_title}</b> with Scripture Mastery & Quizzes!\n\n"
-            "Although I am stepping back from this group, all player <b>YouTopian Points (YP)</b> and global levels remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
-            "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
-            "<blockquote>Feel free to invite our sister bots to your groups or interact with them in private DM:\n"
-            "• 📖 <b>Theo (@iamtheobot):</b> Daily Scripture & Devotionals\n"
-            "• 🛡️ <b>Pete (@iampetebot):</b> Security & Group Moderation\n"
-            "• 📅 <b>Eddy (@iamedyybot):</b> Events & Reminders\n"
-            "• 💬 <b>Susy (@iamsusiebot):</b> Welcome & Onboarding</blockquote>\n\n"
-            "<i>God Bless You All & See You Soon! 💜</i>"
-        )
         markup = build_lusy_farewell_keyboard()
-
-        try:
-            await message.answer(group_farewell_text, parse_mode="HTML", reply_markup=markup)
-        except Exception:
-            pass
 
         if message.from_user:
             try:

@@ -91,7 +91,7 @@ def build_lusy_farewell_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", url="https://t.me/youthopiaos_bot"),
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="lusy_menu_directory"),
                 InlineKeyboardButton(text="➕ Re-invite Lusy", url="https://t.me/iamlusybot?startgroup=true"),
             ],
         ]
