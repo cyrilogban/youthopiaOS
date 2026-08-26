@@ -20,18 +20,13 @@ def build_susy_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_susy_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Susy DM /start Welcome Card Inline Keyboard:
-    [ Join Facebook ]    [ Join Telegram ]
-    [ Join WhatsApp ]    [ Join Threads  ]
+    [ 🚀 Take Community Tour ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Join Facebook", url=FACEBOOK_LINK),
-                InlineKeyboardButton(text="Join Telegram", url=TELEGRAM_GROUP_LINK),
-            ],
-            [
-                InlineKeyboardButton(text="Join WhatsApp", url=WHATSAPP_LINK),
-                InlineKeyboardButton(text="Join Threads", callback_data="global_ignore"),
+                InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_1"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),
             ]
         ]
     )
@@ -64,37 +59,59 @@ def build_onboarding_tour_keyboard(page: int) -> InlineKeyboardMarkup:
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_2"),
-                    InlineKeyboardButton(text="✅ Finish Exploring", callback_data="onboarding_finish")
+                    InlineKeyboardButton(text="✅ Finish Tour", callback_data="onboarding_finish")
                 ]
             ]
         )
 
 
-def build_topic_directory_keyboard() -> InlineKeyboardMarkup:
+def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     """
-    Susy /where Topic Directory inline keyboard:
-    [ 💬 Open YouThopia Group ]
+    Group welcome notice inline keyboard (Admin):
+    [ 🌸 Meet Susy in DM ]  [ 🌐 Community ]
+    [ 🌐 YouThopiaOS Ecosystem ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="💬 Open YouThopia Group", url=TELEGRAM_GROUP_LINK)]
+            [
+                InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot?start=welcome"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),
+            ],
+            [
+                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="susy_menu_directory"),
+            ]
         ]
     )
 
 
-def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
+def build_susy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
-    Group welcome notice inline keyboard:
-    [ 🌸 Meet Susy in DM ]
-    [ 🗑️ Close ]
+    Group welcome notice inline keyboard (Regular Member):
+    [ ⚡ Promote Susy to Admin ]
+    [ 🌸 Meet Susy in DM ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot")
+                InlineKeyboardButton(text="⚡ Promote Susy to Admin", callback_data="susy_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
+                InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot?start=welcome"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),
+            ]
+        ]
+    )
+
+
+def build_susy_farewell_keyboard() -> InlineKeyboardMarkup:
+    """
+    Compact inline keyboard attached to Susy's farewell messages.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="susy_menu_directory"),
+                InlineKeyboardButton(text="➕ Re-invite Susy", url="https://t.me/iamsusiebot?startgroup=true"),
             ]
         ]
     )

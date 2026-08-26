@@ -34,7 +34,6 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
     from aiogram.types import BotCommand
     susy_commands = [
         BotCommand(command="start", description="Meet Susy & Community Welcome"),
-        BotCommand(command="where", description="Community topic directory & guide"),
         BotCommand(command="help", description="Show Susy hostess & community features"),
     ]
 

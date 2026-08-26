@@ -13,6 +13,7 @@ from aiogram.types import (
     BotCommand,
     BotCommandScopeAllPrivateChats,
     BotCommandScopeAllGroupChats,
+    ChatMemberUpdated,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     ReplyKeyboardMarkup,
@@ -33,15 +34,26 @@ from bots.susy.utils.keyboards import (
     build_susy_reply_keyboard,
     build_susy_start_inline_keyboard,
     build_onboarding_tour_keyboard,
-    build_topic_directory_keyboard,
     build_susy_group_welcome_keyboard,
+    build_susy_member_welcome_keyboard,
+    build_susy_farewell_keyboard,
 )
 
-from core.telegram_runtime import build_router
+from core.telegram_runtime import build_router, register_group_chat, register_chat
 from aiogram.filters import Command, CommandObject
 
-# Will add Susy's official photo URL here when available
+logger = logging.getLogger(__name__)
+
 SUSY_PHOTO = None
+
+
+async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay_seconds: int = 10) -> None:
+    await asyncio.sleep(delay_seconds)
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception:
+        pass
+
 
 def build_susy_router(description: str, music_service=None) -> Router:
     router = build_router("susy", description, include_base_commands=False)
@@ -72,120 +84,254 @@ def build_susy_router(description: str, music_service=None) -> Router:
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
 
+    # -------------------------------------------------------------------------
+    # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)
+    # -------------------------------------------------------------------------
     @router.my_chat_member()
-    async def on_bot_added(event, bot: Bot) -> None:
-        if event.new_chat_member.status in {"member", "administrator"}:
-            first_name = event.from_user.first_name if event.from_user else "Friend"
-            chat_title = event.chat.title or "your group"
-            
-            welcome_caption = (
-                f"🌸 <b>Hey {first_name}, This is Susy!</b>\n\n"
-                f"Thanks for having me in <b>{chat_title}</b>! I am your friendly community hostess.\n\n"
-                f"I'm here to make sure every member feels welcomed, connected, and guided across our community!"
-            )
-            
-            welcome_markup = build_susy_group_welcome_keyboard()
-            try:
-                await bot.send_message(
-                    chat_id=event.chat.id,
-                    text=welcome_caption,
-                    parse_mode="HTML",
-                    reply_markup=welcome_markup
-                )
-            except Exception as e:
-                logger.error(f"SUSY BOT ADDED WELCOME NOTICE: {e}")
+    async def on_susy_group_join(event: ChatMemberUpdated, bot: Bot, services: ServiceContainer) -> None:
+        old_status = event.old_chat_member.status
+        new_status = event.new_chat_member.status
 
-    async def send_group_welcome_card(message: Message) -> None:
-        first_name = message.from_user.first_name if message.from_user else "Friend"
-        chat_title = message.chat.title or "your community"
+        # Case 1: Susy added or promoted in group
+        if new_status in ("member", "administrator"):
+            await register_chat(event.chat, services)
+            chat_id = event.chat.id
+            group_title = event.chat.title or "Group"
 
-        welcome_text = (
-            f"🌸 <b>Hey {first_name}, This is Susy!</b>\n\n"
-            f"Thanks for having me in <b>{chat_title}</b>! I am your community hostess.\n\n"
-            f"I am here to welcome you, answer your questions, and guide you around!"
-        )
-
-        welcome_markup = build_susy_group_welcome_keyboard()
-
-        banner_url = "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=1200&q=80"
-        try:
-            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                resp = await client.get(banner_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-                if resp.status_code == 200:
-                    banner_file = BufferedInputFile(resp.content, filename="welcome.jpg")
-                    await message.answer_photo(
-                        photo=banner_file,
-                        caption=welcome_text,
-                        parse_mode="HTML",
-                        reply_markup=welcome_markup
+            # Status transition: Member -> Admin promotion upgrade
+            if old_status == "member" and new_status == "administrator":
+                try:
+                    sent_msg = await bot.send_message(
+                        chat_id=chat_id,
+                        text=(
+                            f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
+                            f"<blockquote>Thank you for promoting Susy in <b>{group_title}</b>! "
+                            f"Community hostess and onboarding features are now fully active. 🌸</blockquote>"
+                        ),
+                        parse_mode="HTML"
                     )
-                    return
+                    asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 5))
+                except Exception:
+                    pass
+                return
+
+            # Differentiated Welcome Card based on Admin vs Member status
+            if new_status == "administrator":
+                welcome_text = (
+                    f"<b>SUSY IS HERE 🌸</b>\n\n"
+                    f"<blockquote>I am Susy — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
+                    f"I keep our community connected and welcomed across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>COMMUNITY QUICK START</b>\n"
+                    f"<blockquote>• Tap <b>🌸 Meet Susy in DM</b> below to start your community tour.\n"
+                    f"• <b>Hostess Welcome:</b> <code>ENABLED</code>\n"
+                    f"• <b>Admins:</b> Manage anytime using <code>/help</code>.</blockquote>\n\n"
+                    f"<i>Sharing God's Love All The Way 💜</i>"
+                )
+                markup = build_susy_group_welcome_keyboard()
+            else:
+                welcome_text = (
+                    f"<b>SUSY IS HERE 🌸</b>\n\n"
+                    f"<blockquote>I am Susy — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
+                    f"I keep our community connected and welcomed across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
+                    f"<blockquote>To help manage member welcomes smoothly, please grant Susy <b>Admin Rights</b>!</blockquote>"
+                )
+                markup = build_susy_member_welcome_keyboard()
+
+            try:
+                sent_msg = await bot.send_message(
+                    chat_id=chat_id,
+                    text=welcome_text,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                # Auto-delete welcome card after 120s
+                asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 120))
+            except Exception as e:
+                logger.warning(f"Failed to send Susy group welcome card: {e}")
+
+        # Case 2: Susy removed or kicked from group
+        elif new_status in ("left", "kicked"):
+            chat_id = event.chat.id
+            group_title = event.chat.title or "your group"
+            try:
+                await services.chats.set_subscription("susy", chat_id, "welcome", enabled=False)
+            except Exception:
+                pass
+
+            # Notify Admin in DM
+            admin_user_id = event.from_user.id if event.from_user else None
+            if admin_user_id:
+                try:
+                    farewell_text = (
+                        f"<b>Susy Departs {group_title} 🌸</b>\n\n"
+                        f"<blockquote>Susy has been removed from <b>{group_title}</b>.\n"
+                        f"Hostess welcome services have been paused for this group. "
+                        f"You can re-invite Susy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    )
+                    await bot.send_message(
+                        chat_id=admin_user_id,
+                        text=farewell_text,
+                        parse_mode="HTML",
+                        reply_markup=build_susy_farewell_keyboard()
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not send Susy farewell DM to admin {admin_user_id}: {e}")
+
+    @router.callback_query(F.data == "susy_prompt_admin")
+    async def handle_susy_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
+        await callback.answer()
+        instructions = (
+            "<b>To Promote Susy to Group Admin:</b>\n\n"
+            "1. Open Group Settings ➔ Administrators\n"
+            "2. Tap <b>Add Administrator</b> and select <b>@iamsusiebot</b>\n"
+            "3. Enable Delete Messages & Pin Messages permissions! ⚡"
+        )
+        try:
+            sent_msg = await callback.message.answer(instructions, parse_mode="HTML")
+            asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
         except Exception:
             pass
 
-        await message.answer(welcome_text, parse_mode="HTML", reply_markup=welcome_markup)
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /leave or /remove_susy
+    # -------------------------------------------------------------------------
+    @router.message(Command("leave"))
+    @router.message(Command("remove_susy"))
+    async def handle_leave_command(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await message.answer("⚠️ This command is only for group chats.")
+            return
 
-    @router.message(Command("start"))
-    async def handle_start(message: Message, command: CommandObject, services: ServiceContainer) -> None:
-        if message.chat.type != "private":
-            is_targeted = message.text and ("susy" in message.text.lower() or "@" in message.text)
-            if not is_targeted:
+        chat_id = message.chat.id
+        group_title = message.chat.title or "your group"
+        admin_id = message.from_user.id if message.from_user else None
+
+        # Check if user is admin
+        try:
+            member = await bot.get_chat_member(chat_id, admin_id)
+            if member.status not in ("creator", "administrator"):
                 try:
                     await message.delete()
                 except Exception:
                     pass
+                msg = await message.answer("⚠️ Only group administrators can use /leave.")
+                asyncio.create_task(self_destruct_message(bot, chat_id, msg.message_id, 5))
                 return
-            await send_group_welcome_card(message)
+        except Exception:
+            pass
+
+        # Send DM to admin
+        if admin_id:
+            try:
+                farewell_text = (
+                    f"<b>Susy Departs {group_title} 🌸</b>\n\n"
+                    f"<blockquote>Susy has left <b>{group_title}</b> as requested.\n"
+                    f"Hostess welcome services have been paused for this group. "
+                    f"You can re-invite Susy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                )
+                await bot.send_message(
+                    chat_id=admin_id,
+                    text=farewell_text,
+                    parse_mode="HTML",
+                    reply_markup=build_susy_farewell_keyboard()
+                )
+            except Exception as e:
+                logger.warning(f"Could not send Susy leave DM to admin {admin_id}: {e}")
+
+        # Leave group cleanly
+        try:
+            await bot.leave_chat(chat_id)
+        except Exception as e:
+            logger.warning(f"Susy failed to leave chat {chat_id}: {e}")
+
+    # -------------------------------------------------------------------------
+    # COMMAND: /start
+    # -------------------------------------------------------------------------
+    @router.message(Command("start"))
+    async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot?start=welcome"),
+                    InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/iamsusiebot?start=tour"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>🌸 <b>Susy Hostess Engine is active in this group!</b>\n"
+                    "Tap below to open your DM Dashboard and explore our community.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
+            except Exception:
+                pass
             return
                 
-        if message.text and "onboarding" in message.text:
+        if message.text and "tour" in message.text:
             await send_onboarding_page(message, 1)
             return
 
+        await register_group_chat(message, services, "susy")
         user = await services.identity.resolve_telegram_user(message.from_user)
         first_name = message.from_user.first_name or "Friend"
         
-        welcome_text = (
-            f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🤍</b>\n"
-            "<blockquote>I am Susy, your first friend and community hostess here in the YouThopia ecosystem.\n\n"
-            "We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it!</blockquote>\n\n"
-            "<b>Getting Started</b>\n"
-            "<blockquote>I'm here to show you around! Use the menu buttons below to check your profile, explore the community, or ask for help!</blockquote>\n\n"
-            "Sharing God's Love All The Way 💜"
-        )
+        if user.get("engagement_level") == "new":
+            welcome_text = (
+                f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🌸</b>\n\n"
+                f"<blockquote>I am Susy — your community hostess here in the YouThopia ecosystem.\n\n"
+                f"We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it! Here is our 5-bot ecosystem ready for you:\n"
+                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+            )
+            await services.users.set_engagement_level(user["id"], "active")
+        else:
+            welcome_text = (
+                f"<b>Welcome back, {first_name}! 🌸</b>\n\n"
+                f"<blockquote>🌸 <b>Community Status:</b> <code>Active YouTopian 💜</code>\n"
+                f"💬 <b>Community:</b> <code>Connected</code>\n\n"
+                f"I'm always here to help you navigate our ecosystem and stay connected with fellow YouTopians!</blockquote>\n\n"
+                f"<b>WHAT WOULD YOU LIKE TO EXPLORE TODAY?</b>"
+            )
         
         reply_menu = build_susy_reply_keyboard()
         inline_menu = build_susy_start_inline_keyboard()
         
+        await message.answer("🌸 <b>Welcome to Susy Hostess Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
         if SUSY_PHOTO:
             await message.answer_photo(
                 photo=SUSY_PHOTO,
                 caption=welcome_text,
                 parse_mode="HTML",
-                reply_markup=reply_menu
+                reply_markup=inline_menu
             )
         else:
             await message.answer(
                 welcome_text,
                 parse_mode="HTML",
                 disable_web_page_preview=True,
-                reply_markup=reply_menu
+                reply_markup=inline_menu
             )
-
-    @router.message(Command("where"))
-    async def on_where_command(message: Message):
-        directory_text = (
-            "<b>🗺️ YouThopia Topic Directory & Guide</b>\n\n"
-            "<blockquote>Where would you like to go today? Here is your quick map to our group threads:</blockquote>\n\n"
-            "📢 <b>Announcements & Events:</b> Stay up to date with community news.\n"
-            "📖 <b>Devotionals & Scripture:</b> Daily inspiration with Theo (@iamtheobot).\n"
-            "🎮 <b>Games & Quizzes:</b> Test your Bible knowledge with Lusy (@iamlusybot).\n"
-            "🙏 <b>Prayer & Testimonies:</b> Stand in faith and share praise reports.\n"
-            "💬 <b>General Fellowship:</b> Connect and chat with fellow YouTopians!\n\n"
-            "<i>Tap below to jump right into the main group! 💜</i>"
-        )
-        markup = build_topic_directory_keyboard()
-        await message.answer(directory_text, parse_mode="HTML", reply_markup=markup)
 
     @router.message(F.text == "Community")
     async def on_about_community(message: Message):
