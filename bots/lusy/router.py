@@ -498,7 +498,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="⚡ Open Telegram Admin Promotion", url="https://t.me/iamlusybot?startgroup=true&admin=post_messages+edit_messages+delete_messages")]
         ])
-        await callback.message.answer(
+        sent_msg = await callback.message.answer(
             "<b>To Promote Lusy to Group Admin:</b>\n"
             "<blockquote>1. Open <b>Group Settings ➔ Administrators</b>\n"
             "2. Tap <b>Add Administrator</b> and select <b>@iamlusybot</b>\n"
@@ -506,6 +506,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             parse_mode="HTML",
             reply_markup=markup
         )
+        import asyncio
+        asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
 
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 1: 🎯 Play Quizzes / /playquiz
