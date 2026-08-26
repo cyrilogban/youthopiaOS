@@ -115,10 +115,15 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         first_name = message.from_user.first_name or "Friend"
 
         welcome_text = (
-            f"<b>Think you know the Bible, {first_name}?</b>\n"
-            "<blockquote>Prove it. I'm Lusy - and I've got questions that'll test even the sharpest minds. "
-            "Answer right, earn YP, rise through the ranks. Let's go! 🎯</blockquote>\n\n"
-            "<b>Select a Quiz Mode Below:</b>"
+            f"<b>Welcome to Scripture Mastery, {first_name}! 🎯</b>\n\n"
+            "<blockquote>I am Lusy — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
+            "Here in our community, mastering God's Word is an exciting journey we share together! Test your knowledge, earn <b>YouTopian Points (YP)</b>, and climb our global leaderboard synced across all 5 YouThopiaOS pillar bots:\n"
+            "• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+            "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+            "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+            "• 📅 <b>Eddy:</b> Events & Reminders\n"
+            "• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+            "<b>SELECT A QUIZ MODE BELOW:</b>"
         )
 
         reply_markup = build_lusy_reply_keyboard()
