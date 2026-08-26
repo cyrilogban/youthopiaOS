@@ -166,12 +166,14 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 )
 
                 markup = build_lusy_member_welcome_keyboard() if is_member_only else build_lusy_group_welcome_keyboard()
-                await bot.send_message(
+                sent_msg = await bot.send_message(
                     chat_id=event.chat.id,
                     text=welcome_card,
                     parse_mode="HTML",
                     reply_markup=markup
                 )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, event.chat.id, sent_msg.message_id, 120))
             except Exception as e:
                 logger.error(f"Failed to post Lusy group welcome card: {e}")
 

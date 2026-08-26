@@ -57,11 +57,11 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🎯 Start a Quiz", callback_data="lusy_menu_play"),
-                InlineKeyboardButton(text="🏆 Global Leaderboard", callback_data="lusy_menu_leaderboard"),
+                InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
+                InlineKeyboardButton(text="🏆 Leaderboard", callback_data="lusy_menu_leaderboard"),
             ],
             [
-                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem & Directory", callback_data="lusy_menu_directory"),
+                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="lusy_menu_directory"),
             ],
         ]
     )
@@ -74,11 +74,11 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="⚡ Promote Lusy to Group Admin", callback_data="lusy_prompt_admin"),
+                InlineKeyboardButton(text="⚡ Promote Lusy to Admin", callback_data="lusy_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="🎯 Start a Quiz", callback_data="lusy_menu_play"),
-                InlineKeyboardButton(text="🏆 Global Leaderboard", callback_data="lusy_menu_leaderboard"),
+                InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
+                InlineKeyboardButton(text="🏆 Leaderboard", callback_data="lusy_menu_leaderboard"),
             ],
         ]
     )
