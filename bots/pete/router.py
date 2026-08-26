@@ -713,11 +713,184 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
         chat_id_str = message.text.split("_")[1]
         markup = build_pete_captcha_inline_keyboard(chat_id_str)
         await message.answer(
-            help_text,
-            parse_mode="HTML",
-            disable_web_page_preview=True,
-            reply_markup=get_community_links_keyboard(),
+            "Please click the button below to verify your account and unlock your chat permissions.",
+            reply_markup=markup
         )
+        return
+
+    await register_group_chat(message, services, "pete")
+    user = await services.identity.resolve_telegram_user(message.from_user)
+    first_name = message.from_user.first_name or "Friend"
+    
+    try:
+        warnings = await services.moderation.get_user_warnings_count(user["id"])
+    except Exception:
+        warnings = 0
+        
+    trust_score = user.get("trust_score", 100)
+
+    if user.get("engagement_level") == "new":
+        welcome_text = (
+            f"<b>Welcome to YouThopia Security, {first_name}! 🛡️</b>\n\n"
+            f"<blockquote>I am Pete (High King Peter) — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
+            f"I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure across all 5 pillar bots:\n"
+            f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+            f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+            f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+            f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+            f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+            f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+        )
+        await services.users.set_engagement_level(user["id"], "active")
+    else:
+        welcome_text = (
+            f"<b>Welcome back, {first_name}! 🛡️</b>\n\n"
+            f"<blockquote>🛡️ <b>Active Warnings:</b> <code>{warnings}/5</code>\n"
+            f"📜 <b>Safety Record:</b> <code>{'Clean Record ✨' if warnings == 0 else 'Under Observation'}</code>\n"
+            f"💯 <b>Trust Score:</b> <code>{trust_score}/100</code>\n\n"
+            f"I am constantly monitoring our community borders so you can fellowship in a clean, safe environment!</blockquote>\n\n"
+            f"<b>WHAT WOULD YOU LIKE TO DO TODAY?</b>"
+        )
+    
+    reply_menu = build_pete_reply_keyboard()
+    inline_menu = build_pete_start_inline_keyboard()
+    
+    await message.answer("🛡️ <b>Welcome to Pete Security Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+    await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
+
+# -------------------------------------------------------------------------
+# PROFILE & HELP HANDLERS
+# -------------------------------------------------------------------------
+@router.message(F.text == "👤 My Profile")
+@router.message(Command("profile"))
+@router.callback_query(F.data == "pete_profile")
+async def handle_pete_profile(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
+    is_callback = isinstance(event, CallbackQuery)
+    message = event.message if is_callback else event
+    user_from = event.from_user
+
+    if is_callback:
+        await event.answer()
+
+    if message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
+        user_first = user_from.first_name if user_from else "Friend"
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🛡️ View Profile in DM", url="https://t.me/iampetebot?start=profile"),
+                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+            ]
+        ])
+        try:
+            sent_msg = await message.answer(
+                f"<blockquote>👤 <b>{user_first}</b>, your security profile has been sent to your private DM!</blockquote>",
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+        except Exception:
+            pass
+
+        if user_from:
+            try:
+                await send_pete_profile(message, services, telegram_user=user_from, send_to_dm=True, bot=bot)
+            except Exception as e:
+                logger.warning(f"Failed to send Pete profile to DM: {e}")
+        return
+
+    await send_pete_profile(message, services, telegram_user=user_from)
+
+async def send_pete_profile(
+    message: Message, services: ServiceContainer, telegram_user: Any | None = None, send_to_dm: bool = False, bot: Bot | None = None
+) -> None:
+    user_from = telegram_user or message.from_user
+    user = await services.identity.resolve_telegram_user(user_from)
+    try:
+        warnings = await services.moderation.get_user_warnings_count(user["id"])
+    except Exception:
+        warnings = 0
+
+    bot_stats = [
+        f"🛡️ Active Warnings: <b>{warnings}/5</b>",
+        f"📜 Safety Status: <b>{'Clean Record ✨' if warnings == 0 else 'Under Observation'}</b>",
+    ]
+
+    card_text = render_shared_profile_card(
+        user_data=user,
+        telegram_first_name=user_from.first_name or "Friend",
+        bot_specific_stats=bot_stats
+    )
+
+    if send_to_dm and bot and user_from:
+        await bot.send_message(
+            chat_id=user_from.id,
+            text=card_text,
+            parse_mode="HTML",
+            reply_markup=build_pete_reply_keyboard()
+        )
+    else:
+        await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_reply_keyboard())
+
+@router.message(F.text == "ℹ️ Help")
+@router.message(Command("help"))
+@router.callback_query(F.data == "pete_help")
+async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
+    is_callback = isinstance(event, CallbackQuery)
+    message = event.message if is_callback else event
+
+    if is_callback:
+        await event.answer()
+
+    if message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/iampetebot?start=help"),
+                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+            ]
+        ])
+        try:
+            sent_msg = await message.answer(
+                "<blockquote>🛡️ <b>Pete Security Help Guide</b>\n"
+                "Tap below to view full features and moderation rules in DM.</blockquote>",
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
+        except Exception:
+            pass
+        return
+
+    first_name = event.from_user.first_name or "Friend"
+    help_text = (
+        f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
+        "<blockquote>I am Pete (@iampetebot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
+        "<b>Pete Features & Commands</b>\n"
+        "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
+        "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"
+        "• 📜 <b>Moderation Record:</b> Transparent warning system.\n"
+        "• 📝 <b>Submit Appeal:</b> Appeal a warning or penalty directly to community admins.\n"
+        "• <b>/warn:</b> Issue warning to a member (Admin).\n"
+        "• <b>/mute /unmute:</b> Restrict or restore chat rights (Admin).\n"
+        "• <b>/kick /ban /unban:</b> Remove or restrict disruptive accounts (Admin).\n"
+        "• <b>/lock /unlock:</b> Lock or open group chat (Admin).</blockquote>\n\n"
+        f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
+        "Sharing God's Love All The Way 💜"
+    )
+
+    await message.answer(
+        help_text,
+        parse_mode="HTML",
+        disable_web_page_preview=True,
+        reply_markup=get_community_links_keyboard(),
+    )
 
 @router.message(F.text == "🌐 Community")
 @router.message(F.text == "🌐 Community Links")
