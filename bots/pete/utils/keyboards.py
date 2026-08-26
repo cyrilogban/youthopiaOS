@@ -23,15 +23,62 @@ def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
 
 def build_pete_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
-    Pete DM /start Card Inline Keyboard (Cleaned):
+    Pete DM /start Card Inline Keyboard:
+    [ 📝 Submit Appeal ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(
-                    text="💬 Open Main Group",
-                    url="https://t.me/youthopiabiblecommunity"
-                )
+                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
+            ]
+        ]
+    )
+
+
+def build_pete_group_welcome_keyboard() -> InlineKeyboardMarkup:
+    """
+    Inline keyboard attached to Pete's group welcome card (Admin).
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
+            ],
+            [
+                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="pete_menu_directory"),
+            ]
+        ]
+    )
+
+
+def build_pete_member_welcome_keyboard() -> InlineKeyboardMarkup:
+    """
+    Inline keyboard attached to Pete's group welcome card (Regular Member).
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="⚡ Promote Pete to Admin", callback_data="pete_prompt_admin"),
+            ],
+            [
+                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
+            ]
+        ]
+    )
+
+
+def build_pete_farewell_keyboard() -> InlineKeyboardMarkup:
+    """
+    Compact inline keyboard attached to Pete's farewell messages.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="pete_menu_directory"),
+                InlineKeyboardButton(text="➕ Re-invite Pete", url="https://t.me/iampetebot?startgroup=true"),
             ]
         ]
     )

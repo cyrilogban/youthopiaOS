@@ -1,14 +1,23 @@
 import logging
 from typing import Any
-from aiogram import Router, F
-from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
+from aiogram import Router, F, Bot
+from aiogram.types import (
+    Message,
+    ChatPermissions,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    ChatMemberUpdated,
+)
 from aiogram.filters import Command, CommandObject, Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import asyncio
 import os
 from shared.services.container import ServiceContainer
-from core.telegram_runtime import register_group_chat
+from core.telegram_runtime import register_group_chat, register_chat
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
@@ -19,6 +28,9 @@ from shared.utils.ui import (
 from bots.pete.utils.keyboards import (
     build_pete_reply_keyboard,
     build_pete_start_inline_keyboard,
+    build_pete_group_welcome_keyboard,
+    build_pete_member_welcome_keyboard,
+    build_pete_farewell_keyboard,
     build_pete_captcha_inline_keyboard,
     build_pete_post_captcha_group_keyboard,
 )
@@ -28,6 +40,14 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 from core.filters import IsAdminFilter
+
+
+async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay_seconds: int = 10) -> None:
+    await asyncio.sleep(delay_seconds)
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception:
+        pass
 
 # -----------------------------------------------------------------------------
 # CORE ADMIN COMMANDS
@@ -497,115 +517,389 @@ async def handle_appeal_reject(callback_query: CallbackQuery) -> None:
 # Captcha Memory Store: {user_id: {"chat_id": int, "msg_id": int}}
 PENDING_CAPTCHAS = {}
 
-@router.message(Command("start"))
-async def handle_start(message: Message, services: ServiceContainer) -> None:
-    if message.chat.type != "private":
-        try:
-            await message.delete()
-        except Exception:
-            pass
-        return
-            
-    # Check if this is a Deep Link Captcha verification
-    if message.text and message.text.startswith("/start verify_"):
-        chat_id_str = message.text.split("_")[1]
-        markup = build_pete_captcha_inline_keyboard(chat_id_str)
-        await message.answer(
-            "Please click the button below to verify your account and unlock your chat permissions.",
-            reply_markup=markup
+    # -------------------------------------------------------------------------
+    # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)
+    # -------------------------------------------------------------------------
+    @router.my_chat_member()
+    async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: ServiceContainer) -> None:
+        old_status = event.old_chat_member.status
+        new_status = event.new_chat_member.status
+
+        # Case 1: Pete added or promoted in group
+        if new_status in ("member", "administrator"):
+            await register_chat(event.chat, services)
+            chat_id = event.chat.id
+            group_title = event.chat.title or "Group"
+
+            # Status transition: Member -> Admin promotion upgrade
+            if old_status == "member" and new_status == "administrator":
+                try:
+                    sent_msg = await bot.send_message(
+                        chat_id=chat_id,
+                        text=(
+                            f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
+                            f"<blockquote>Thank you for promoting Pete in <b>{group_title}</b>! "
+                            f"Automated moderation, captcha verification, and anti-spam shields are now active. 🛡️</blockquote>"
+                        ),
+                        parse_mode="HTML"
+                    )
+                    asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 5))
+                except Exception:
+                    pass
+                return
+
+            # Differentiated Welcome Card based on Admin vs Member status
+            if new_status == "administrator":
+                welcome_text = (
+                    f"<b>PETE IS HERE 🛡️</b>\n\n"
+                    f"<blockquote>I am Pete — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
+                    f"I protect our digital sanctuary across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>SECURITY QUICK START</b>\n"
+                    f"<blockquote>• <b>Captcha Gatekeeper:</b> <code>ENABLED</code> (Auto-verifies new members).\n"
+                    f"• <b>Spam & Link Shield:</b> <code>ACTIVE</code> (Blocks profanity & links).\n"
+                    f"• <b>Admins:</b> Manage anytime using <code>/help</code> or <code>/warn</code>.</blockquote>\n\n"
+                    f"<i>Sharing God's Love All The Way 💜</i>"
+                )
+                markup = build_pete_group_welcome_keyboard()
+            else:
+                welcome_text = (
+                    f"<b>PETE IS HERE 🛡️</b>\n\n"
+                    f"<blockquote>I am Pete — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
+                    f"I protect our digital sanctuary across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
+                    f"<blockquote>To filter spam and execute captcha mutes smoothly, please grant Pete <b>Admin Rights</b>!</blockquote>"
+                )
+                markup = build_pete_member_welcome_keyboard()
+
+            try:
+                sent_msg = await bot.send_message(
+                    chat_id=chat_id,
+                    text=welcome_text,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                # Auto-delete welcome card after 120s
+                asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 120))
+            except Exception as e:
+                logger.warning(f"Failed to send Pete group welcome card: {e}")
+
+        # Case 2: Pete removed or kicked from group
+        elif new_status in ("left", "kicked"):
+            chat_id = event.chat.id
+            group_title = event.chat.title or "your group"
+            try:
+                await services.chats.set_subscription("pete", chat_id, "security", enabled=False)
+            except Exception:
+                pass
+
+            # Notify Admin in DM
+            admin_user_id = event.from_user.id if event.from_user else None
+            if admin_user_id:
+                try:
+                    farewell_text = (
+                        f"<b>Pete Departs {group_title} 🛡️</b>\n\n"
+                        f"<blockquote>Pete has been removed from <b>{group_title}</b>.\n"
+                        f"Automated security and captcha verification have been paused for this group. "
+                        f"You can re-invite Pete anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    )
+                    await bot.send_message(
+                        chat_id=admin_user_id,
+                        text=farewell_text,
+                        parse_mode="HTML",
+                        reply_markup=build_pete_farewell_keyboard()
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not send Pete farewell DM to admin {admin_user_id}: {e}")
+
+    @router.callback_query(F.data == "pete_prompt_admin")
+    async def handle_pete_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
+        await callback.answer()
+        instructions = (
+            "<b>To Promote Pete to Group Admin:</b>\n\n"
+            "1. Open Group Settings ➔ Administrators\n"
+            "2. Tap <b>Add Administrator</b> and select <b>@iampetebot</b>\n"
+            "3. Enable Ban Users, Delete Messages & Pin Messages permissions! ⚡"
         )
-        return
-
-    # Standard welcome for normal DMs
-    first_name = message.from_user.first_name or "Friend"
-    welcome_text = (
-        f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 🛡️</b>\n"
-        "<blockquote>I am Pete (Peter, High King), the silent guardian of the YouThopia bot family.\n\n"
-        "I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure!</blockquote>"
-    )
-    
-    reply_menu = build_pete_reply_keyboard()
-    await message.answer(
-        welcome_text, 
-        parse_mode="HTML", 
-        disable_web_page_preview=True, 
-        reply_markup=reply_menu
-    )
-
-@router.message(F.text == "👤 My Profile")
-@router.message(Command("profile"))
-@router.callback_query(F.data == "pete_profile")
-async def handle_pete_profile(event: Message | CallbackQuery, services: ServiceContainer) -> None:
-    is_callback = isinstance(event, CallbackQuery)
-    message = event.message if is_callback else event
-    user_from = event.from_user
-
-    if is_callback:
-        await event.answer()
-
-    if message.chat.type != "private":
         try:
-            await message.delete()
+            sent_msg = await callback.message.answer(instructions, parse_mode="HTML")
+            asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
         except Exception:
             pass
-        return
 
-    user = await services.identity.resolve_telegram_user(user_from)
-    warnings = await services.moderation.get_user_warnings_count(user["id"])
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /leave or /remove_pete
+    # -------------------------------------------------------------------------
+    @router.message(Command("leave"))
+    @router.message(Command("remove_pete"))
+    async def handle_leave_command(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await message.answer("⚠️ This command is only for group chats.")
+            return
 
-    bot_stats = [
-        f"🛡️ Active Warnings: <b>{warnings}/5</b>",
-        f"📜 Safety Status: <b>{'Clean Record' if warnings == 0 else 'Under Observation'}</b>",
-    ]
+        chat_id = message.chat.id
+        group_title = message.chat.title or "your group"
+        admin_id = message.from_user.id if message.from_user else None
 
-    card_text = render_shared_profile_card(
-        user_data=user,
-        telegram_first_name=user_from.first_name or "Friend",
-        bot_specific_stats=bot_stats
-    )
-
-    await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_reply_keyboard())
-
-@router.message(F.text == "ℹ️ Help")
-@router.message(Command("help"))
-@router.callback_query(F.data == "pete_help")
-async def handle_pete_help(event: Message | CallbackQuery) -> None:
-    is_callback = isinstance(event, CallbackQuery)
-    message = event.message if is_callback else event
-
-    if is_callback:
-        await event.answer()
-
-    if message.chat.type != "private":
+        # Check if user is admin
         try:
-            await message.delete()
+            member = await bot.get_chat_member(chat_id, admin_id)
+            if member.status not in ("creator", "administrator"):
+                try:
+                    await message.delete()
+                except Exception:
+                    pass
+                msg = await message.answer("⚠️ Only group administrators can use /leave.")
+                asyncio.create_task(self_destruct_message(bot, chat_id, msg.message_id, 5))
+                return
         except Exception:
             pass
-        return
 
-    first_name = event.from_user.first_name or "Friend"
-    help_text = (
-        f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
-        "<blockquote>I am Pete (@iampetebot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
-        "<b>Pete Features & Commands</b>\n"
-        "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
-        "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"
-        "• 📜 <b>Moderation Record:</b> Transparent warning system.\n"
-        "• 📝 <b>Submit Appeal:</b> Appeal a warning or penalty directly to community admins.\n"
-        "• <b>/warn:</b> Issue warning to a member (Admin).\n"
-        "• <b>/mute /unmute:</b> Restrict or restore chat rights (Admin).\n"
-        "• <b>/kick /ban /unban:</b> Remove or restrict disruptive accounts (Admin).\n"
-        "• <b>/lock /unlock:</b> Lock or open group chat (Admin).</blockquote>\n\n"
-        f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
-        "Sharing God's Love All The Way 💜"
-    )
+        # Send DM to admin
+        if admin_id:
+            try:
+                farewell_text = (
+                    f"<b>Pete Departs {group_title} 🛡️</b>\n\n"
+                    f"<blockquote>Pete has left <b>{group_title}</b> as requested.\n"
+                    f"Automated security and captcha verification have been paused for this group. "
+                    f"You can re-invite Pete anytime or explore our other 4 community bots below! 💜</blockquote>"
+                )
+                await bot.send_message(
+                    chat_id=admin_id,
+                    text=farewell_text,
+                    parse_mode="HTML",
+                    reply_markup=build_pete_farewell_keyboard()
+                )
+            except Exception as e:
+                logger.warning(f"Could not send Pete leave DM to admin {admin_id}: {e}")
 
-    await message.answer(
-        help_text,
-        parse_mode="HTML",
-        disable_web_page_preview=True,
-        reply_markup=get_community_links_keyboard(),
-    )
+        # Leave group cleanly
+        try:
+            await bot.leave_chat(chat_id)
+        except Exception as e:
+            logger.warning(f"Pete failed to leave chat {chat_id}: {e}")
+
+    # -------------------------------------------------------------------------
+    # COMMAND: /start
+    # -------------------------------------------------------------------------
+    @router.message(Command("start"))
+    async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🛡️ Open Security Dashboard", url="https://t.me/iampetebot?start=dashboard"),
+                    InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>🛡️ <b>Pete Security Engine is active in this group!</b>\n"
+                    "Tap below to open your DM Security Dashboard or submit an appeal.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
+            except Exception:
+                pass
+            return
+            
+        # Check if this is a Deep Link Captcha verification
+        if message.text and message.text.startswith("/start verify_"):
+            chat_id_str = message.text.split("_")[1]
+            markup = build_pete_captcha_inline_keyboard(chat_id_str)
+            await message.answer(
+                "Please click the button below to verify your account and unlock your chat permissions.",
+                reply_markup=markup
+            )
+            return
+
+        await register_group_chat(message, services, "pete")
+        user = await services.identity.resolve_telegram_user(message.from_user)
+        first_name = message.from_user.first_name or "Friend"
+        
+        try:
+            warnings = await services.moderation.get_user_warnings_count(user["id"])
+        except Exception:
+            warnings = 0
+            
+        trust_score = user.get("trust_score", 100)
+
+        if user.get("engagement_level") == "new":
+            welcome_text = (
+                f"<b>Welcome to YouThopia Security, {first_name}! 🛡️</b>\n\n"
+                f"<blockquote>I am Pete (High King Peter) — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
+                f"I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure across all 5 pillar bots:\n"
+                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+            )
+            await services.users.set_engagement_level(user["id"], "active")
+        else:
+            welcome_text = (
+                f"<b>Welcome back, {first_name}! 🛡️</b>\n\n"
+                f"<blockquote>🛡️ <b>Active Warnings:</b> <code>{warnings}/5</code>\n"
+                f"📜 <b>Safety Record:</b> <code>{'Clean Record ✨' if warnings == 0 else 'Under Observation'}</code>\n"
+                f"💯 <b>Trust Score:</b> <code>{trust_score}/100</code>\n\n"
+                f"I am constantly monitoring our community borders so you can fellowship in a clean, safe environment!</blockquote>\n\n"
+                f"<b>WHAT WOULD YOU LIKE TO DO TODAY?</b>"
+            )
+        
+        reply_menu = build_pete_reply_keyboard()
+        inline_menu = build_pete_start_inline_keyboard()
+        
+        await message.answer("🛡️ <b>Welcome to Pete Security Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
+
+    # -------------------------------------------------------------------------
+    # PROFILE & HELP HANDLERS
+    # -------------------------------------------------------------------------
+    @router.message(F.text == "👤 My Profile")
+    @router.message(Command("profile"))
+    @router.callback_query(F.data == "pete_profile")
+    async def handle_pete_profile(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
+        is_callback = isinstance(event, CallbackQuery)
+        message = event.message if is_callback else event
+        user_from = event.from_user
+
+        if is_callback:
+            await event.answer()
+
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+
+            user_first = user_from.first_name if user_from else "Friend"
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🛡️ View Profile in DM", url="https://t.me/iampetebot?start=profile"),
+                    InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    f"<blockquote>👤 <b>{user_first}</b>, your security profile has been sent to your private DM!</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+            except Exception:
+                pass
+
+            if user_from:
+                try:
+                    await send_pete_profile(message, services, telegram_user=user_from, send_to_dm=True, bot=bot)
+                except Exception as e:
+                    logger.warning(f"Failed to send Pete profile to DM: {e}")
+            return
+
+        await send_pete_profile(message, services, telegram_user=user_from)
+
+    async def send_pete_profile(
+        message: Message, services: ServiceContainer, telegram_user: Any | None = None, send_to_dm: bool = False, bot: Bot | None = None
+    ) -> None:
+        user_from = telegram_user or message.from_user
+        user = await services.identity.resolve_telegram_user(user_from)
+        try:
+            warnings = await services.moderation.get_user_warnings_count(user["id"])
+        except Exception:
+            warnings = 0
+
+        bot_stats = [
+            f"🛡️ Active Warnings: <b>{warnings}/5</b>",
+            f"📜 Safety Status: <b>{'Clean Record ✨' if warnings == 0 else 'Under Observation'}</b>",
+        ]
+
+        card_text = render_shared_profile_card(
+            user_data=user,
+            telegram_first_name=user_from.first_name or "Friend",
+            bot_specific_stats=bot_stats
+        )
+
+        if send_to_dm and bot and user_from:
+            await bot.send_message(
+                chat_id=user_from.id,
+                text=card_text,
+                parse_mode="HTML",
+                reply_markup=build_pete_reply_keyboard()
+            )
+        else:
+            await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_reply_keyboard())
+
+    @router.message(F.text == "ℹ️ Help")
+    @router.message(Command("help"))
+    @router.callback_query(F.data == "pete_help")
+    async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
+        is_callback = isinstance(event, CallbackQuery)
+        message = event.message if is_callback else event
+
+        if is_callback:
+            await event.answer()
+
+        if message.chat.type != "private":
+            try:
+                await message.delete()
+            except Exception:
+                pass
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/iampetebot?start=help"),
+                    InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>🛡️ <b>Pete Security Help Guide</b>\n"
+                    "Tap below to view full features and moderation rules in DM.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
+            except Exception:
+                pass
+            return
+
+        first_name = event.from_user.first_name or "Friend"
+        help_text = (
+            f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
+            "<blockquote>I am Pete (@iampetebot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Pete Features & Commands</b>\n"
+            "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
+            "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"
+            "• 📜 <b>Moderation Record:</b> Transparent warning system.\n"
+            "• 📝 <b>Submit Appeal:</b> Appeal a warning or penalty directly to community admins.\n"
+            "• <b>/warn:</b> Issue warning to a member (Admin).\n"
+            "• <b>/mute /unmute:</b> Restrict or restore chat rights (Admin).\n"
+            "• <b>/kick /ban /unban:</b> Remove or restrict disruptive accounts (Admin).\n"
+            "• <b>/lock /unlock:</b> Lock or open group chat (Admin).</blockquote>\n\n"
+            f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
+            "Sharing God's Love All The Way 💜"
+        )
+
+        await message.answer(
+            help_text,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=get_community_links_keyboard(),
+        )
 
 @router.message(F.text == "🌐 Community")
 @router.message(F.text == "🌐 Community Links")
