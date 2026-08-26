@@ -10,12 +10,13 @@ from aiogram.types import (
     BotCommandScopeAllGroupChats,
     BotCommandScopeAllPrivateChats,
     CallbackQuery,
+    ChatMemberUpdated,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
 )
 
-from core.telegram_runtime import build_router, register_group_chat
+from core.telegram_runtime import build_router, register_group_chat, register_chat
 from shared.services.container import ServiceContainer
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
@@ -28,6 +29,7 @@ from bots.lusy.handlers.quizzes import quiz_router
 from bots.lusy.utils.keyboards import (
     build_game_selection_inline_keyboard,
     build_lusy_reply_keyboard,
+    build_lusy_group_welcome_keyboard,
 )
 
 logger = logging.getLogger(__name__)
@@ -103,6 +105,47 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         inline_markup = build_game_selection_inline_keyboard()
         await message.answer("🎯 <b>Welcome to Lusy Quiz Dashboard!</b>", parse_mode="HTML", reply_markup=reply_markup)
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
+
+    # -------------------------------------------------------------------------
+    # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)
+    # -------------------------------------------------------------------------
+    @router.my_chat_member()
+    async def on_lusy_group_join(event: ChatMemberUpdated, bot: Bot, services: ServiceContainer) -> None:
+        old_status = event.old_chat_member.status
+        new_status = event.new_chat_member.status
+
+        # Trigger welcome card when Lusy is added to a group (transitioning from left/kicked to member/administrator)
+        if old_status in ("left", "kicked") and new_status in ("member", "administrator"):
+            try:
+                # 1. Register group in Supabase and ensure active status
+                await register_chat(event.chat, services, "lusy")
+
+                # 2. Build the official 5-bot welcome card
+                welcome_card = (
+                    "<b>LUSY IS HERE</b>\n\n"
+                    "<blockquote>I am Lusy — your Scripture Mastery & Quiz Engine in <b>YouThopiaOS</b>.\n\n"
+                    "Every quiz answered here earns <b>YouTopian Points (YP)</b>, advancing your global rank across our entire 5-bot ecosystem:\n"
+                    "• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    "• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    "• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    "<b>GROUP QUICK START</b>\n"
+                    "<blockquote>• <b>/playquiz</b> — Launch an instant Bible Quiz round.\n"
+                    "• <b>Auto Quiz:</b> <code>ENABLED</code> (10–15 casual drops daily).\n"
+                    "• <b>Admins:</b> Manage anytime using <code>/autoquiz_on</code> or <code>/autoquiz_off</code>.</blockquote>\n\n"
+                    "<i>Sharing God's Love All The Way 💜</i>"
+                )
+
+                markup = build_lusy_group_welcome_keyboard()
+                await bot.send_message(
+                    chat_id=event.chat.id,
+                    text=welcome_card,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+            except Exception as e:
+                logger.error(f"Failed to post Lusy group welcome card: {e}")
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
@@ -227,6 +270,16 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     @router.callback_query(F.data.startswith("onboarding_"))
     async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         await handle_global_onboarding_callback(callback_query, services)
+
+    @router.callback_query(F.data == "lusy_menu_directory")
+    async def inline_directory_handler(callback: CallbackQuery) -> None:
+        await callback.answer()
+        await callback.message.answer(
+            BOT_FAMILY_DIRECTORY_TEXT,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=get_community_links_keyboard(),
+        )
 
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 1: 🎯 Play Quizzes / /playquiz

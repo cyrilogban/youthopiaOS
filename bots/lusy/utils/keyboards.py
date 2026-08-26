@@ -48,3 +48,20 @@ def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
 
 
 build_quiz_selection_inline_keyboard = build_game_selection_inline_keyboard
+
+
+def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
+    """
+    Inline keyboard attached to Lusy's group welcome card.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🎯 Start a Quiz", callback_data="lusy_menu_play"),
+                InlineKeyboardButton(text="🏆 Global Leaderboard", callback_data="lusy_menu_leaderboard"),
+            ],
+            [
+                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem & Directory", callback_data="lusy_menu_directory"),
+            ],
+        ]
+    )
