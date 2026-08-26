@@ -112,19 +112,49 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         await register_group_chat(message, services, "lusy")
         user = await services.identity.resolve_telegram_user(message.from_user)
+        user_id = user["id"]
         first_name = message.from_user.first_name or "Friend"
 
-        welcome_text = (
-            f"<b>Welcome to Scripture Mastery, {first_name}! 🎯</b>\n\n"
-            "<blockquote>I am Lusy — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
-            "Here in our community, mastering God's Word is an exciting journey we share together! Test your knowledge, earn <b>YouTopian Points (YP)</b>, and climb our global leaderboard synced across all 5 YouThopiaOS pillar bots:\n"
-            "• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-            "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-            "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-            "• 📅 <b>Eddy:</b> Events & Reminders\n"
-            "• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
-            "<b>SELECT A QUIZ MODE BELOW:</b>"
-        )
+        # Check if user is returning by checking game history
+        try:
+            history = await services.quizzes.get_game_history(user_id)
+        except Exception:
+            history = []
+
+        total_quizzes = len(history)
+
+        if total_quizzes > 0:
+            try:
+                level_info = await services.xp.get_level(user_id)
+                total_xp = level_info.get("total_xp", 0)
+                level = level_info.get("level", 1)
+            except Exception:
+                total_xp = user.get("total_xp", 0)
+                level = user.get("level", 1)
+
+            rank_title = "Novice" if level < 2 else ("Scripture Sage" if level < 5 else ("Wisdom Warrior" if level < 10 else "High Priest"))
+            correct_answers = len([h for h in history if h.get("is_correct", False)])
+            accuracy = (correct_answers / total_quizzes * 100) if total_quizzes > 0 else 0.0
+
+            welcome_text = (
+                f"<b>Welcome back, {first_name}! 🎯</b>\n\n"
+                f"<blockquote>🌟 <b>Level {level} ({rank_title})</b> | <code>{total_xp} YP</code>\n"
+                f"🎯 <b>Accuracy:</b> <code>{accuracy:.1f}%</code> ({correct_answers}/{total_quizzes} played)\n\n"
+                "Ready to take on another challenge and advance your rank?</blockquote>\n\n"
+                "<b>SELECT A QUIZ MODE BELOW:</b>"
+            )
+        else:
+            welcome_text = (
+                f"<b>Welcome to Scripture Mastery, {first_name}! 🎯</b>\n\n"
+                "<blockquote>I am Lusy — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
+                "Here in our community, mastering God's Word is an exciting journey we share together! Test your knowledge, earn <b>YouTopian Points (YP)</b>, and climb our global leaderboard synced across all 5 YouThopiaOS pillar bots:\n"
+                "• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                "• 📅 <b>Eddy:</b> Events & Reminders\n"
+                "• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                "<b>SELECT A QUIZ MODE BELOW:</b>"
+            )
 
         reply_markup = build_lusy_reply_keyboard()
         inline_markup = build_game_selection_inline_keyboard()
