@@ -30,6 +30,7 @@ from bots.lusy.utils.keyboards import (
     build_game_selection_inline_keyboard,
     build_lusy_reply_keyboard,
     build_lusy_group_welcome_keyboard,
+    build_lusy_member_welcome_keyboard,
 )
 
 logger = logging.getLogger(__name__)
@@ -132,13 +133,20 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         old_status = event.old_chat_member.status
         new_status = event.new_chat_member.status
 
-        # Trigger welcome card when Lusy is added to a group (transitioning from left/kicked to member/administrator)
+        # 1. Trigger welcome card when Lusy is added to a group
         if old_status in ("left", "kicked") and new_status in ("member", "administrator"):
             try:
-                # 1. Register group in Supabase and ensure active status
                 await register_chat(event.chat, services, "lusy")
 
-                # 2. Build the official 5-bot welcome card
+                is_member_only = (new_status == "member")
+
+                admin_note = (
+                    "\n\n⚠️ <b>ADMIN RIGHTS NEEDED:</b> I was added as a regular member. "
+                    "To allow me to delete expired trigger messages, pin quiz leaderboards, and run Auto Quizzes cleanly, "
+                    "please promote me to <b>Group Administrator</b>!"
+                    if is_member_only else ""
+                )
+
                 welcome_card = (
                     "<b>LUSY IS HERE</b>\n\n"
                     "<blockquote>I am Lusy — your Scripture Mastery & Quiz Engine in <b>YouThopiaOS</b>.\n\n"
@@ -147,7 +155,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                     "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
                     "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
                     "• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    "• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    "• 💬 <b>Susy:</b> Welcome & Onboarding"
+                    f"{admin_note}</blockquote>\n\n"
                     "<b>GROUP QUICK START</b>\n"
                     "<blockquote>• <b>/playquiz</b> — Launch an instant Bible Quiz round.\n"
                     "• <b>Auto Quiz:</b> <code>ENABLED</code> (10–15 casual drops daily).\n"
@@ -155,7 +164,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                     "<i>Sharing God's Love All The Way 💜</i>"
                 )
 
-                markup = build_lusy_group_welcome_keyboard()
+                markup = build_lusy_member_welcome_keyboard() if is_member_only else build_lusy_group_welcome_keyboard()
                 await bot.send_message(
                     chat_id=event.chat.id,
                     text=welcome_card,
@@ -164,6 +173,19 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 )
             except Exception as e:
                 logger.error(f"Failed to post Lusy group welcome card: {e}")
+
+        # 2. Trigger confirmation card when Lusy is promoted from member to administrator
+        elif old_status == "member" and new_status == "administrator":
+            try:
+                sent_msg = await bot.send_message(
+                    chat_id=event.chat.id,
+                    text="<blockquote>⚡ <b>ADMIN RIGHTS GRANTED!</b> Lusy is now fully empowered as a Group Administrator. All quiz features unlocked!</blockquote>",
+                    parse_mode="HTML"
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, event.chat.id, sent_msg.message_id, 5))
+            except Exception as e:
+                logger.error(f"Failed to post Lusy admin promotion confirmation: {e}")
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
@@ -352,6 +374,39 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             parse_mode="HTML",
             disable_web_page_preview=True,
             reply_markup=get_community_links_keyboard(),
+        )
+
+    @router.callback_query(F.data == "lusy_prompt_admin")
+    async def inline_prompt_admin_handler(callback: CallbackQuery, bot: Bot) -> None:
+        is_admin = False
+        import os
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+        if callback.from_user and callback.from_user.id in admin_ids:
+            is_admin = True
+        else:
+            try:
+                member = await bot.get_chat_member(callback.message.chat.id, callback.from_user.id)
+                if member.status in ("administrator", "creator"):
+                    is_admin = True
+            except Exception:
+                pass
+
+        if not is_admin:
+            await callback.answer("⚠️ Only group administrators can grant admin rights.", show_alert=True)
+            return
+
+        await callback.answer()
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="⚡ Open Telegram Admin Promotion", url="https://t.me/iamlusybot?startgroup=true&admin=post_messages+edit_messages+delete_messages")]
+        ])
+        await callback.message.answer(
+            "<b>To Promote Lusy to Group Admin:</b>\n"
+            "<blockquote>1. Open <b>Group Settings ➔ Administrators</b>\n"
+            "2. Tap <b>Add Administrator</b> and select <b>@iamlusybot</b>\n"
+            "3. Enable <b>Delete Messages</b> & <b>Pin Messages</b> permissions!</blockquote>",
+            parse_mode="HTML",
+            reply_markup=markup
         )
 
     # -------------------------------------------------------------------------
