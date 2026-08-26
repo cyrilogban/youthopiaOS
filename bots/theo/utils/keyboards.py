@@ -50,6 +50,54 @@ def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
+    """
+    Inline keyboard attached to Theo's group welcome card (Admin).
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
+            ],
+            [
+                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="theo_community_links"),
+            ],
+        ]
+    )
+
+
+def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
+    """
+    Inline keyboard attached to Theo's group welcome card (Regular Member).
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="⚡ Promote Theo to Admin", callback_data="theo_prompt_admin"),
+            ],
+            [
+                InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
+            ],
+        ]
+    )
+
+
+def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
+    """
+    Compact inline keyboard attached to Theo's farewell messages.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="theo_community_links"),
+                InlineKeyboardButton(text="➕ Re-invite Theo", url="https://t.me/iamtheobot?startgroup=true"),
+            ],
+        ]
+    )
+
+
 def build_verse_actions_keyboard(category: str, reference: str) -> InlineKeyboardMarkup:
     """Builds the inline action keyboard for verse cards: [ 💜 Save ] [ Next Verse ] [ Share ]."""
     clean_ref = reference.replace(" ", "_")

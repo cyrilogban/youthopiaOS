@@ -11,12 +11,13 @@ from aiogram.types import (
     BotCommandScopeAllGroupChats,
     BotCommandScopeAllPrivateChats,
     CallbackQuery,
+    ChatMemberUpdated,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
 )
 
-from core.telegram_runtime import build_router, register_group_chat
+from core.telegram_runtime import build_router, register_group_chat, register_chat
 from shared.services.container import ServiceContainer
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
@@ -32,12 +33,23 @@ from bots.theo.utils.keyboards import (
     VerseAction,
     build_theo_reply_keyboard,
     build_theo_welcome_inline_keyboard,
+    build_theo_group_welcome_keyboard,
+    build_theo_member_welcome_keyboard,
+    build_theo_farewell_keyboard,
     build_verse_actions_keyboard,
 )
 
 logger = logging.getLogger(__name__)
 
 VALID_TRANSLATIONS = {"kjv", "asv", "web", "bbe"}
+
+
+async def self_destruct_message(bot: Any, chat_id: int, message_id: int, delay_seconds: int = 10) -> None:
+    await asyncio.sleep(delay_seconds)
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception:
+        pass
 THEO_PHOTO: str | None = None
 
 
@@ -140,10 +152,27 @@ def build_theo_router(description: str) -> Router:
     # COMMAND: /start
     # -------------------------------------------------------------------------
     @router.message(Command("start"))
-    async def start(message: Message, services: ServiceContainer) -> None:
+    async def start(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
+            except Exception:
+                pass
+
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamtheobot?start=dashboard"),
+                    InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>📖 <b>Theo Devotional Engine is active in this group!</b>\n"
+                    "Type any Bible reference in chat (e.g. <code>John 3:16</code>), or tap below to open your DM Dashboard.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
             return
@@ -160,32 +189,38 @@ def build_theo_router(description: str) -> Router:
         except Exception as e:
             logger.warning(f"Failed to auto-subscribe user {user['id']} on /start: {e}")
 
+        sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
+        sub_status = "ENABLED (6:00 AM)" if (sub and sub.get("enabled")) else "DISABLED"
+
+        state = await services.users.get_user_state(user["id"], "theo")
+        translation = state.get("translation", "kjv").upper()
+
         if user.get("engagement_level") == "new":
             welcome_text = (
-                f"<blockquote>Hi there, I'm Theo. 🤍\n\n"
-                f"I serve YOUTHOPIA BIBLE COMMUNITY as your dedicated Bible companion bot. "
-                f"Every YouTopian in this community has me in their corner, keeping Scripture alive in their daily journey.\n\n"
-                f"Think of me as the community's digital anchor to God's Word.\n\n"
-                f"What I bring to you:\n"
-                f"🌅 Daily Verse every morning at 6 AM when you subscribe\n"
-                f"📖 Instant Scripture lookup on demand in chat (e.g. John 3:16)\n"
-                f"👤 Community profile to track your growth\n\n"
-                f"Welcome to the family, {first_name}.\n"
-                f"Use the menu below to get started. 💜\n\n"
-                f"Sharing God's Love All The Way.\n"
-                f"#YouThopia #YouThopiaBibleCommunity</blockquote>"
+                f"<b>Welcome to Daily Scripture, {first_name}! 📖</b>\n\n"
+                f"<blockquote>I am Theo — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                f"Here in our community, we stay anchored in God's Word every day! Every YouTopian has access to daily devotionals and instant verse lookups across all 5 YouThopiaOS pillar bots:\n"
+                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"<b>SEARCH OR EXPLORE BELOW:</b>"
             )
             await services.users.set_engagement_level(user["id"], "active")
         else:
             welcome_text = (
-                f"<blockquote>Welcome back, {first_name}! 💜\n\n"
-                f"I'm Theo, your scripture companion built for YOUTHOPIA BIBLE COMMUNITY.\n\n"
-                f"Use the menu buttons below to check your profile, search scripture, or bookmark verses!</blockquote>"
+                f"<b>Welcome back, {first_name}! 📖</b>\n\n"
+                f"<blockquote>📖 <b>Translation:</b> <code>{translation}</code>\n"
+                f"🌅 <b>Daily Verse:</b> <code>{sub_status}</code>\n\n"
+                f"Ready to explore God's Word today? Type any verse reference directly in this chat!</blockquote>\n\n"
+                f"<b>SEARCH OR EXPLORE BELOW:</b>"
             )
 
         reply_menu = build_theo_reply_keyboard()
         inline_menu = build_theo_welcome_inline_keyboard()
 
+        await message.answer("📖 <b>Welcome to Theo Devotional Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
         if THEO_PHOTO:
             await message.answer_photo(
                 photo=THEO_PHOTO,
@@ -206,13 +241,37 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     @router.message(F.text == "👤 My Profile")
     @router.message(Command("profile"))
-    async def profile_handler(message: Message, services: ServiceContainer) -> None:
+    async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
             except Exception:
                 pass
+
+            user_first = message.from_user.first_name if message.from_user else "Friend"
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="👤 View Profile in DM", url="https://t.me/iamtheobot?start=profile"),
+                    InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    f"<blockquote>👤 <b>{user_first}</b>, your scripture profile has been sent to your private DM!</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+            except Exception:
+                pass
+
+            if message.from_user:
+                try:
+                    await send_theo_profile(message, services, telegram_user=message.from_user, send_to_dm=True, bot=bot)
+                except Exception as e:
+                    logger.warning(f"Failed to send Theo profile to DM for user {message.from_user.id}: {e}")
             return
+
         await send_theo_profile(message, services)
 
     @router.callback_query(F.data == "theo_profile")
@@ -221,7 +280,7 @@ def build_theo_router(description: str) -> Router:
         await send_theo_profile(callback.message, services, telegram_user=callback.from_user)
 
     async def send_theo_profile(
-        message: Message, services: ServiceContainer, telegram_user: Any | None = None
+        message: Message, services: ServiceContainer, telegram_user: Any | None = None, send_to_dm: bool = False, bot: Bot | None = None
     ) -> None:
         await register_group_chat(message, services, "theo")
         user_from = telegram_user or message.from_user
@@ -247,21 +306,45 @@ def build_theo_router(description: str) -> Router:
             bot_specific_stats=bot_stats
         )
 
-        await message.answer(
-            card_text,
-            parse_mode="HTML",
-            reply_markup=build_theo_reply_keyboard(),
-        )
+        if send_to_dm and bot and user_from:
+            await bot.send_message(
+                chat_id=user_from.id,
+                text=card_text,
+                parse_mode="HTML",
+                reply_markup=build_theo_reply_keyboard()
+            )
+        else:
+            await message.answer(
+                card_text,
+                parse_mode="HTML",
+                reply_markup=build_theo_reply_keyboard(),
+            )
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
     @router.message(F.text == "ℹ️ Help")
     @router.message(Command("help"))
-    async def help_handler(message: Message) -> None:
+    async def help_handler(message: Message, bot: Bot) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
+            except Exception:
+                pass
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="📖 Open Theo Guide in DM", url="https://t.me/iamtheobot?start=help"),
+                    InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>📖 <b>Theo Devotional Help Guide</b>\n"
+                    "Tap below to view full features and community guide in DM.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
             return
@@ -291,6 +374,190 @@ def build_theo_router(description: str) -> Router:
             disable_web_page_preview=True,
             reply_markup=get_community_links_keyboard(),
         )
+
+    # -------------------------------------------------------------------------
+    # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)
+    # -------------------------------------------------------------------------
+    @router.my_chat_member()
+    async def on_theo_group_join(event: ChatMemberUpdated, bot: Bot, services: ServiceContainer) -> None:
+        old_status = event.old_chat_member.status
+        new_status = event.new_chat_member.status
+
+        # Case 1: Theo added or promoted in group
+        if new_status in ("member", "administrator"):
+            await register_chat(event.chat, services)
+            chat_id = event.chat.id
+            group_title = event.chat.title or "Group"
+
+            # Auto-subscribe group to Theo's VOTD on join
+            try:
+                sub = await services.chats.get_subscription("theo", chat_id, "daily_devotional")
+                if not sub:
+                    await services.chats.set_subscription("theo", chat_id, "daily_devotional", enabled=True)
+            except Exception as e:
+                logger.warning(f"Failed to auto-subscribe group {chat_id} on join: {e}")
+
+            # Status transition: Member -> Admin promotion upgrade
+            if old_status == "member" and new_status == "administrator":
+                try:
+                    sent_msg = await bot.send_message(
+                        chat_id=chat_id,
+                        text=(
+                            f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
+                            f"<blockquote>Thank you for promoting Theo in <b>{group_title}</b>! "
+                            f"Daily Verses will be delivered clean and automated every morning at 6:00 AM. 📖</blockquote>"
+                        ),
+                        parse_mode="HTML"
+                    )
+                    asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 5))
+                except Exception:
+                    pass
+                return
+
+            # Differentiated Welcome Card based on Admin vs Member status
+            if new_status == "administrator":
+                welcome_text = (
+                    f"<b>THEO IS HERE 📖</b>\n\n"
+                    f"<blockquote>I am Theo — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                    f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>GROUP QUICK START</b>\n"
+                    f"<blockquote>• Type any Bible reference in chat (e.g. <code>John 3:16</code>).\n"
+                    f"• <b>Daily Verse:</b> <code>ENABLED</code> (Delivered daily at 6:00 AM).\n"
+                    f"• <b>Admins:</b> Manage anytime using <code>/subscribe</code> or <code>/unsubscribe</code>.</blockquote>\n\n"
+                    f"<i>Sharing God's Love All The Way 💜</i>"
+                )
+                markup = build_theo_group_welcome_keyboard()
+            else:
+                welcome_text = (
+                    f"<b>THEO IS HERE 📖</b>\n\n"
+                    f"<blockquote>I am Theo — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                    f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
+                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
+                    f"<blockquote>To send daily 6 AM devotional broadcasts smoothly, please grant Theo <b>Admin Rights</b>!</blockquote>"
+                )
+                markup = build_theo_member_welcome_keyboard()
+
+            try:
+                sent_msg = await bot.send_message(
+                    chat_id=chat_id,
+                    text=welcome_text,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                # Auto-delete welcome card after 120s
+                asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 120))
+            except Exception as e:
+                logger.warning(f"Failed to send Theo group welcome card: {e}")
+
+        # Case 2: Theo removed or kicked from group
+        elif new_status in ("left", "kicked"):
+            chat_id = event.chat.id
+            group_title = event.chat.title or "your group"
+            try:
+                await services.chats.set_subscription("theo", chat_id, "daily_devotional", enabled=False)
+            except Exception:
+                pass
+
+            # Notify Admin in DM
+            admin_user_id = event.from_user.id if event.from_user else None
+            if admin_user_id:
+                try:
+                    farewell_text = (
+                        f"<b>Theo Departs {group_title} 📖</b>\n\n"
+                        f"<blockquote>Theo has been removed from <b>{group_title}</b>.\n"
+                        f"Daily devotional broadcasts have been paused for this group. "
+                        f"You can re-invite Theo anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    )
+                    await bot.send_message(
+                        chat_id=admin_user_id,
+                        text=farewell_text,
+                        parse_mode="HTML",
+                        reply_markup=build_theo_farewell_keyboard()
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not send Theo farewell DM to admin {admin_user_id}: {e}")
+
+    @router.callback_query(F.data == "theo_prompt_admin")
+    async def handle_theo_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
+        await callback.answer()
+        instructions = (
+            "<b>To Promote Theo to Group Admin:</b>\n\n"
+            "1. Open Group Settings ➔ Administrators\n"
+            "2. Tap <b>Add Administrator</b> and select <b>@iamtheobot</b>\n"
+            "3. Enable Delete Messages & Pin Messages permissions! ⚡"
+        )
+        try:
+            sent_msg = await callback.message.answer(instructions, parse_mode="HTML")
+            asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
+        except Exception:
+            pass
+
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /leave or /remove_theo
+    # -------------------------------------------------------------------------
+    @router.message(Command("leave"))
+    @router.message(Command("remove_theo"))
+    async def handle_leave_command(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await message.answer("⚠️ This command is only for group chats.")
+            return
+
+        chat_id = message.chat.id
+        group_title = message.chat.title or "your group"
+        admin_id = message.from_user.id if message.from_user else None
+
+        # Check if user is admin
+        try:
+            member = await bot.get_chat_member(chat_id, admin_id)
+            if member.status not in ("creator", "administrator"):
+                try:
+                    await message.delete()
+                except Exception:
+                    pass
+                msg = await message.answer("⚠️ Only group administrators can use /leave.")
+                asyncio.create_task(self_destruct_message(bot, chat_id, msg.message_id, 5))
+                return
+        except Exception:
+            pass
+
+        try:
+            await services.chats.set_subscription("theo", chat_id, "daily_devotional", enabled=False)
+        except Exception:
+            pass
+
+        # Send DM to admin
+        if admin_id:
+            try:
+                farewell_text = (
+                    f"<b>Theo Departs {group_title} 📖</b>\n\n"
+                    f"<blockquote>Theo has left <b>{group_title}</b> as requested.\n"
+                    f"Daily devotional broadcasts have been paused for this group. "
+                    f"You can re-invite Theo anytime or explore our other 4 community bots below! 💜</blockquote>"
+                )
+                await bot.send_message(
+                    chat_id=admin_id,
+                    text=farewell_text,
+                    parse_mode="HTML",
+                    reply_markup=build_theo_farewell_keyboard()
+                )
+            except Exception as e:
+                logger.warning(f"Could not send Theo leave DM to admin {admin_id}: {e}")
+
+        # Leave group cleanly
+        try:
+            await bot.leave_chat(chat_id)
+        except Exception as e:
+            logger.warning(f"Theo failed to leave chat {chat_id}: {e}")
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 3: 🌐 Community
@@ -511,7 +778,7 @@ def build_theo_router(description: str) -> Router:
     # SUBSCRIPTION COMMANDS
     # -------------------------------------------------------------------------
     @router.message(Command("subscribe"))
-    async def subscribe_command(message: Message, services: ServiceContainer) -> None:
+    async def subscribe_command(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type == "private":
             user = await services.identity.resolve_telegram_user(message.from_user)
             existing_sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
@@ -529,30 +796,36 @@ def build_theo_router(description: str) -> Router:
                 enabled=True,
             )
             await message.answer(
-                "✅ You are now subscribed to Theo's Daily Verse of the Day. You will receive it daily at 6:00 AM WAT.",
+                "✅ You are now subscribed to Theo's Daily Verse of the Day. You will receive it daily at 6:00 AM.",
                 reply_markup=build_theo_reply_keyboard(),
             )
             return
 
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
         chat = await register_group_chat(message, services, "theo")
         if not chat:
-            await message.answer("Subscriptions are only supported in groups or private DMs.")
             return
 
         try:
             member = await message.chat.get_member(message.from_user.id)
             if member.status not in ("administrator", "creator"):
-                await message.answer("❌ Only group admins can subscribe the group to daily verses.")
+                msg = await message.answer("❌ Only group admins can subscribe the group to daily verses.")
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, msg.message_id, 10))
                 return
         except Exception:
             pass
 
         existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
         if existing_sub and existing_sub.get("enabled"):
-            await message.answer(
-                f"ℹ️ {message.chat.title} is already subscribed to Theo's Daily Verse.",
-                reply_markup=build_theo_reply_keyboard(),
+            sent_msg = await message.answer(
+                f"ℹ️ <b>{message.chat.title}</b> is already subscribed to Theo's Daily Verse (6:00 AM).",
+                parse_mode="HTML"
             )
+            asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             return
 
         await services.chats.set_subscription(
@@ -561,14 +834,14 @@ def build_theo_router(description: str) -> Router:
             subscription_type="daily_devotional",
             enabled=True,
         )
-        await message.answer(
-            f"✅ **{message.chat.title}** is now subscribed to Theo's Daily Verse.",
-            parse_mode="Markdown",
-            reply_markup=build_theo_reply_keyboard(),
+        sent_msg = await message.answer(
+            f"✅ <b>{message.chat.title}</b> is now subscribed to Theo's Daily Verse (6:00 AM).",
+            parse_mode="HTML"
         )
+        asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
 
     @router.message(Command("unsubscribe"))
-    async def unsubscribe_command(message: Message, services: ServiceContainer) -> None:
+    async def unsubscribe_command(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type == "private":
             user = await services.identity.resolve_telegram_user(message.from_user)
             await services.users.set_subscription(
@@ -583,15 +856,30 @@ def build_theo_router(description: str) -> Router:
             )
             return
 
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
         chat = await register_group_chat(message, services, "theo")
         if chat:
+            try:
+                member = await message.chat.get_member(message.from_user.id)
+                if member.status not in ("administrator", "creator"):
+                    msg = await message.answer("❌ Only group admins can unsubscribe the group.")
+                    asyncio.create_task(self_destruct_message(bot, message.chat.id, msg.message_id, 10))
+                    return
+            except Exception:
+                pass
+
             await services.chats.set_subscription(
                 bot_name="theo",
                 chat_id=chat["id"],
                 subscription_type="daily_devotional",
                 enabled=False,
             )
-            await message.answer("Paused daily verse delivery for this group.")
+            sent_msg = await message.answer("⏸️ Paused daily verse delivery for this group.", parse_mode="HTML")
+            asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
 
     # -------------------------------------------------------------------------
     # VERSE CALLBACK ACTIONS (Save / Next Verse)
