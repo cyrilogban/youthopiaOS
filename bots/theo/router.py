@@ -119,6 +119,15 @@ def build_theo_router(description: str) -> Router:
     async def handle_manual_votd_broadcast(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             return
+
+        import os
+        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
+
+        if not message.from_user or message.from_user.id not in admin_ids:
+            await message.answer("⚠️ Only system administrators can trigger manual VOTD broadcasts.")
+            return
+
         from bots.theo.services.scheduler import trigger_daily_votd
         msg = await message.answer("🔄 Initiating Verse of the Day broadcast...")
         res = await trigger_daily_votd(bot, services)
