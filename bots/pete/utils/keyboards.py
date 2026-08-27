@@ -24,12 +24,12 @@ def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_pete_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Pete DM /start Card Inline Keyboard:
-    [ 📝 Submit Appeal ]  [ 🌐 Community ]
+    [ 📝 Appeal ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
             ]
         ]
@@ -43,11 +43,11 @@ def build_pete_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
             ],
             [
-                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="pete_menu_directory"),
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="pete_menu_directory"),
             ]
         ]
     )
@@ -63,7 +63,7 @@ def build_pete_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="⚡ Promote Pete to Admin", callback_data="pete_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
+                InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
             ]
         ]
@@ -87,13 +87,13 @@ def build_pete_farewell_keyboard() -> InlineKeyboardMarkup:
 def build_pete_captcha_inline_keyboard(chat_id_str: str) -> InlineKeyboardMarkup:
     """
     Captcha Verification Inline Keyboard:
-    [ 🛡️ Tap here to prove you are human ]
+    [ 🛡️ Verify Human (Tap Here) ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="🛡️ Tap here to prove you are human",
+                    text="🛡️ Verify Human (Tap Here)",
                     callback_data=f"captcha|{chat_id_str}"
                 )
             ]

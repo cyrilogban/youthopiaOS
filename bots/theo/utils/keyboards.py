@@ -38,12 +38,12 @@ def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Theo /start Welcome Card inline keyboard:
-    [ 🔍 Search Scripture ]  [ 🌐 Translation ]
+    [ 🔍 Search ]  [ 🌐 Translation ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ]
         ]
@@ -57,11 +57,11 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ],
             [
-                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="theo_community_links"),
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="theo_community_links"),
             ],
         ]
     )
@@ -77,7 +77,7 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="⚡ Promote Theo to Admin", callback_data="theo_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ],
         ]

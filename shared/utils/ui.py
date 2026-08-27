@@ -100,7 +100,6 @@ def get_community_links_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(text="Join WhatsApp", url=WHATSAPP_LINK),
-                InlineKeyboardButton(text="Join Threads", callback_data="global_ignore"),
             ],
         ]
     )

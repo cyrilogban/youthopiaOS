@@ -29,20 +29,18 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
 
 def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
     """
-    Lusy Quiz Mode Selection inline keyboard per spec:
-    [ 📖 Bible Challenge ]  [ ✍️ Verse Completion ]
-    [ 🔀 Verse Scramble  ]  [ ⚡ Trivia Race      ]
+    Lusy Quiz Mode Selection inline keyboard (1-column full-width for mobile clarity):
+    [ 📖 Bible Challenge ]
+    [ ✍️ Verse Completion ]
+    [ 🔀 Verse Scramble ]
+    [ ⚡ Trivia Race ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [
-                InlineKeyboardButton(text="📖 Bible Challenge", callback_data="lusy_play_quiz"),
-                InlineKeyboardButton(text="✍️ Verse Completion", callback_data="lusy_play_fill_blank"),
-            ],
-            [
-                InlineKeyboardButton(text="🔀 Verse Scramble", callback_data="lusy_play_scramble"),
-                InlineKeyboardButton(text="⚡ Trivia Race", callback_data="lusy_play_race"),
-            ],
+            [InlineKeyboardButton(text="📖 Bible Challenge", callback_data="lusy_play_quiz")],
+            [InlineKeyboardButton(text="✍️ Verse Completion", callback_data="lusy_play_fill_blank")],
+            [InlineKeyboardButton(text="🔀 Verse Scramble", callback_data="lusy_play_scramble")],
+            [InlineKeyboardButton(text="⚡ Trivia Race", callback_data="lusy_play_race")],
         ]
     )
 
@@ -58,10 +56,10 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
-                InlineKeyboardButton(text="🏆 Leaderboard", callback_data="lusy_menu_leaderboard"),
+                InlineKeyboardButton(text="🏆 Rankings", callback_data="lusy_menu_leaderboard"),
             ],
             [
-                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="lusy_menu_directory"),
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="lusy_menu_directory"),
             ],
         ]
     )
@@ -78,7 +76,7 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
-                InlineKeyboardButton(text="🏆 Leaderboard", callback_data="lusy_menu_leaderboard"),
+                InlineKeyboardButton(text="🏆 Rankings", callback_data="lusy_menu_leaderboard"),
             ],
         ]
     )

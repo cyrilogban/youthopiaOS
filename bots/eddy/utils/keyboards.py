@@ -30,12 +30,12 @@ def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_eddy_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Eddy DM /start Card Inline Keyboard:
-    [ 📅 View Calendar ]  [ 🌐 Community ]
+    [ 📅 Calendar ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📅 View Calendar", callback_data="eddy_view_calendar"),
+                InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
             ]
         ]
@@ -49,11 +49,11 @@ def build_eddy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📅 View Calendar", callback_data="eddy_view_calendar"),
+                InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
             ],
             [
-                InlineKeyboardButton(text="🌐 YouThopiaOS Ecosystem", callback_data="eddy_menu_directory"),
+                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="eddy_menu_directory"),
             ]
         ]
     )
@@ -69,7 +69,7 @@ def build_eddy_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="⚡ Promote Eddy to Admin", callback_data="eddy_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="📅 View Calendar", callback_data="eddy_view_calendar"),
+                InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
             ]
         ]
@@ -93,14 +93,15 @@ def build_eddy_farewell_keyboard() -> InlineKeyboardMarkup:
 def build_event_card_inline_keyboard(event_id: str, is_attending: bool = False) -> InlineKeyboardMarkup:
     """
     Event Card Inline Keyboard per spec:
-    [ ✅ I'm Attending ]  [ 👥 View Attendees ]  [ 🔔 Set Reminder ]
+    [ ✅ Attending ]  [ 👥 Attendees ]
+    [ 🔔 Set Reminder ]
     """
     attend_text = "✅ Attending" if is_attending else "✅ I'm Attending"
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text=attend_text, callback_data=f"eddy_rsvp_{event_id}"),
-                InlineKeyboardButton(text="👥 View Attendees", callback_data=f"eddy_attendees_{event_id}"),
+                InlineKeyboardButton(text="👥 Attendees", callback_data=f"eddy_attendees_{event_id}"),
             ],
             [
                 InlineKeyboardButton(text="🔔 Set Reminder", callback_data=f"eddy_remind_{event_id}"),
