@@ -90,26 +90,8 @@ def build_router(bot_name: str, description: str, *, include_base_commands: bool
                 f"Trust: {user.get('trust_score', 100)}"
             )
 
-    # Fallback sub-router for default group tracking and membership status updates.
-    # It lives in a sub-router included at the end so that any custom command
-    # or my_chat_member handlers added to the parent router later (e.g. by
-    # build_theo_router, build_susy_router, build_eddy_router) are evaluated first.
+    # Fallback sub-router for default group tracking
     _fallback = Router(name=f"{bot_name}_fallback")
-
-    @_fallback.my_chat_member()
-    async def track_bot_membership(event: ChatMemberUpdated, services: ServiceContainer) -> None:
-        chat = await register_chat(event.chat, services, bot_name)
-        if not chat:
-            return
-
-        status = event.new_chat_member.status
-        if status in {"left", "kicked"}:
-            await services.chats.mark_bot_status(
-                bot_name,
-                chat["id"],
-                status,
-                enabled=False,
-            )
 
     @_fallback.message()
     async def track_group(message: Message, services: ServiceContainer) -> None:
@@ -146,4 +128,7 @@ async def run_polling_bot(
             pass
 
     logger.info("Starting %s bot polling.", config.name)
-    await dispatcher.start_polling(bot, allowed_updates=dispatcher.resolve_used_update_types())
+    await dispatcher.start_polling(
+        bot,
+        allowed_updates=["message", "callback_query", "my_chat_member", "chat_member"]
+    )
