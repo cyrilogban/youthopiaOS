@@ -621,16 +621,26 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
 
 @router.callback_query(F.data == "pete_prompt_admin")
 async def handle_pete_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
-    await callback.answer()
-    instructions = (
-        "<b>To Promote Pete to Group Admin:</b>\n\n"
-        "1. Open Group Settings ➔ Administrators\n"
-        "2. Tap <b>Add Administrator</b> and select <b>@iampetebot</b>\n"
-        "3. Enable Ban Users, Delete Messages & Pin Messages permissions! ⚡"
-    )
     try:
-        sent_msg = await callback.message.answer(instructions, parse_mode="HTML")
-        asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
+        member = await bot.get_chat_member(callback.message.chat.id, callback.from_user.id)
+        if member.status not in ("administrator", "creator"):
+            await callback.answer("⚠️ Only group administrators can promote bots to admin!", show_alert=True)
+            return
+    except Exception:
+        pass
+
+    await callback.answer()
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iampetebot?startgroup=admin&admin=delete_messages+restrict_members+pin_messages+invite_users")]
+    ])
+    try:
+        sent_msg = await callback.message.answer(
+            "<blockquote>🛡️ <b>Pete Administrator Setup</b>\n\n"
+            "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+        asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 20))
     except Exception:
         pass
 

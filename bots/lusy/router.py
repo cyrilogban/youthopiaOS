@@ -489,38 +489,26 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
     @router.callback_query(F.data == "lusy_prompt_admin")
     async def inline_prompt_admin_handler(callback: CallbackQuery, bot: Bot) -> None:
-        is_admin = False
-        import os
-        admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
-        admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
-        if callback.from_user and callback.from_user.id in admin_ids:
-            is_admin = True
-        else:
-            try:
-                member = await bot.get_chat_member(callback.message.chat.id, callback.from_user.id)
-                if member.status in ("administrator", "creator"):
-                    is_admin = True
-            except Exception:
-                pass
-
-        if not is_admin:
-            await callback.answer("⚠️ Only group administrators can grant admin rights.", show_alert=True)
-            return
+        try:
+            member = await bot.get_chat_member(callback.message.chat.id, callback.from_user.id)
+            if member.status not in ("administrator", "creator"):
+                await callback.answer("⚠️ Only group administrators can promote bots to admin!", show_alert=True)
+                return
+        except Exception:
+            pass
 
         await callback.answer()
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⚡ Open Telegram Admin Promotion", url="https://t.me/iamlusybot?startgroup=true&admin=post_messages+edit_messages+delete_messages")]
+            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iamlusybot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
         ])
         sent_msg = await callback.message.answer(
-            "<b>To Promote Lusy to Group Admin:</b>\n"
-            "<blockquote>1. Open <b>Group Settings ➔ Administrators</b>\n"
-            "2. Tap <b>Add Administrator</b> and select <b>@iamlusybot</b>\n"
-            "3. Enable <b>Delete Messages</b> & <b>Pin Messages</b> permissions!</blockquote>",
+            "<blockquote>🎯 <b>Lusy Administrator Setup</b>\n\n"
+            "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
             parse_mode="HTML",
             reply_markup=markup
         )
         import asyncio
-        asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 30))
+        asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 20))
 
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 1: 🎯 Play Quizzes / /playquiz
