@@ -201,9 +201,21 @@ async def start_quiz(callback: CallbackQuery, services: ServiceContainer):
         # 2. Pick a random question from eligible list
         question_record = random.choice(eligible_questions)
         q_id = question_record["id"]
-        content = question_record.get("content", {})
-        text = content.get("text", "Unknown Question")
-        options = content.get("options", [])
+        content = question_record.get("content") or {}
+        if isinstance(content, str):
+            import json
+            try:
+                content = json.loads(content)
+            except Exception:
+                content = {}
+        if not isinstance(content, dict):
+            content = {}
+
+        text = content.get("text") or question_record.get("question") or "Unknown Question"
+        options = content.get("options") or question_record.get("options") or []
+        if not isinstance(options, list):
+            options = []
+
         correct_text = question_record.get("correct_answer")
         explanation = question_record.get("explanation", "")
         

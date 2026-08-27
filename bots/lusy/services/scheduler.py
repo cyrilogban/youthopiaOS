@@ -95,11 +95,26 @@ async def trigger_auto_quiz_cycle(bot: Bot, services: ServiceContainer) -> None:
 
             question_record = random.choice(questions)
             q_id = question_record["id"]
-            content = question_record.get("content", {})
-            text = content.get("text", "Bible Question")
-            options = content.get("options", [])
+            content = question_record.get("content") or {}
+            if isinstance(content, str):
+                import json
+                try:
+                    content = json.loads(content)
+                except Exception:
+                    content = {}
+            if not isinstance(content, dict):
+                content = {}
+
+            text = content.get("text") or question_record.get("question") or "Bible Question"
+            options = content.get("options") or question_record.get("options") or []
+            if not isinstance(options, list):
+                options = []
+
             correct_text = question_record.get("correct_answer")
             explanation = question_record.get("explanation", "")
+
+            if not options and game_type in ("multiple_choice", "trivia_race"):
+                continue
 
             correct_idx = options.index(correct_text) if correct_text in options else 0
 
