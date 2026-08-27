@@ -28,36 +28,40 @@ async def register_chat(
     if chat_obj.type not in {"group", "supergroup"}:
         return None
 
-    chat = await services.chats.upsert_chat(
-        chat_obj.id,
-        chat_obj.type,
-        title=chat_obj.title,
-        username=chat_obj.username,
-    )
-    if bot_name:
-        await services.chats.mark_bot_active(bot_name, chat["id"])
-        existing_settings = await services.supabase.find_one_multi(
-            "chat_bot_settings", {"bot_name": bot_name, "chat_id": chat["id"]}
+    try:
+        chat = await services.chats.upsert_chat(
+            chat_obj.id,
+            chat_obj.type,
+            title=chat_obj.title,
+            username=chat_obj.username,
         )
-        if not existing_settings:
-            await services.chats.set_bot_settings(
-                bot_name,
-                chat["id"],
-                DEFAULT_BOT_SETTINGS.get(bot_name, {}),
-            )
-        if bot_name == "theo":
+        if bot_name and chat and "id" in chat:
             try:
-                existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
-                if not existing_sub:
-                    await services.chats.set_subscription(
-                        bot_name="theo",
-                        chat_id=chat["id"],
-                        subscription_type="daily_devotional",
-                        enabled=True,
+                await services.chats.mark_bot_active(bot_name, chat["id"])
+                existing_settings = await services.supabase.find_one_multi(
+                    "chat_bot_settings", {"bot_name": bot_name, "chat_id": chat["id"]}
+                )
+                if not existing_settings:
+                    await services.chats.set_bot_settings(
+                        bot_name,
+                        chat["id"],
+                        DEFAULT_BOT_SETTINGS.get(bot_name, {}),
                     )
-            except Exception:
-                pass
-    return chat
+                if bot_name == "theo":
+                    existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
+                    if not existing_sub:
+                        await services.chats.set_subscription(
+                            bot_name="theo",
+                            chat_id=chat["id"],
+                            subscription_type="daily_devotional",
+                            enabled=True,
+                        )
+            except Exception as e:
+                logger.warning(f"Error updating bot settings in register_chat for {bot_name}: {e}")
+        return chat
+    except Exception as e:
+        logger.warning(f"Failed to upsert chat in register_chat for {bot_name}: {e}")
+        return None
 
 
 async def register_group_chat(

@@ -170,11 +170,28 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         old_status = event.old_chat_member.status
         new_status = event.new_chat_member.status
 
-        # 1. Trigger welcome card when Lusy is added to a group
-        if old_status in ("left", "kicked") and new_status in ("member", "administrator"):
+        # 1. Trigger welcome card when Lusy is added or promoted in a group
+        if new_status in ("member", "administrator"):
             try:
                 await register_chat(event.chat, services, "lusy")
+            except Exception as e:
+                logger.warning(f"Failed to register group chat for Lusy on join: {e}")
 
+            # Status transition: Member -> Admin promotion upgrade
+            if old_status == "member" and new_status == "administrator":
+                try:
+                    sent_msg = await bot.send_message(
+                        chat_id=event.chat.id,
+                        text="<blockquote>⚡ <b>ADMIN RIGHTS GRANTED!</b> Lusy is now fully empowered as a Group Administrator. All quiz features unlocked!</blockquote>",
+                        parse_mode="HTML"
+                    )
+                    import asyncio
+                    asyncio.create_task(self_destruct_message(bot, event.chat.id, sent_msg.message_id, 5))
+                except Exception as e:
+                    logger.error(f"Failed to post Lusy admin promotion confirmation: {e}")
+                return
+
+            try:
                 is_member_only = (new_status == "member")
 
                 admin_note = (
@@ -213,21 +230,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             except Exception as e:
                 logger.error(f"Failed to post Lusy group welcome card: {e}")
 
-        # 2. Trigger confirmation card when Lusy is promoted from member to administrator
-        elif old_status == "member" and new_status == "administrator":
-            try:
-                sent_msg = await bot.send_message(
-                    chat_id=event.chat.id,
-                    text="<blockquote>⚡ <b>ADMIN RIGHTS GRANTED!</b> Lusy is now fully empowered as a Group Administrator. All quiz features unlocked!</blockquote>",
-                    parse_mode="HTML"
-                )
-                import asyncio
-                asyncio.create_task(self_destruct_message(bot, event.chat.id, sent_msg.message_id, 5))
-            except Exception as e:
-                logger.error(f"Failed to post Lusy admin promotion confirmation: {e}")
-
-        # 3. Trigger DM farewell notification when Lusy is removed/kicked from a group
-        elif old_status in ("member", "administrator") and new_status in ("left", "kicked"):
+        # 2. Trigger DM farewell notification when Lusy is removed/kicked from a group
+        elif new_status in ("left", "kicked"):
             try:
                 chat = await register_chat(event.chat, services, "lusy")
                 if chat:

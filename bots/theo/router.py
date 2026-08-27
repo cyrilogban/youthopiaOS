@@ -365,7 +365,10 @@ def build_theo_router(description: str) -> Router:
 
         # Case 1: Theo added or promoted in group
         if new_status in ("member", "administrator"):
-            await register_chat(event.chat, services, "theo")
+            try:
+                await register_chat(event.chat, services, "theo")
+            except Exception as e:
+                logger.warning(f"Failed to register group chat for Theo on join: {e}")
             chat_id = event.chat.id
             group_title = event.chat.title or "Group"
 
