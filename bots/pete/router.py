@@ -966,7 +966,7 @@ async def execute_quarantine_decree(bot: Bot, chat_id: int, user_id: int, first_
         
         # 2. Drop the Deep Link gateway in the chat
         welcome_text = (
-            f"🕊️ <b>Welcome to YouThopia Bible Community, {first_name}!</b>\n\n"
+            f"<b>Welcome to YouThopia Bible Community, {first_name}!</b>\n\n"
             f"<blockquote><b>YouThopia</b> is a vibrant Gen Z Christian community where faith meets real life — "
             f"built to help you grow in God's Word, build genuine friendships, and fellowship together.\n\n"
             f"To keep our space safe, uplifting, and protected against spam bots, Pete has placed a brief security checkpoint on your account.\n\n"
