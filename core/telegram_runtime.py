@@ -23,7 +23,7 @@ DEFAULT_BOT_SETTINGS = {
 async def register_chat(
     chat_obj: Chat,
     services: ServiceContainer,
-    bot_name: str,
+    bot_name: str = "",
 ) -> dict | None:
     if chat_obj.type not in {"group", "supergroup"}:
         return None
@@ -34,28 +34,29 @@ async def register_chat(
         title=chat_obj.title,
         username=chat_obj.username,
     )
-    await services.chats.mark_bot_active(bot_name, chat["id"])
-    existing_settings = await services.supabase.find_one_multi(
-        "chat_bot_settings", {"bot_name": bot_name, "chat_id": chat["id"]}
-    )
-    if not existing_settings:
-        await services.chats.set_bot_settings(
-            bot_name,
-            chat["id"],
-            DEFAULT_BOT_SETTINGS.get(bot_name, {}),
+    if bot_name:
+        await services.chats.mark_bot_active(bot_name, chat["id"])
+        existing_settings = await services.supabase.find_one_multi(
+            "chat_bot_settings", {"bot_name": bot_name, "chat_id": chat["id"]}
         )
-    if bot_name == "theo":
-        try:
-            existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
-            if not existing_sub:
-                await services.chats.set_subscription(
-                    bot_name="theo",
-                    chat_id=chat["id"],
-                    subscription_type="daily_devotional",
-                    enabled=True,
-                )
-        except Exception:
-            pass
+        if not existing_settings:
+            await services.chats.set_bot_settings(
+                bot_name,
+                chat["id"],
+                DEFAULT_BOT_SETTINGS.get(bot_name, {}),
+            )
+        if bot_name == "theo":
+            try:
+                existing_sub = await services.chats.get_subscription("theo", chat["id"], "daily_devotional")
+                if not existing_sub:
+                    await services.chats.set_subscription(
+                        bot_name="theo",
+                        chat_id=chat["id"],
+                        subscription_type="daily_devotional",
+                        enabled=True,
+                    )
+            except Exception:
+                pass
     return chat
 
 

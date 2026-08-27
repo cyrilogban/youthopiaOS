@@ -112,7 +112,7 @@ def build_eddy_router(description: str) -> Router:
 
         # Case 1: Eddy added or promoted in group
         if new_status in ("member", "administrator"):
-            await register_chat(event.chat, services)
+            await register_chat(event.chat, services, "eddy")
             chat_id = event.chat.id
             group_title = event.chat.title or "Group"
 

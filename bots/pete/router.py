@@ -524,7 +524,7 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
 
     # Case 1: Pete added or promoted in group
     if new_status in ("member", "administrator"):
-        await register_chat(event.chat, services)
+        await register_chat(event.chat, services, "pete")
         chat_id = event.chat.id
         group_title = event.chat.title or "Group"
 

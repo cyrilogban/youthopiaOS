@@ -95,7 +95,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         # Case 1: Susy added or promoted in group
         if new_status in ("member", "administrator"):
-            await register_chat(event.chat, services)
+            await register_chat(event.chat, services, "susy")
             chat_id = event.chat.id
             group_title = event.chat.title or "Group"
 

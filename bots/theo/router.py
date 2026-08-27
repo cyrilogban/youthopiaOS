@@ -385,7 +385,7 @@ def build_theo_router(description: str) -> Router:
 
         # Case 1: Theo added or promoted in group
         if new_status in ("member", "administrator"):
-            await register_chat(event.chat, services)
+            await register_chat(event.chat, services, "theo")
             chat_id = event.chat.id
             group_title = event.chat.title or "Group"
 
