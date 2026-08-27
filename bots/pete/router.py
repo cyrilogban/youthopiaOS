@@ -951,23 +951,47 @@ async def execute_quarantine_decree(bot: Bot, chat_id: int, user_id: int, first_
         
         # 2. Drop the Deep Link gateway in the chat
         welcome_text = (
-            f"Welcome to YouThopia, **{first_name}**! 🕊️\n\n"
-            f"To protect our community from spam bots, you have been temporarily muted.\n"
-            f"Please click here to verify your account in my DMs: [Verify Here](https://t.me/{bot_me.username}?start=verify_{chat_id})"
+            f"🕊️ <b>Welcome to YouThopia Bible Community, {first_name}!</b>\n\n"
+            f"<blockquote><b>YouThopia</b> is a vibrant Gen Z Christian community where faith meets real life — "
+            f"built to help you grow in God's Word, build genuine friendships, and fellowship together.\n\n"
+            f"To keep our space safe, uplifting, and protected against spam bots, Pete has placed a brief security checkpoint on your account.\n\n"
+            f"Tap below to complete a quick 1-tap verification and unlock your chat permissions! 💜</blockquote>"
         )
         
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="🛡️ Tap Here to Complete Verification",
+                    url=f"https://t.me/{bot_me.username}?start=verify_{chat_id}"
+                )
+            ]
+        ])
+
         sent_msg = await bot.send_message(
             chat_id=chat_id,
             text=welcome_text,
-            parse_mode="Markdown",
-            disable_web_page_preview=True
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=markup
         )
         
-        # 3. Store the message ID so we can cleanly delete it later
+        # 3. Store the message ID so we can cleanly delete it later upon verification
         PENDING_CAPTCHAS[user_id] = {
             "chat_id": chat_id,
             "msg_id": sent_msg.message_id
         }
+
+        # 4. Fallback auto-cleanup: If user/bot never verifies, remove notice after 3 minutes
+        async def fallback_cleanup(c_id: int, u_id: int, m_id: int, delay: int = 180) -> None:
+            await asyncio.sleep(delay)
+            p = PENDING_CAPTCHAS.get(u_id)
+            if p and p.get("msg_id") == m_id:
+                try:
+                    await bot.delete_message(chat_id=c_id, message_id=m_id)
+                except Exception:
+                    pass
+
+        asyncio.create_task(fallback_cleanup(chat_id, user_id, sent_msg.message_id, 180))
     except Exception as e:
         logger.error(f"Failed to execute Welcome Decree on {user_id}: {e}")
 
