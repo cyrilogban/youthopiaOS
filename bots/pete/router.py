@@ -720,12 +720,27 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
             pass
         return
         
-    # Check if this is a Deep Link Captcha verification
+    # 1. Check if this is a Deep Link Captcha verification
     if message.text and message.text.startswith("/start verify_"):
         chat_id_str = message.text.split("_")[1]
         markup = build_pete_captcha_inline_keyboard(chat_id_str)
         await message.answer(
-            "Please click the button below to verify your account and unlock your chat permissions.",
+            "🛡️ <b>YouThopia Human Verification</b>\n\n"
+            "<blockquote>Please tap the button below to verify your account and unlock your chat permissions.</blockquote>",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+        return
+
+    # 2. Check if user has an active pending verification from joining recently
+    if message.from_user and message.from_user.id in PENDING_CAPTCHAS:
+        chat_id = PENDING_CAPTCHAS[message.from_user.id]["chat_id"]
+        markup = build_pete_captcha_inline_keyboard(str(chat_id))
+        await message.answer(
+            "🛡️ <b>Pending Verification Detected!</b>\n\n"
+            "<blockquote>You have a pending security check for <b>YouThopia Bible Community</b>.\n\n"
+            "Tap below to complete verification and unlock full chat rights! 💜</blockquote>",
+            parse_mode="HTML",
             reply_markup=markup
         )
         return
