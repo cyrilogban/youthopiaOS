@@ -79,6 +79,8 @@ def build_eddy_router(description: str) -> Router:
         ]
 
         group_commands = [
+            BotCommand(command="start", description="Meet Ed"),
+            BotCommand(command="help", description="Show Ed's instructions"),
             BotCommand(command="calendar", description="View all upcoming events"),
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
         ]

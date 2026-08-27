@@ -1203,11 +1203,16 @@ async def on_startup(bot: Bot) -> None:
         except Exception:
             pass
 
+    group_commands = [
+        BotCommand(command="start", description="Meet Pete"),
+        BotCommand(command="help", description="Pete Safety Guide")
+    ]
+
     # Set public commands for Private DMs only
     await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
     
-    # Normal group members see NO commands, avoiding clutter
-    await bot.set_my_commands([], scope=BotCommandScopeAllGroupChats())
+    # Normal group members see /start and /help
+    await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
     
-    # Group Administrators ONLY see the moderation commands in groups
-    await bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
+    # Group Administrators see /start, /help, and moderation tools in groups
+    await bot.set_my_commands(group_commands + admin_commands, scope=BotCommandScopeAllChatAdministrators())

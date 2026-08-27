@@ -61,6 +61,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         group_commands = [
+            BotCommand(command="start", description="Open Quiz Dashboard"),
+            BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="autoquiz", description="Check Auto Quiz status"),
             BotCommand(command="autoquiz_on", description="Enable 10-15 daily casual quizzes"),
