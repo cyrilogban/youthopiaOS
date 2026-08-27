@@ -30,16 +30,12 @@ def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_eddy_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Eddy DM /start Card Inline Keyboard:
-    [ 📅 View Calendar ]  [ 🎂 Add Birthday ]
-    [ 🌐 Community ]
+    [ 📅 View Calendar ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="📅 View Calendar", callback_data="eddy_view_calendar"),
-                InlineKeyboardButton(text="🎂 Add Birthday", callback_data="eddy_add_bday_init"),
-            ],
-            [
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
             ]
         ]
