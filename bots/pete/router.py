@@ -938,39 +938,64 @@ FLOOD_WINDOW = 4  # Within 4 seconds
 # PHASE 3: PERIMETER DEFENSE (WELCOME DECREE)
 # -----------------------------------------------------------------------------
 
+async def execute_quarantine_decree(bot: Bot, chat_id: int, user_id: int, first_name: str) -> None:
+    """Reusable quarantine and challenge engine for Pete."""
+    bot_me = await bot.get_me()
+    try:
+        # 1. Instantly revoke typing permissions
+        await bot.restrict_chat_member(
+            chat_id=chat_id,
+            user_id=user_id, 
+            permissions=ChatPermissions(can_send_messages=False)
+        )
+        
+        # 2. Drop the Deep Link gateway in the chat
+        welcome_text = (
+            f"Welcome to YouThopia, **{first_name}**! 🕊️\n\n"
+            f"To protect our community from spam bots, you have been temporarily muted.\n"
+            f"Please click here to verify your account in my DMs: [Verify Here](https://t.me/{bot_me.username}?start=verify_{chat_id})"
+        )
+        
+        sent_msg = await bot.send_message(
+            chat_id=chat_id,
+            text=welcome_text,
+            parse_mode="Markdown",
+            disable_web_page_preview=True
+        )
+        
+        # 3. Store the message ID so we can cleanly delete it later
+        PENDING_CAPTCHAS[user_id] = {
+            "chat_id": chat_id,
+            "msg_id": sent_msg.message_id
+        }
+    except Exception as e:
+        logger.error(f"Failed to execute Welcome Decree on {user_id}: {e}")
+
+
 @router.message(F.new_chat_members)
-async def welcome_decree_handler(message: Message) -> None:
-    """Intercepts new members, mutes them, and drops the Deep Link challenge."""
-    bot_me = await message.bot.get_me()
-    
+async def welcome_decree_handler(message: Message, bot: Bot) -> None:
+    """Intercepts new members joining via public link, mutes them, and drops the Deep Link challenge."""
     for new_member in message.new_chat_members:
         if new_member.is_bot:
             continue
-            
-        try:
-            # 1. Instantly revoke typing permissions
-            await message.chat.restrict(
-                user_id=new_member.id, 
-                permissions=ChatPermissions(can_send_messages=False)
-            )
-            
-            # 2. Drop the Deep Link gateway in the chat
-            welcome_text = (
-                f"Welcome to YouThopia, **{new_member.first_name}**! 🕊️\n\n"
-                f"To protect our community from spam bots, you have been temporarily muted.\n"
-                f"Please click here to verify your account in my DMs: [Verify Here](https://t.me/{bot_me.username}?start=verify_{message.chat.id})"
-            )
-            
-            sent_msg = await message.answer(welcome_text, parse_mode="Markdown", disable_web_page_preview=True)
-            
-            # 3. Store the message ID so we can cleanly delete it later
-            PENDING_CAPTCHAS[new_member.id] = {
-                "chat_id": message.chat.id,
-                "msg_id": sent_msg.message_id
-            }
-            
-        except Exception as e:
-            logger.error(f"Failed to execute Welcome Decree on {new_member.id}: {e}")
+        await execute_quarantine_decree(bot, message.chat.id, new_member.id, new_member.first_name)
+
+
+@router.chat_member()
+async def member_status_update_handler(event: ChatMemberUpdated, bot: Bot) -> None:
+    """Intercepts new members joining via Admin Join Request Approval."""
+    old_status = event.old_chat_member.status
+    new_status = event.new_chat_member.status
+    user = event.new_chat_member.user
+
+    # If this is the bot itself being added, my_chat_member handles it
+    if user.is_bot:
+        return
+
+    # Triggered when user enters group: from left/kicked/restricted -> member
+    if old_status in ("left", "kicked", "restricted") and new_status == "member":
+        if user.id not in PENDING_CAPTCHAS:
+            await execute_quarantine_decree(bot, event.chat.id, user.id, user.first_name)
 
 @router.callback_query(F.data.startswith("captcha|"))
 async def captcha_callback_handler(callback_query: CallbackQuery) -> None:
