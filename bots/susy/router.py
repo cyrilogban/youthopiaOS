@@ -413,7 +413,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     async def send_onboarding_page(message: Message, page: int, edit: bool = False) -> None:
         await send_community_exploration_page(message, page, edit=edit)
-
     @router.callback_query(F.data.startswith("onboarding_"))
     async def handle_onboarding_callbacks(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         await handle_global_onboarding_callback(callback_query, services)
@@ -424,7 +423,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     @router.message(F.text == "👤 My Profile")
     @router.message(Command("profile"))
     @router.callback_query(F.data == "susy_profile")
-    async def handle_susy_profile(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+    async def handle_susy_profile(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
         is_callback = isinstance(event, CallbackQuery)
         message = event.message if is_callback else event
         user_from = event.from_user
@@ -437,8 +436,38 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await message.delete()
             except Exception:
                 pass
+
+            user_first = user_from.first_name if user_from else "Friend"
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🌸 View Profile in DM", url="https://t.me/iamsusiebot?start=profile"),
+                    InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    f"<blockquote>👤 <b>{user_first}</b>, your community hostess profile has been sent to your private DM!</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+            except Exception:
+                pass
+
+            if user_from:
+                try:
+                    await send_susy_profile(message, services, telegram_user=user_from, send_to_dm=True, bot=bot)
+                except Exception as e:
+                    logger.warning(f"Failed to send Susy profile to DM: {e}")
             return
 
+        await send_susy_profile(message, services, telegram_user=user_from)
+
+    async def send_susy_profile(
+        message: Message, services: ServiceContainer, telegram_user: Any | None = None, send_to_dm: bool = False, bot: Bot | None = None
+    ) -> None:
+        user_from = telegram_user or message.from_user
         user = await services.identity.resolve_telegram_user(user_from)
         engagement = user.get("engagement_level", "new")
         trust = user.get("trust_score", 100)
@@ -486,7 +515,15 @@ def build_susy_router(description: str, music_service=None) -> Router:
             bot_specific_stats=bot_stats
         )
 
-        await message.answer(card_text, parse_mode="HTML", reply_markup=build_susy_reply_keyboard())
+        if send_to_dm and bot and user_from:
+            await bot.send_message(
+                chat_id=user_from.id,
+                text=card_text,
+                parse_mode="HTML",
+                reply_markup=build_susy_reply_keyboard()
+            )
+        else:
+            await message.answer(card_text, parse_mode="HTML", reply_markup=build_susy_reply_keyboard())
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
@@ -495,7 +532,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     @router.message(F.text == "ℹ️ Help")
     @router.message(F.text == "Help")
     @router.callback_query(F.data == "susy_help")
-    async def handle_susy_help(event: Message | CallbackQuery, services: ServiceContainer) -> None:
+    async def handle_susy_help(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
         is_callback = isinstance(event, CallbackQuery)
         message = event.message if is_callback else event
 
@@ -505,6 +542,23 @@ def build_susy_router(description: str, music_service=None) -> Router:
         if message.chat.type != "private":
             try:
                 await message.delete()
+            except Exception:
+                pass
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🌸 Open Susy Guide in DM", url="https://t.me/iamsusiebot?start=help"),
+                    InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start"),
+                ]
+            ])
+            try:
+                sent_msg = await message.answer(
+                    "<blockquote>🌸 <b>Susy Community Hostess Guide</b>\n"
+                    "Tap below to view full onboarding features and community guidelines in DM.</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
             return
@@ -518,7 +572,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "• 🤝 <b>Hospitality & Guidance:</b> Here to answer questions and show you around.\n"
             "• <b>/start:</b> Open Susy welcome dashboard.\n"
             "• <b>/profile:</b> View your YouTopian profile card.\n"
-            "• <b>/help:</b> Open Susy hostess guide.</blockquote>\n\n"
+            "• <b>/help:</b> Show this guidance message.</blockquote>\n\n"
             f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
             "Sharing God's Love All The Way 💜"
         )
