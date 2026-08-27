@@ -9,6 +9,7 @@ from aiogram.types import (
     BotCommand,
     BotCommandScopeAllGroupChats,
     BotCommandScopeAllPrivateChats,
+    BotCommandScopeAllChatAdministrators,
     CallbackQuery,
     ChatMemberUpdated,
     InlineKeyboardButton,
@@ -65,10 +66,12 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="autoquiz", description="Check Auto Quiz status"),
-            BotCommand(command="autoquiz_on", description="Enable 10-15 daily casual quizzes"),
-            BotCommand(command="autoquiz_off", description="Disable daily casual quizzes"),
             BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
+        ]
+        group_admin_commands = group_commands + [
+            BotCommand(command="autoquiz_on", description="Enable daily casual quizzes (Admin)"),
+            BotCommand(command="autoquiz_off", description="Disable daily casual quizzes (Admin)"),
         ]
         import os
         from aiogram.types import BotCommandScopeChat
@@ -82,6 +85,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(group_admin_commands, scope=BotCommandScopeAllChatAdministrators())
 
     # -------------------------------------------------------------------------
     # COMMAND: /start
