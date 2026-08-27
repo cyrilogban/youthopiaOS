@@ -490,15 +490,30 @@ def build_eddy_router(description: str) -> Router:
             return
         await send_community_exploration_page(message, 1)
 
+    @router.callback_query(F.data == "eddy_community_links")
+    async def handle_eddy_community_links(callback: CallbackQuery) -> None:
+        await callback.answer()
+        await send_community_exploration_page(callback.message, 1)
+
     @router.callback_query(F.data.startswith("onboarding_"))
     async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         await handle_global_onboarding_callback(callback_query, services)
 
 
+    @router.callback_query(F.data == "eddy_menu_directory")
+    async def handle_eddy_menu_directory(callback: CallbackQuery) -> None:
+        await callback.answer()
+        await send_community_exploration_page(callback.message, 3)
+
     @router.message(Command("calendar"))
     @router.message(F.text == "📅 View Calendar")
-    async def on_view_calendar(message: Message, services: ServiceContainer):
-        if message.chat.type != "private" and message.text == "📅 View Calendar":
+    @router.callback_query(F.data == "eddy_view_calendar")
+    async def on_view_calendar(event: Message | CallbackQuery, services: ServiceContainer):
+        is_callback = isinstance(event, CallbackQuery)
+        message = event.message if is_callback else event
+        if is_callback:
+            await event.answer()
+        if message.chat.type != "private" and not is_callback and message.text == "📅 View Calendar":
             return
         # Fetch upcoming events from the daily schedule dictionary for now
         from bots.eddy.services.scheduler import DAILY_SCHEDULE
@@ -517,7 +532,8 @@ def build_eddy_router(description: str) -> Router:
             await asyncio.sleep(30)
             try:
                 await sent_msg.delete()
-                await message.delete()
+                if not is_callback:
+                    await event.delete()
             except Exception:
                 pass
 
