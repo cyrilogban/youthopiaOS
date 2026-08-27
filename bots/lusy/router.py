@@ -24,6 +24,7 @@ from shared.utils.ui import (
     render_shared_profile_card,
     send_community_exploration_page,
     handle_global_onboarding_callback,
+    handle_group_profile_acknowledgment,
 )
 from bots.lusy.handlers.quizzes import quiz_router, self_destruct_message
 from bots.lusy.utils.keyboards import (
@@ -322,6 +323,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
+            await handle_group_profile_acknowledgment(message, bot)
             # Send profile directly to user's private DM
             try:
                 user_first = message.from_user.first_name if message.from_user else "Friend"

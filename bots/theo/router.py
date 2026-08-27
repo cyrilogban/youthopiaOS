@@ -25,6 +25,7 @@ from shared.utils.ui import (
     render_shared_profile_card,
     send_community_exploration_page,
     handle_global_onboarding_callback,
+    handle_group_profile_acknowledgment,
 )
 from bots.theo.handlers.messages import handle_bible_detection
 from bots.theo.services.devotional_service import VOTDService
@@ -243,6 +244,7 @@ def build_theo_router(description: str) -> Router:
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
+            await handle_group_profile_acknowledgment(message, bot)
             if message.from_user:
                 try:
                     await send_theo_profile(message, services, telegram_user=message.from_user, send_to_dm=True, bot=bot)

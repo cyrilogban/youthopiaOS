@@ -30,6 +30,7 @@ from shared.utils.ui import (
     render_shared_profile_card,
     send_community_exploration_page,
     handle_global_onboarding_callback,
+    handle_group_profile_acknowledgment,
 )
 from bots.susy.utils.keyboards import (
     build_susy_reply_keyboard,
@@ -432,35 +433,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             await event.answer()
 
         if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
-
-            user_first = user_from.first_name if user_from else "Friend"
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="📖 Theo", url="https://t.me/iamtheobot?start=profile"),
-                    InlineKeyboardButton(text="🎯 Lusy", url="https://t.me/iamlusybot?start=profile"),
-                    InlineKeyboardButton(text="🛡️ Pete", url="https://t.me/iampetebot?start=profile"),
-                ],
-                [
-                    InlineKeyboardButton(text="📅 Eddy", url="https://t.me/iamedyybot?start=profile"),
-                    InlineKeyboardButton(text="🌸 Susy", url="https://t.me/iamsusiebot?start=profile"),
-                ],
-            ])
-            try:
-                sent_msg = await message.answer(
-                    f"<blockquote>🌸 👤 <b>{user_first}</b>, your community profiles from our 5 ecosystem bots have been sent to your private DMs!\n\n"
-                    f"<i>Tap below if you haven't unlocked a specific bot yet:</i></blockquote>",
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
-                import asyncio
-                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
-            except Exception:
-                pass
-
+            await handle_group_profile_acknowledgment(message, bot)
             if user_from:
                 try:
                     await send_susy_profile(message, services, telegram_user=user_from, send_to_dm=True, bot=bot)

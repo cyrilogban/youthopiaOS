@@ -22,6 +22,74 @@ TELEGRAM_GROUP_LINK = "https://t.me/youthopiabiblecommunity"
 WHATSAPP_LINK = "https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"
 
 
+class GroupNoticeCoordinator:
+    """In-memory first-responder lock to prevent duplicate group feedback across bots."""
+    _claims: dict[str, float] = {}
+
+    @classmethod
+    def claim(cls, key: str, ttl_seconds: float = 15.0) -> bool:
+        import time
+        now = time.time()
+        # Clean expired keys
+        cls._claims = {k: exp for k, exp in cls._claims.items() if exp > now}
+        if key in cls._claims:
+            return False
+        cls._claims[key] = now + ttl_seconds
+        return True
+
+
+def get_5bot_quick_access_keyboard() -> InlineKeyboardMarkup:
+    """Standardized 5-bot quick access inline keyboard."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📖 Theo", url="https://t.me/iamtheobot?start=profile"),
+                InlineKeyboardButton(text="🎯 Lusy", url="https://t.me/iamlusybot?start=profile"),
+                InlineKeyboardButton(text="🛡️ Pete", url="https://t.me/iampetebot?start=profile"),
+            ],
+            [
+                InlineKeyboardButton(text="📅 Eddy", url="https://t.me/iamedyybot?start=profile"),
+                InlineKeyboardButton(text="🌸 Susy", url="https://t.me/iamsusiebot?start=profile"),
+            ],
+        ]
+    )
+
+
+async def handle_group_profile_acknowledgment(message: Message, bot: Any) -> None:
+    """
+    Ensures exactly ONE bot in any group posts a 10-second self-destruct acknowledgment notice
+    when /profile is typed, regardless of which combination of bots are present in the chat.
+    """
+    key = f"profile:{message.chat.id}:{message.message_id}"
+    if not GroupNoticeCoordinator.claim(key, ttl_seconds=15.0):
+        return
+
+    import asyncio
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+    user_first = message.from_user.first_name if message.from_user else "Friend"
+    markup = get_5bot_quick_access_keyboard()
+    try:
+        sent_msg = await message.answer(
+            f"<blockquote>🌸 👤 <b>{user_first}</b>, your community profiles from our 5 ecosystem bots have been sent to your private DMs!\n\n"
+            f"<i>Tap below if you haven't unlocked a specific bot yet:</i></blockquote>",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+        async def _cleanup():
+            await asyncio.sleep(10)
+            try:
+                await bot.delete_message(chat_id=message.chat.id, message_id=sent_msg.message_id)
+            except Exception:
+                pass
+        asyncio.create_task(_cleanup())
+    except Exception as e:
+        logger.warning(f"Failed to send group profile notice: {e}")
+
+
 def get_community_links_keyboard() -> InlineKeyboardMarkup:
     """Returns the standardized community links inline keyboard."""
     return InlineKeyboardMarkup(

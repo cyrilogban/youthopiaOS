@@ -31,6 +31,7 @@ from shared.utils.ui import (
     render_shared_profile_card,
     send_community_exploration_page,
     handle_global_onboarding_callback,
+    handle_group_profile_acknowledgment,
 )
 from bots.eddy.utils.keyboards import (
     build_eddy_reply_keyboard,
@@ -373,6 +374,7 @@ def build_eddy_router(description: str) -> Router:
             await event.answer()
 
         if message.chat.type != "private":
+            await handle_group_profile_acknowledgment(message, bot)
             if user_from:
                 try:
                     await send_eddy_profile(message, user_from, services, send_to_dm=True, bot=bot)

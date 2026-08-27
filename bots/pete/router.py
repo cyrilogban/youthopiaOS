@@ -24,6 +24,7 @@ from shared.utils.ui import (
     render_shared_profile_card,
     send_community_exploration_page,
     handle_global_onboarding_callback,
+    handle_group_profile_acknowledgment,
 )
 from bots.pete.utils.keyboards import (
     build_pete_reply_keyboard,
@@ -773,6 +774,7 @@ async def handle_pete_profile(event: Message | CallbackQuery, bot: Bot, services
         await event.answer()
 
     if message.chat.type != "private":
+        await handle_group_profile_acknowledgment(message, bot)
         if user_from:
             try:
                 await send_pete_profile(message, services, telegram_user=user_from, send_to_dm=True, bot=bot)
