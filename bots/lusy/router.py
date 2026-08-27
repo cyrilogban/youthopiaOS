@@ -93,10 +93,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamlusybot?start=dashboard"),
-                    InlineKeyboardButton(text="🎯 Play Group Quiz", callback_data="lusy_menu_play"),
-                ]
+                [InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamlusybot?start=dashboard")],
+                [InlineKeyboardButton(text="🎯 Play Group Quiz", callback_data="lusy_menu_play")],
             ])
             try:
                 sent_msg = await message.answer(

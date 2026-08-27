@@ -161,10 +161,8 @@ def build_theo_router(description: str) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamtheobot?start=dashboard"),
-                    InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
-                ]
+                [InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamtheobot?start=dashboard")],
+                [InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture")],
             ])
             try:
                 sent_msg = await message.answer(
@@ -312,10 +310,8 @@ def build_theo_router(description: str) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="📖 Open Theo Guide in DM", url="https://t.me/iamtheobot?start=help"),
-                    InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
-                ]
+                [InlineKeyboardButton(text="📖 Open Theo Guide in DM", url="https://t.me/iamtheobot?start=help")],
+                [InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture")],
             ])
             try:
                 sent_msg = await message.answer(

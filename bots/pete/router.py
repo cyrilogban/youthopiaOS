@@ -705,10 +705,8 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
             pass
 
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🛡️ Open Security Dashboard", url="https://t.me/iampetebot?start=dashboard"),
-                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
-            ]
+            [InlineKeyboardButton(text="🛡️ Open Security Dashboard", url="https://t.me/iampetebot?start=dashboard")],
+            [InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init")],
         ])
         try:
             sent_msg = await message.answer(
@@ -844,10 +842,8 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
         except Exception:
             pass
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/iampetebot?start=help"),
-                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
-            ]
+            [InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/iampetebot?start=help")],
+            [InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init")],
         ])
         try:
             sent_msg = await message.answer(

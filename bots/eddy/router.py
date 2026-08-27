@@ -299,10 +299,8 @@ def build_eddy_router(description: str) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="📅 View Calendar in DM", url="https://t.me/iamedyybot?start=calendar"),
-                    InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/iamedyybot?start=events"),
-                ]
+                [InlineKeyboardButton(text="📅 View Calendar in DM", url="https://t.me/iamedyybot?start=calendar")],
+                [InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/iamedyybot?start=events")],
             ])
             try:
                 sent_msg = await message.answer(
