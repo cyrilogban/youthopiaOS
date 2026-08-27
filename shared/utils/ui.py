@@ -49,7 +49,7 @@ def get_5bot_quick_access_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(text="📅 Eddy", url="https://t.me/iamedyybot?start=profile"),
-                InlineKeyboardButton(text="🌸 Susy", url="https://t.me/iamsusiebot?start=profile"),
+                InlineKeyboardButton(text="💬 Susy", url="https://t.me/iamsusiebot?start=profile"),
             ],
         ]
     )
@@ -74,7 +74,7 @@ async def handle_group_profile_acknowledgment(message: Message, bot: Any) -> Non
     markup = get_5bot_quick_access_keyboard()
     try:
         sent_msg = await message.answer(
-            f"<blockquote>🌸 👤 <b>{user_first}</b>, your community profiles from our 5 ecosystem bots have been sent to your private DMs!\n\n"
+            f"<blockquote>👤 <b>{user_first}</b>, your community profiles from our 5 ecosystem bots have been sent to your private DMs!\n\n"
             f"<i>Tap below if you haven't unlocked a specific bot yet:</i></blockquote>",
             parse_mode="HTML",
             reply_markup=markup

@@ -122,7 +122,7 @@ def create_admin_router(bot_name: str = "global") -> Router:
             f"• 🎮 Lusy: <b>{breakdown.get('lusy', {}).get('active_chats', 0)}</b> groups\n"
             f"• 🛡️ Pete: <b>{breakdown.get('pete', {}).get('active_chats', 0)}</b> groups\n"
             f"• 📅 Eddy: <b>{breakdown.get('eddy', {}).get('active_chats', 0)}</b> groups\n"
-            f"• 🌸 Susy: <b>{breakdown.get('susy', {}).get('active_chats', 0)}</b> groups\n\n"
+            f"• 💬 Susy: <b>{breakdown.get('susy', {}).get('active_chats', 0)}</b> groups\n\n"
             "<i>Use <code>/botstats</code> or <code>/groups</code> for deeper details.</i>"
         )
         await message.answer(text, parse_mode="HTML")
@@ -138,7 +138,7 @@ def create_admin_router(bot_name: str = "global") -> Router:
             "lusy": "🎮 Lusy (Games & Fellowship)",
             "pete": "🛡️ Pete (Moderation)",
             "eddy": "📅 Eddy (Events & Calendar)",
-            "susy": "🌸 Susy (Music & Hostess)",
+            "susy": "💬 Susy (Hostess & Onboarding)",
         }
 
         for bot_key, display in bot_display_names.items():
