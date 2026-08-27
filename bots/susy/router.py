@@ -282,10 +282,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot?start=welcome"),
-                    InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/iamsusiebot?start=tour"),
-                ]
+                [InlineKeyboardButton(text="🌸 Meet Susy in DM", url="https://t.me/iamsusiebot?start=welcome")],
+                [InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/iamsusiebot?start=tour")],
             ])
             try:
                 sent_msg = await message.answer(
@@ -537,10 +535,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="🌸 Open Susy Guide in DM", url="https://t.me/iamsusiebot?start=help"),
-                    InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start"),
-                ]
+                [InlineKeyboardButton(text="🌸 Open Susy Guide in DM", url="https://t.me/iamsusiebot?start=help")],
+                [InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start")],
             ])
             try:
                 sent_msg = await message.answer(
