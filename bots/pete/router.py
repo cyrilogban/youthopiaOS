@@ -773,28 +773,6 @@ async def handle_pete_profile(event: Message | CallbackQuery, bot: Bot, services
         await event.answer()
 
     if message.chat.type != "private":
-        try:
-            await message.delete()
-        except Exception:
-            pass
-
-        user_first = user_from.first_name if user_from else "Friend"
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🛡️ View Profile in DM", url="https://t.me/iampetebot?start=profile"),
-                InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init"),
-            ]
-        ])
-        try:
-            sent_msg = await message.answer(
-                f"<blockquote>👤 <b>{user_first}</b>, your security profile has been sent to your private DM!</blockquote>",
-                parse_mode="HTML",
-                reply_markup=markup
-            )
-            asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
-        except Exception:
-            pass
-
         if user_from:
             try:
                 await send_pete_profile(message, services, telegram_user=user_from, send_to_dm=True, bot=bot)

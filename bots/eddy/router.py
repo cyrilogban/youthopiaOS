@@ -373,28 +373,6 @@ def build_eddy_router(description: str) -> Router:
             await event.answer()
 
         if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
-
-            user_first = user_from.first_name if user_from else "Friend"
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="📅 View Profile in DM", url="https://t.me/iamedyybot?start=profile"),
-                    InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/iamedyybot?start=events"),
-                ]
-            ])
-            try:
-                sent_msg = await message.answer(
-                    f"<blockquote>👤 <b>{user_first}</b>, your event profile has been sent to your private DM!</blockquote>",
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
-                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
-            except Exception:
-                pass
-
             if user_from:
                 try:
                     await send_eddy_profile(message, user_from, services, send_to_dm=True, bot=bot)

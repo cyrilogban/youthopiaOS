@@ -322,28 +322,9 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
-
-            user_first = message.from_user.first_name if message.from_user else "Friend"
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="👤 View Player Profile in DM", url="https://t.me/iamlusybot?start=profile")]
-            ])
-            try:
-                sent_msg = await message.answer(
-                    f"<blockquote>👤 <b>{user_first}</b>, your player stats have been sent to your private DM!</blockquote>",
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
-                import asyncio
-                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
-            except Exception:
-                pass
-
             # Send profile directly to user's private DM
             try:
+                user_first = message.from_user.first_name if message.from_user else "Friend"
                 user = await services.identity.resolve_telegram_user(message.from_user)
                 level_info = await services.xp.get_level(user["id"])
                 total_xp = level_info["total_xp"]
@@ -363,8 +344,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                     bot_specific_stats=bot_stats
                 )
                 await bot.send_message(message.from_user.id, card_text, parse_mode="HTML", reply_markup=build_lusy_reply_keyboard())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to send Lusy profile to DM: {e}")
             return
 
         await send_lusy_profile(message, services)

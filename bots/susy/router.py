@@ -440,18 +440,24 @@ def build_susy_router(description: str, music_service=None) -> Router:
             user_first = user_from.first_name if user_from else "Friend"
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="🌸 View Profile in DM", url="https://t.me/iamsusiebot?start=profile"),
-                    InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start"),
-                ]
+                    InlineKeyboardButton(text="📖 Theo", url="https://t.me/iamtheobot?start=profile"),
+                    InlineKeyboardButton(text="🎯 Lusy", url="https://t.me/iamlusybot?start=profile"),
+                    InlineKeyboardButton(text="🛡️ Pete", url="https://t.me/iampetebot?start=profile"),
+                ],
+                [
+                    InlineKeyboardButton(text="📅 Eddy", url="https://t.me/iamedyybot?start=profile"),
+                    InlineKeyboardButton(text="🌸 Susy", url="https://t.me/iamsusiebot?start=profile"),
+                ],
             ])
             try:
                 sent_msg = await message.answer(
-                    f"<blockquote>👤 <b>{user_first}</b>, your community hostess profile has been sent to your private DM!</blockquote>",
+                    f"<blockquote>🌸 👤 <b>{user_first}</b>, your community profiles from our 5 ecosystem bots have been sent to your private DMs!\n\n"
+                    f"<i>Tap below if you haven't unlocked a specific bot yet:</i></blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
                 )
                 import asyncio
-                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
+                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
 

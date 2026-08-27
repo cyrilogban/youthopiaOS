@@ -243,28 +243,6 @@ def build_theo_router(description: str) -> Router:
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
-            try:
-                await message.delete()
-            except Exception:
-                pass
-
-            user_first = message.from_user.first_name if message.from_user else "Friend"
-            markup = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="👤 View Profile in DM", url="https://t.me/iamtheobot?start=profile"),
-                    InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture"),
-                ]
-            ])
-            try:
-                sent_msg = await message.answer(
-                    f"<blockquote>👤 <b>{user_first}</b>, your scripture profile has been sent to your private DM!</blockquote>",
-                    parse_mode="HTML",
-                    reply_markup=markup
-                )
-                asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 5))
-            except Exception:
-                pass
-
             if message.from_user:
                 try:
                     await send_theo_profile(message, services, telegram_user=message.from_user, send_to_dm=True, bot=bot)
