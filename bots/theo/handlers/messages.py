@@ -25,8 +25,11 @@ async def handle_bible_detection(message: Message, services: ServiceContainer) -
     Also handles group-chat registration (the same job the fallback
     handler does for non-text messages).
     """
-    # Register the group chat for tracking.  Returns None for DMs.
-    chat = await register_group_chat(message, services, "theo")
+    chat = None
+    try:
+        chat = await register_group_chat(message, services, "theo")
+    except Exception as e:
+        logging.warning("Error registering group chat in handle_bible_detection: %s", e)
 
     if not message.text:
         return
@@ -44,12 +47,19 @@ async def handle_bible_detection(message: Message, services: ServiceContainer) -
     translation = "kjv"
 
     if chat:
-        settings = await services.chats.get_bot_settings("theo", chat["id"])
-        translation = settings.get("translation", "kjv")
+        try:
+            settings = await services.chats.get_bot_settings("theo", chat["id"])
+            translation = settings.get("translation", "kjv")
+        except Exception as e:
+            logger.warning("Error fetching group bot settings for theo: %s", e)
+            translation = "kjv"
     else:
-        user = await services.identity.resolve_telegram_user(message.from_user)
-        user_state = await services.users.get_user_state(user["id"], "theo")
-        translation = user_state.get("translation", "kjv")
+        try:
+            user = await services.identity.resolve_telegram_user(message.from_user)
+            user_state = await services.users.get_user_state(user["id"], "theo")
+            translation = user_state.get("translation", "kjv")
+        except Exception:
+            translation = "kjv"
 
     # ------------------------------------------------------------------
     # Fetch verse texts from bible-api.com
