@@ -151,6 +151,8 @@ async def run_polling_bot(
             "channel_post",
             "edited_channel_post",
             "callback_query",
+            "poll",
+            "poll_answer",
             "my_chat_member",
             "chat_member",
             "chat_join_request",

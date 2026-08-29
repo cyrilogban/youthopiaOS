@@ -613,8 +613,19 @@ async def handle_poll_answer(poll_answer: PollAnswer, services: ServiceContainer
     if not q_resp:
         return
         
-    content = q_resp.get("content", {})
-    options = content.get("options", [])
+    content = q_resp.get("content") or {}
+    if isinstance(content, str):
+        import json
+        try:
+            content = json.loads(content)
+        except Exception:
+            content = {}
+    if not isinstance(content, dict):
+        content = {}
+
+    options = content.get("options") or q_resp.get("options") or []
+    if not isinstance(options, list):
+        options = []
     correct_text = q_resp.get("correct_answer")
     correct_idx = options.index(correct_text) if correct_text in options else 0
     
