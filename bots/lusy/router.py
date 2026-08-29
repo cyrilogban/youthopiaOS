@@ -553,15 +553,39 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         await send_lusy_leaderboard(callback.message, services)
 
     async def send_lusy_leaderboard(message: Message, services: ServiceContainer) -> None:
+        is_group = message.chat.type != "private"
+
+        if is_group:
+            try:
+                await message.delete()
+            except Exception:
+                pass
+
         try:
             users_list = await services.users.get_leaderboard(limit=10)
         except Exception as e:
             logger.error(f"Failed to fetch leaderboard: {e}")
-            await message.answer("⚠️ Failed to retrieve leaderboard. Please try again later.")
+            if is_group:
+                try:
+                    err_msg = await message.answer("⚠️ Failed to retrieve leaderboard. Please try again later.")
+                    import asyncio
+                    asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 10))
+                except Exception:
+                    pass
+            else:
+                await message.answer("⚠️ Failed to retrieve leaderboard. Please try again later.")
             return
 
         if not users_list:
-            await message.answer("No scores recorded yet. Be the first to play and earn YP!")
+            if is_group:
+                try:
+                    empty_msg = await message.answer("No scores recorded yet. Be the first to play and earn YP!")
+                    import asyncio
+                    asyncio.create_task(self_destruct_message(message.bot, message.chat.id, empty_msg.message_id, 10))
+                except Exception:
+                    pass
+            else:
+                await message.answer("No scores recorded yet. Be the first to play and earn YP!")
             return
 
         leaderboard_text = "<b>🏆 Top YouTopians (Global Leaderboard)</b>\n\n"
@@ -574,11 +598,23 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             medal = medals[idx] if idx < len(medals) else f"#{idx+1}"
             leaderboard_text += f"{medal} <b>{display_name}</b> (Lvl {level}) - <code>{xp} YP</code>\n"
 
-        await message.answer(
-            leaderboard_text,
-            parse_mode="HTML",
-            reply_markup=build_lusy_reply_keyboard()
-        )
+        if is_group:
+            leaderboard_text += "\n<i>🧹 This leaderboard will self-destruct in 30 seconds...</i>"
+            try:
+                sent_msg = await message.answer(
+                    leaderboard_text,
+                    parse_mode="HTML",
+                )
+                import asyncio
+                asyncio.create_task(self_destruct_message(message.bot, message.chat.id, sent_msg.message_id, 30))
+            except Exception:
+                pass
+        else:
+            await message.answer(
+                leaderboard_text,
+                parse_mode="HTML",
+                reply_markup=build_lusy_reply_keyboard()
+            )
 
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 3: ⭐ My Points / /yp / /xp
