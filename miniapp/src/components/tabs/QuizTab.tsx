@@ -110,7 +110,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
-            Top Community Leaderboard
+            Global Leaderboard
           </h3>
           <span style={{ fontSize: '11px', color: '#6d28d9', fontWeight: 600 }}>Top 10</span>
         </div>

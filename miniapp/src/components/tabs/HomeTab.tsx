@@ -129,7 +129,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <span style={{ fontSize: '11px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Verse of the Day (Supabase Live)
+            Verse of the Day
           </span>
           <span style={{ fontSize: '11px', color: '#64748b', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
             {votd?.translation || 'KJV'}
