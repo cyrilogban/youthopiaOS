@@ -531,7 +531,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         if is_callback:
             await event.answer()
 
-        markup = build_game_selection_inline_keyboard()
+        is_group = message.chat.type != "private"
+        markup = build_game_selection_inline_keyboard(is_group=is_group)
         await message.answer(
             "<b>Choose a Quiz Mode 🎯</b>\n\n"
             "Select a quiz mode below to test your scripture knowledge and earn YP!",
@@ -703,7 +704,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     @router.message(lambda message: message.text and "Over to you, @iamlusybot!" in message.text)
     async def respond_to_eddy(message: Message) -> None:
-        markup = build_game_selection_inline_keyboard()
+        markup = build_game_selection_inline_keyboard(is_group=True)
         await message.reply(
             "Thanks Ed! 🎤\n\nAlright YouTopians, the weekend is here! What game are we playing tonight?",
             reply_markup=markup

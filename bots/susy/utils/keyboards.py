@@ -79,7 +79,7 @@ def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamsusiebot/app"),
             ],
             [
                 InlineKeyboardButton(text="💬 Meet Susy", url="https://t.me/iamsusiebot?start=welcome"),
@@ -102,7 +102,7 @@ def build_susy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamsusiebot/app"),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Susy to Admin", callback_data="susy_prompt_admin"),

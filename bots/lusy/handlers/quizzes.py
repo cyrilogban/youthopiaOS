@@ -1108,7 +1108,7 @@ async def execute_quit_game(
 
     # 4. Return to Quiz Mode Selection Menu unconditionally
     from bots.lusy.utils.keyboards import build_game_selection_inline_keyboard
-    game_mode_markup = build_game_selection_inline_keyboard()
+    game_mode_markup = build_game_selection_inline_keyboard(is_group=not is_private)
 
     user_first = user.first_name or "Player"
     if is_private:

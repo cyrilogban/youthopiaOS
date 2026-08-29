@@ -61,7 +61,7 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
             ],
             [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
@@ -81,7 +81,7 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Theo to Admin", callback_data="theo_prompt_admin"),

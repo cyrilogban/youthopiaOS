@@ -27,7 +27,7 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
     )
 
 
-def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
+def build_game_selection_inline_keyboard(is_group: bool = False) -> InlineKeyboardMarkup:
     """
     Lusy Quiz Mode Selection inline keyboard:
     [ Open App ]
@@ -36,9 +36,10 @@ def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
     [ 🔀 Verse Scramble ]
     [ ⚡ Trivia Race ]
     """
+    open_app_btn = InlineKeyboardButton(text="Open App", url="https://t.me/iamlusybot/app") if is_group else get_open_app_inline_button()
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [get_open_app_inline_button()],
+            [open_app_btn],
             [InlineKeyboardButton(text="📖 Bible Challenge", callback_data="lusy_play_quiz")],
             [InlineKeyboardButton(text="✍️ Verse Completion", callback_data="lusy_play_fill_blank")],
             [InlineKeyboardButton(text="🔀 Verse Scramble", callback_data="lusy_play_scramble")],
@@ -57,7 +58,7 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamlusybot/app"),
             ],
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
@@ -77,7 +78,7 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamlusybot/app"),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Lusy to Admin", callback_data="lusy_prompt_admin"),
