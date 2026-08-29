@@ -1,10 +1,5 @@
 /**
  * api.ts — the only file that knows the gateway's URL and HTTP contract.
- *
- * Mirror of telegram.ts: telegram.ts isolates the Telegram SDK, this isolates
- * our backend. fetchVerifiedUser asks the gateway "who am I?" and the gateway
- * answers only after HMAC-verifying the initData — the trust flip that is the
- * whole point of Module 3.
  */
 import type { TelegramUser } from '../types/telegram';
 import type { UserProfile } from '../types/profile';
@@ -16,7 +11,6 @@ const GATEWAY_URL =
     ? window.location.origin
     : 'http://localhost:8000');
 
-/** The gateway's /me JSON — Telegram's native snake_case; optionals arrive as null. */
 interface GatewayUser {
   id: number;
   first_name: string;
@@ -27,7 +21,6 @@ interface GatewayUser {
   photo_url?: string | null;
 }
 
-/** Every honest outcome of asking the gateway who we are. */
 export type VerifyResult =
   | { status: 'verified'; user: TelegramUser }
   | { status: 'unverified' }
@@ -45,7 +38,6 @@ function mapGatewayUser(u: GatewayUser): TelegramUser {
   };
 }
 
-/** Ask the gateway to verify our Telegram initData and return the trusted user. */
 export async function fetchVerifiedUser(rawInitData: string | null): Promise<VerifyResult> {
   if (!rawInitData) return { status: 'no-telegram' };
 
@@ -69,7 +61,6 @@ export async function fetchVerifiedUser(rawInitData: string | null): Promise<Ver
   }
 }
 
-/** The gateway's /profile JSON — snake_case; display_name may be null. */
 interface GatewayProfile {
   display_name?: string | null;
   engagement_level: string;
@@ -77,11 +68,10 @@ interface GatewayProfile {
   level: number;
 }
 
-/** Every honest outcome of asking the gateway for our YouThopiaOS profile. */
 export type ProfileResult =
   | { status: 'ok'; profile: UserProfile }
-  | { status: 'none' } // 404 — verified, but no YouThopiaOS account yet
-  | { status: 'unverified' } // 401 — initData rejected (defensive; normally gated on verified)
+  | { status: 'none' }
+  | { status: 'unverified' }
   | { status: 'error'; message: string };
 
 function mapGatewayProfile(p: GatewayProfile): UserProfile {
@@ -93,9 +83,8 @@ function mapGatewayProfile(p: GatewayProfile): UserProfile {
   };
 }
 
-/** Ask the gateway for the verified user's stored profile + XP. */
 export async function fetchProfile(rawInitData: string | null): Promise<ProfileResult> {
-  if (!rawInitData) return { status: 'unverified' }; // no initData to authorize with
+  if (!rawInitData) return { status: 'unverified' };
 
   let res: Response;
   try {
@@ -115,5 +104,115 @@ export async function fetchProfile(rawInitData: string | null): Promise<ProfileR
     return { status: 'ok', profile: mapGatewayProfile(data) };
   } catch {
     return { status: 'error', message: 'Malformed response from server.' };
+  }
+}
+
+export interface UserSettings {
+  translation: string;
+  dailyDevotional: boolean;
+}
+
+export async function fetchSettings(rawInitData: string | null): Promise<UserSettings> {
+  if (!rawInitData) return { translation: 'KJV', dailyDevotional: true };
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/settings`, {
+      headers: { Authorization: `tma ${rawInitData}` },
+    });
+    if (!res.ok) return { translation: 'KJV', dailyDevotional: true };
+    const data = await res.json();
+    return { translation: data.translation, dailyDevotional: data.daily_devotional };
+  } catch {
+    return { translation: 'KJV', dailyDevotional: true };
+  }
+}
+
+export async function updateSettings(rawInitData: string | null, settings: UserSettings): Promise<boolean> {
+  if (!rawInitData) return false;
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/settings`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `tma ${rawInitData}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        translation: settings.translation,
+        daily_devotional: settings.dailyDevotional,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export interface LeaderboardItem {
+  displayName?: string;
+  totalXp: number;
+  level: number;
+}
+
+export async function fetchLeaderboard(): Promise<LeaderboardItem[]> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/leaderboard`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((item: any) => ({
+      displayName: item.display_name ?? undefined,
+      totalXp: item.total_xp,
+      level: item.level,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export interface EventItem {
+  id?: string;
+  title: string;
+  startsAt: string;
+  category?: string;
+  location?: string;
+}
+
+export async function fetchEvents(): Promise<EventItem[]> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/events`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      startsAt: item.starts_at,
+      category: item.category,
+      location: item.location,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export interface VotdItem {
+  reference: string;
+  text: string;
+  translation: string;
+}
+
+export async function fetchVotd(translation: string = 'KJV'): Promise<VotdItem> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/votd?translation=${encodeURIComponent(translation)}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    return {
+      reference: data.reference,
+      text: data.text,
+      translation: data.translation,
+    };
+  } catch {
+    return {
+      reference: 'Jeremiah 29:11',
+      text: 'For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.',
+      translation: translation.toUpperCase(),
+    };
   }
 }

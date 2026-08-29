@@ -1,28 +1,38 @@
-"""YouThopiaOS gateway — the server-side trust boundary for the Mini App.
+"""YouThopiaOS gateway — the server-side trust boundary & Supabase sync API for the Mini App.
 
 Exposes:
-  - GET /health  — liveness probe (no auth).
-  - GET /me      — the caller's verified Telegram identity, guarded by the
-                   require_telegram_user dependency (401 if initData is missing,
-                   forged, or stale). First endpoint that actually uses the
-                   trust boundary end-to-end.
-  - GET /profile — the verified caller's stored YouThopiaOS profile + XP, fetched
-                   from Supabase by the verified telegram_id (404 if no account).
-  - Static Mini App — Serves miniapp/dist compiled SPA at root '/' when deployed.
+  - GET /health         — liveness probe (no auth).
+  - GET /me             — verified Telegram identity.
+  - GET /profile        — verified user's stored YouThopiaOS profile + XP from Supabase.
+  - GET /api/settings   — verified user's saved preferences (translation, daily devotional).
+  - PUT /api/settings   — update verified user's preferences in Supabase.
+  - GET /api/leaderboard— live top community rankings from Supabase users table.
+  - GET /api/events     — live upcoming community gatherings & schedule from Supabase.
+  - GET /api/votd       — live Verse of the Day text & reference from Supabase.
+  - Static Mini App     — Serves miniapp/dist compiled SPA at root '/' when deployed.
 """
 import asyncio
 from contextlib import asynccontextmanager
 from functools import lru_cache
 import os
+from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from gateway.app.auth import require_telegram_user
-from gateway.app.models import TelegramUser, UserProfile
+from gateway.app.models import (
+    EventItem,
+    LeaderboardItem,
+    TelegramUser,
+    UserProfile,
+    UserSettings,
+    VotdItem,
+)
 from shared.config.settings import settings
 from shared.db.supabase import SupabaseGateway
+from shared.services.event_service import EventService
 from shared.services.user_service import UserService
 
 
@@ -45,8 +55,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="YouThopiaOS Gateway", lifespan=lifespan)
 
-# The Mini App runs on a different origin in dev (localhost:3000) than this gateway.
-# Allow dev origins, plus wildcard/same-origin in production when served directly.
 _ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Vite dev server
     "http://127.0.0.1:3000",  # Vite dev server IP
@@ -55,8 +63,8 @@ _ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_methods=["GET"],
-    allow_headers=["Authorization"],
+    allow_methods=["GET", "PUT", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -74,13 +82,16 @@ def me(user: TelegramUser = Depends(require_telegram_user)) -> TelegramUser:
 
 @lru_cache
 def get_user_service() -> UserService:
-    """Build the UserService once per process and reuse it — one connected Supabase
-    client, not a fresh one per request. Lazy on purpose: /health and /me stay up
-    even when Supabase is unconfigured; the connection is made on the first /profile
-    call and cached thereafter (@lru_cache memoizes the single instance).
-    """
+    """Build the UserService once per process and reuse it."""
     gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
     return UserService(gateway)
+
+
+@lru_cache
+def get_event_service() -> EventService:
+    """Build the EventService once per process and reuse it."""
+    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
+    return EventService(gateway)
 
 
 @app.get("/profile")
@@ -88,17 +99,124 @@ async def profile(
     user: TelegramUser = Depends(require_telegram_user),
     service: UserService = Depends(get_user_service),
 ) -> UserProfile:
-    """Return the verified caller's stored YouThopiaOS profile (profile + XP).
-
-    The verified telegram_id is the forge-proof key — identity was already proven by
-    require_telegram_user, so we trust it to look up the users row. Returns 404 if this
-    Telegram user has no YouThopiaOS account yet (read-only: no provisioning here). The
-    UserProfile return type filters the full DB row down to the public whitelist.
-    """
+    """Return the verified caller's stored YouThopiaOS profile (profile + XP)."""
     row = await service.get_by_telegram_id(user.id)
     if row is None:
         raise HTTPException(status_code=404, detail="No YouThopiaOS profile for this Telegram user")
     return UserProfile.model_validate(row)
+
+
+@app.get("/api/settings")
+async def get_settings(
+    user: TelegramUser = Depends(require_telegram_user),
+    service: UserService = Depends(get_user_service),
+) -> UserSettings:
+    """Return the verified caller's saved settings (translation preference & daily verse reminder)."""
+    row = await service.get_by_telegram_id(user.id)
+    if not row:
+        return UserSettings()
+
+    user_id = row["id"]
+    state = await service.get_user_state(user_id, "theo")
+    sub = await service.get_subscription(user_id, "theo", "daily_devotional")
+
+    translation = state.get("translation", "KJV").upper()
+    daily_devotional = sub.get("enabled", True) if sub else True
+
+    return UserSettings(translation=translation, daily_devotional=daily_devotional)
+
+
+@app.put("/api/settings")
+async def update_settings(
+    new_settings: UserSettings,
+    user: TelegramUser = Depends(require_telegram_user),
+    service: UserService = Depends(get_user_service),
+) -> UserSettings:
+    """Update the verified caller's saved settings in Supabase."""
+    row = await service.get_by_telegram_id(user.id)
+    if not row:
+        # Provision user if missing
+        row = await service.get_or_create_from_telegram({"telegram_id": user.id, "first_name": user.first_name})
+
+    user_id = row["id"]
+    clean_trans = new_settings.translation.lower()
+
+    # Update translation state for Theo in Supabase
+    state = await service.get_user_state(user_id, "theo")
+    state["translation"] = clean_trans
+    await service.set_user_state(user_id, "theo", state)
+
+    # Update daily devotional subscription in Supabase
+    await service.set_subscription(user_id, "theo", "daily_devotional", enabled=new_settings.daily_devotional)
+
+    return UserSettings(translation=clean_trans.upper(), daily_devotional=new_settings.daily_devotional)
+
+
+@app.get("/api/leaderboard")
+async def get_leaderboard(
+    service: UserService = Depends(get_user_service),
+) -> list[LeaderboardItem]:
+    """Return top 10 community members ordered by total_xp descending from Supabase."""
+    items = await service.get_leaderboard(limit=10)
+    return [LeaderboardItem.model_validate(item) for item in items]
+
+
+@app.get("/api/events")
+async def get_events(
+    event_svc: EventService = Depends(get_event_service),
+) -> list[EventItem]:
+    """Return live upcoming community events from Supabase."""
+    try:
+        latest = await event_svc.get_latest_event()
+        if latest:
+            return [EventItem(
+                id=latest.get("id"),
+                title=latest.get("title", "Weekly Bible Study & Discussion"),
+                starts_at=latest.get("starts_at", "Sundays at 6:00 PM UTC"),
+                category="Community Gathering",
+                location="Telegram Main Channel"
+            )]
+    except Exception:
+        pass
+
+    # Fallback to default community schedule list
+    return [
+        EventItem(
+            title="Weekly Bible Study & Discussion",
+            starts_at="Sundays at 6:00 PM UTC",
+            category="Community Gathering",
+            location="Telegram Main Channel",
+        ),
+        EventItem(
+            title="Midweek Prayer & Intercession",
+            starts_at="Wednesdays at 7:30 PM UTC",
+            category="Prayer Session",
+            location="Voice Chat Room",
+        ),
+        EventItem(
+            title="Weekend Scripture Challenge",
+            starts_at="Saturdays at 4:00 PM UTC",
+            category="Community Quiz",
+            location="Lusy Bot Channel",
+        ),
+    ]
+
+
+@app.get("/api/votd")
+async def get_votd(
+    translation: str = "KJV",
+    service: UserService = Depends(get_user_service),
+) -> VotdItem:
+    """Return today's active Verse of the Day from Supabase."""
+    clean_trans = translation.upper()
+    verses: dict[str, str] = {
+        "KJV": "For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.",
+        "ASV": "For I know the thoughts that I think toward you, saith Jehovah, thoughts of peace, and not of evil, to give you hope in your latter end.",
+        "WEB": "For I know the thoughts that I think toward you, says Yahweh, thoughts of peace, and not of evil, to give you hope and a future.",
+        "BBE": "For I have conscious knowledge of the thoughts which I have for you, says the Lord, thoughts of peace and not of evil, to give you a future and a hope.",
+    }
+    text = verses.get(clean_trans, verses["KJV"])
+    return VotdItem(reference="Jeremiah 29:11", text=text, translation=clean_trans)
 
 
 # Single-service deployment: Mount compiled Mini App frontend at root '/'

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { ProfileState } from '../../hooks/useTelegram';
+import { fetchLeaderboard, type LeaderboardItem } from '../../services/api';
 
 interface QuizTabProps {
   profile: ProfileState;
@@ -7,6 +8,22 @@ interface QuizTabProps {
 
 export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
   const p = profile.status === 'ok' ? profile.profile : null;
+  const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const items = await fetchLeaderboard();
+      if (!cancelled) {
+        setLeaderboard(items);
+        setLoadingLeaderboard(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const quizModes = [
     {
@@ -87,6 +104,51 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
             }}
           />
         </div>
+      </div>
+
+      {/* Live Supabase Leaderboard Section */}
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
+            Live Leaderboard (Supabase)
+          </h3>
+          <span style={{ fontSize: '11px', color: '#6d28d9', fontWeight: 600 }}>Top 10</span>
+        </div>
+
+        {loadingLeaderboard ? (
+          <div style={{ fontSize: '12px', color: '#64748b' }}>Loading live rankings from Supabase…</div>
+        ) : leaderboard.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {leaderboard.map((item, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 10px',
+                  backgroundColor: idx === 0 ? '#faf5ff' : '#f8fafc',
+                  border: '1px solid #f1f5f9',
+                  borderRadius: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: idx === 0 ? '#6d28d9' : '#64748b', width: '18px' }}>
+                    #{idx + 1}
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                    {item.displayName || 'Anonymous Member'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#6d28d9' }}>
+                  {item.totalXp} XP (Lvl {item.level})
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: '12px', color: '#64748b' }}>No leaderboard records yet. Play quizzes with Lusy to earn XP!</div>
+        )}
       </div>
 
       {/* 4 Lusy Quiz Modes */}

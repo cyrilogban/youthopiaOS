@@ -3,10 +3,6 @@
 Pydantic models for the FastAPI trust boundary. The bots use dataclasses/dicts,
 but this is a FastAPI service — Pydantic is the native idiom here: it validates
 untrusted input on parse and serializes responses for free.
-
-`TelegramUser` mirrors Telegram's WebApp `user` object field-for-field (native
-names), so a parsed instance drops straight into core.identity.IdentityResolver
-at Module 4 (it reads .id / .first_name / ... via getattr) with no adapter.
 """
 from __future__ import annotations
 
@@ -44,15 +40,42 @@ class TelegramUser(BaseModel):
 
 
 class UserProfile(BaseModel):
-    """The public YouThopiaOS profile for a verified user — the response_model for GET /profile.
-
-    Built from a full `users` row (migrations/001_initial_schema.sql), but declaring
-    only these fields guarantees internal columns never reach the client: trust_score
-    (moderation signal), is_active, id, and timestamps are all dropped on serialization,
-    even though UserService.get_by_telegram_id() returns the whole row.
-    """
+    """The public YouThopiaOS profile for a verified user."""
 
     display_name: str | None = None
     engagement_level: str
     total_xp: int
     level: int
+
+
+class UserSettings(BaseModel):
+    """User preferences stored in Supabase."""
+
+    translation: str = "KJV"
+    daily_devotional: bool = True
+
+
+class LeaderboardItem(BaseModel):
+    """Top community member entry on the leaderboard."""
+
+    display_name: str | None = None
+    total_xp: int
+    level: int
+
+
+class EventItem(BaseModel):
+    """Community event entry."""
+
+    id: str | None = None
+    title: str
+    starts_at: str
+    category: str | None = "Community Gathering"
+    location: str | None = "Telegram Main Channel"
+
+
+class VotdItem(BaseModel):
+    """Verse of the Day entry."""
+
+    reference: str
+    text: str
+    translation: str = "KJV"
