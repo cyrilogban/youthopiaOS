@@ -27,9 +27,12 @@ class DeliveryService:
         if not todays_votd:
             logger.warning("DeliveryService: No VOTD scheduled for today.")
             return {"status": "error", "message": "No VOTD scheduled for today."}
-            
         reference = todays_votd["reference"]
         logger.info("Broadcasting VOTD: %s", reference)
+        
+        # Resolve bot username once to avoid multiple API calls in loops
+        bot_me = await self.bot.get_me()
+        bot_username = bot_me.username
         
         # We will cache the fetched text by translation to avoid redundant API calls
         fetched_texts: dict[str, str] = {}
@@ -68,7 +71,7 @@ class DeliveryService:
                 blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
                 message = f"{header}\n{blockquote}"
                 
-                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=True)
+                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=True, bot_username=bot_username)
                 
                 await self.bot.send_message(
                     chat_id=telegram_chat_id, 
@@ -107,7 +110,7 @@ class DeliveryService:
                 blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
                 message = f"{header}\n{blockquote}"
                 
-                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=False)
+                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=False, bot_username=bot_username)
                 
                 await self.bot.send_message(
                     chat_id=telegram_user_id, 

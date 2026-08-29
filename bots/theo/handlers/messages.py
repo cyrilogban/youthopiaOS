@@ -94,6 +94,12 @@ async def handle_bible_detection(message: Message, services: ServiceContainer) -
     if len(refs) == 1:
         from bots.theo.utils.keyboards import build_verse_actions_keyboard
         is_group = message.chat.type != "private"
-        markup = build_verse_actions_keyboard(category="general", reference=refs[0].reference, is_group=is_group)
+        bot_me = await message.bot.get_me()
+        markup = build_verse_actions_keyboard(
+            category="general", 
+            reference=refs[0].reference, 
+            is_group=is_group,
+            bot_username=bot_me.username
+        )
         
     await message.reply(reply_text, parse_mode="HTML", reply_markup=markup)

@@ -108,15 +108,15 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def build_verse_actions_keyboard(category: str, reference: str, is_group: bool = False) -> InlineKeyboardMarkup:
+def build_verse_actions_keyboard(category: str, reference: str, is_group: bool = False, bot_username: str = "iamtheobot") -> InlineKeyboardMarkup:
     """Builds the inline action keyboard for verse cards: [ Open App ] [ 💜 Save ] [ Next Verse ] [ Share ]."""
     clean_ref = reference.replace(" ", "_")
     buttons = []
     
     if is_group:
-        # In groups, we use a deep link to start the app via Theo's DM
+        # In groups, we use the direct Telegram Mini App URL (t.me/botname/appname)
         buttons.append([
-            InlineKeyboardButton(text="Open App 📱", url="https://t.me/iamtheobot?start=app")
+            InlineKeyboardButton(text="Open App", url=f"https://t.me/{bot_username}/app")
         ])
     else:
         buttons.append([
