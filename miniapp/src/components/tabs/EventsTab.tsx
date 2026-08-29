@@ -35,7 +35,7 @@ export const EventsTab: React.FC = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {loading ? (
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '16px', fontSize: '12px', color: '#64748b' }}>
-            Loading community schedule from Supabase…
+            Loading community schedule…
           </div>
         ) : (
           events.map((evt, idx) => (

@@ -58,7 +58,7 @@ export const BibleTab: React.FC = () => {
     setIsSaving(false);
 
     if (ok) {
-      setSaveMessage(`Translation saved to Supabase: ${code}`);
+      setSaveMessage(`Translation saved: ${code}`);
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
