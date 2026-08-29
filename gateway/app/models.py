@@ -47,6 +47,8 @@ class UserProfile(BaseModel):
     total_xp: int
     level: int
     trust_score: int = 100
+    quizzes_played: int = 0
+    accuracy_pct: int = 100
 
 
 class UserSettings(BaseModel):

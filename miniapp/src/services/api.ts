@@ -67,6 +67,8 @@ interface GatewayProfile {
   total_xp: number;
   level: number;
   trust_score?: number | null;
+  quizzes_played?: number | null;
+  accuracy_pct?: number | null;
 }
 
 export type ProfileResult =
@@ -82,6 +84,8 @@ function mapGatewayProfile(p: GatewayProfile): UserProfile {
     totalXp: p.total_xp,
     level: p.level,
     trustScore: p.trust_score ?? 100,
+    quizzesPlayed: p.quizzes_played ?? 0,
+    accuracyPct: p.accuracy_pct ?? 100,
   };
 }
 

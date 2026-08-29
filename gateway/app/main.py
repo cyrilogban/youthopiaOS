@@ -33,6 +33,7 @@ from gateway.app.models import (
 from shared.config.settings import settings
 from shared.db.supabase import SupabaseGateway
 from shared.services.event_service import EventService
+from shared.services.quiz_service import QuizService
 from shared.services.user_service import UserService
 
 
@@ -88,6 +89,13 @@ def get_user_service() -> UserService:
 
 
 @lru_cache
+def get_quiz_service() -> QuizService:
+    """Build the QuizService once per process and reuse it."""
+    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
+    return QuizService(gateway)
+
+
+@lru_cache
 def get_event_service() -> EventService:
     """Build the EventService once per process and reuse it."""
     gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
@@ -98,12 +106,19 @@ def get_event_service() -> EventService:
 async def profile(
     user: TelegramUser = Depends(require_telegram_user),
     service: UserService = Depends(get_user_service),
+    quiz_svc: QuizService = Depends(get_quiz_service),
 ) -> UserProfile:
-    """Return the verified caller's stored YouThopiaOS profile (profile + XP)."""
+    """Return the verified caller's stored YouThopiaOS profile (profile + XP + quiz stats)."""
     row = await service.get_by_telegram_id(user.id)
     if row is None:
         raise HTTPException(status_code=404, detail="No YouThopiaOS profile for this Telegram user")
-    return UserProfile.model_validate(row)
+
+    stats = await quiz_svc.get_user_quiz_stats(row["id"])
+    profile_dict = dict(row)
+    profile_dict["quizzes_played"] = stats.get("quizzes_played", 0)
+    profile_dict["accuracy_pct"] = stats.get("accuracy_pct", 100)
+
+    return UserProfile.model_validate(profile_dict)
 
 
 @app.get("/api/settings")

@@ -23,6 +23,29 @@ class QuizService:
         """Fetch the user's game/quiz play history."""
         return await self.db.find_many("lusy_game_history", {"user_id": user_id})
 
+    async def get_user_quiz_stats(self, user_id: str) -> dict[str, int]:
+        """Aggregate Lusy game history for total quizzes played and accuracy percentage."""
+        def run() -> dict[str, int]:
+            try:
+                response = (
+                    self.db._client()
+                    .table("lusy_game_history")
+                    .select("is_correct")
+                    .eq("user_id", user_id)
+                    .execute()
+                )
+                history = response.data or []
+                total = len(history)
+                if total == 0:
+                    return {"quizzes_played": 0, "accuracy_pct": 100}
+                correct = sum(1 for item in history if item.get("is_correct"))
+                accuracy = round((correct / total) * 100)
+                return {"quizzes_played": total, "accuracy_pct": accuracy}
+            except Exception:
+                return {"quizzes_played": 0, "accuracy_pct": 100}
+
+        return await asyncio.to_thread(run)
+
     async def track_private_poll(
         self, user_id: str, poll_id: str, question_id: str, base_xp: int
     ) -> dict[str, Any]:

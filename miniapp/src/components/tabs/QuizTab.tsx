@@ -104,6 +104,18 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
             }}
           />
         </div>
+
+        {/* Live Quiz Accuracy & Games Played Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Quizzes Completed</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{p?.quizzesPlayed ?? 0} Played</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Quiz Accuracy</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#16a34a' }}>{p?.accuracyPct ?? 100}% Accuracy</div>
+          </div>
+        </div>
       </div>
 
       {/* Live Community Leaderboard Section */}

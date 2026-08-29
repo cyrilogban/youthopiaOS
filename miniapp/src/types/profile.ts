@@ -12,4 +12,8 @@ export interface UserProfile {
   level: number;
   /** Community trust rating (Pete Bot security score). */
   trustScore?: number;
+  /** Total quizzes played in Lusy Bot. */
+  quizzesPlayed?: number;
+  /** Quiz accuracy percentage (0-100%). */
+  accuracyPct?: number;
 }
