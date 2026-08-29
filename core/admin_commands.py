@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 BOT_NATIVE_COMMANDS = {
     "theo": [
         BotCommand(command="start", description="Wake Up Theo"),
+        BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="help", description="Show help information"),
         BotCommand(command="subscribe", description="Subscribe to daily verses"),
         BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
@@ -21,6 +22,7 @@ BOT_NATIVE_COMMANDS = {
     ],
     "pete": [
         BotCommand(command="start", description="Meet Pete"),
+        BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="appeal", description="Submit Appeal"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Pete Safety Guide"),
@@ -37,6 +39,7 @@ BOT_NATIVE_COMMANDS = {
     ],
     "lusy": [
         BotCommand(command="start", description="Meet Lusy"),
+        BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="games", description="Browse Bible Games"),
         BotCommand(command="playgame", description="Choose and start a Bible game"),
         BotCommand(command="quit", description="Quit active game session"),
@@ -47,12 +50,14 @@ BOT_NATIVE_COMMANDS = {
     ],
     "susy": [
         BotCommand(command="start", description="Meet Susy"),
+        BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="where", description="Community topic directory & guide"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Susy Hostess Guide"),
     ],
     "eddy": [
         BotCommand(command="start", description="Open Ed main dashboard"),
+        BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="calendar", description="View this week's event schedule"),
         BotCommand(command="my_events", description="View events I am attending"),
         BotCommand(command="addbirthday", description="Add your birthday"),

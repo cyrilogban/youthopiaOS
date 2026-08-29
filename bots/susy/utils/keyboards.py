@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
-from shared.utils.ui import FACEBOOK_LINK, TELEGRAM_GROUP_LINK, WHATSAPP_LINK, GLOBAL_REPLY_BUTTONS
+from shared.utils.ui import FACEBOOK_LINK, TELEGRAM_GROUP_LINK, WHATSAPP_LINK, GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 
 def build_susy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -20,10 +20,14 @@ def build_susy_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_susy_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Susy DM /start Welcome Card Inline Keyboard:
+    [ Open App ]
     [ 🚀 Start Tour ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="🚀 Start Tour", callback_data="onboarding_1"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),

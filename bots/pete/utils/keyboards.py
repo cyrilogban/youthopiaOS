@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-from shared.utils.ui import GLOBAL_REPLY_BUTTONS
+from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 
 def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -24,10 +24,14 @@ def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_pete_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Pete DM /start Card Inline Keyboard:
+    [ Open App ]
     [ 📝 Appeal ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),

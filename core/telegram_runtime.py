@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import Command
-from aiogram.types import BotCommand, Chat, ChatMemberUpdated, Message, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators, BotCommandScopeChat
+from aiogram.types import BotCommand, Chat, ChatMemberUpdated, Message, InlineKeyboardMarkup, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators, BotCommandScopeChat
 
 from core.config import BotConfig
 from core.admin_commands import create_admin_router
 from shared.logging.logger import get_logger
 from shared.services.container import ServiceContainer
+from shared.utils.ui import get_open_app_inline_button
 
 
 DEFAULT_BOT_SETTINGS = {
@@ -92,6 +93,16 @@ def build_router(bot_name: str, description: str, *, include_base_commands: bool
                 f"Level: {user.get('level', 1)}\n"
                 f"XP: {user.get('total_xp', 0)}\n"
                 f"Trust: {user.get('trust_score', 100)}"
+            )
+
+        @router.message(Command("app", "miniapp"))
+        async def handle_app_command(message: Message) -> None:
+            markup = InlineKeyboardMarkup(inline_keyboard=[[get_open_app_inline_button()]])
+            await message.answer(
+                "Open <b>YOUTHOPIA BIBLE COMMUNITY</b> Mini App:\n"
+                "<i>Sharing God's Love All The Way</i>",
+                parse_mode="HTML",
+                reply_markup=markup
             )
 
     # Fallback sub-router for default group tracking

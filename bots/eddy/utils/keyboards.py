@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
-from shared.utils.ui import GLOBAL_REPLY_BUTTONS
+from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 
 def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -30,10 +30,14 @@ def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_eddy_start_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Eddy DM /start Card Inline Keyboard:
+    [ Open App ]
     [ 📅 Calendar ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),

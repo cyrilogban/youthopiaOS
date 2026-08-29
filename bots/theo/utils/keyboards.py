@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
-from shared.utils.ui import GLOBAL_REPLY_BUTTONS
+from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 class VerseAction(CallbackData, prefix="verse", sep="|"):
     action: str  # "save" or "next"
@@ -14,7 +14,7 @@ class SavedVersesPage(CallbackData, prefix="sv_page"):
 def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
     """
     Theo persistent reply keyboard:
-    Row 1 (Global):        [ 👤 My Profile ]      [ ℹ️ Help ]  [ 🌐 Community ]
+    Row 1 (Global):        [ 👤 My Profile ]      [ Open App ] [ ℹ️ Help ]  [ 🌐 Community ]
     Row 2 (Bot Specific): [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
     Row 3 (Settings):      [ 🌐 Translation ]
     """
@@ -38,10 +38,14 @@ def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
 def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Theo /start Welcome Card inline keyboard:
+    [ Open App ]
     [ 🔍 Search ]  [ 🌐 Translation ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),

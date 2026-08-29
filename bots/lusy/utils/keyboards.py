@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
-from shared.utils.ui import GLOBAL_REPLY_BUTTONS
+from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 
 def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -29,7 +29,8 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
 
 def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
     """
-    Lusy Quiz Mode Selection inline keyboard (1-column full-width for mobile clarity):
+    Lusy Quiz Mode Selection inline keyboard:
+    [ Open App ]
     [ 📖 Bible Challenge ]
     [ ✍️ Verse Completion ]
     [ 🔀 Verse Scramble ]
@@ -37,6 +38,7 @@ def build_game_selection_inline_keyboard() -> InlineKeyboardMarkup:
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [get_open_app_inline_button()],
             [InlineKeyboardButton(text="📖 Bible Challenge", callback_data="lusy_play_quiz")],
             [InlineKeyboardButton(text="✍️ Verse Completion", callback_data="lusy_play_fill_blank")],
             [InlineKeyboardButton(text="🔀 Verse Scramble", callback_data="lusy_play_scramble")],

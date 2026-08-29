@@ -8,10 +8,21 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     KeyboardButton,
     Message,
+    WebAppInfo,
 )
 from shared.services.container import ServiceContainer
 
 logger = logging.getLogger(__name__)
+
+MINI_APP_URL = "https://youthopiaos.onrender.com"
+
+
+def get_open_app_inline_button() -> InlineKeyboardButton:
+    return InlineKeyboardButton(text="Open App", web_app=WebAppInfo(url=MINI_APP_URL))
+
+
+def get_open_app_reply_button() -> KeyboardButton:
+    return KeyboardButton(text="Open App", web_app=WebAppInfo(url=MINI_APP_URL))
 
 # -----------------------------------------------------------------------------
 # GLOBAL COMMUNITY LINKS (Used across all bots)
@@ -127,6 +138,7 @@ BOT_FAMILY_DIRECTORY_TEXT = (
 
 GLOBAL_REPLY_BUTTONS: List[KeyboardButton] = [
     KeyboardButton(text="👤 My Profile"),
+    KeyboardButton(text="Open App", web_app=WebAppInfo(url=MINI_APP_URL)),
     KeyboardButton(text="ℹ️ Help"),
     KeyboardButton(text="🌐 Community"),
 ]
