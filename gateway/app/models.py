@@ -41,3 +41,18 @@ class TelegramUser(BaseModel):
             return cls.model_validate_json(user_json)
         except ValidationError:
             return None
+
+
+class UserProfile(BaseModel):
+    """The public YouThopiaOS profile for a verified user — the response_model for GET /profile.
+
+    Built from a full `users` row (migrations/001_initial_schema.sql), but declaring
+    only these fields guarantees internal columns never reach the client: trust_score
+    (moderation signal), is_active, id, and timestamps are all dropped on serialization,
+    even though UserService.get_by_telegram_id() returns the whole row.
+    """
+
+    display_name: str | None = None
+    engagement_level: str
+    total_xp: int
+    level: int

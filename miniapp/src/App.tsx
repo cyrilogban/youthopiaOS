@@ -1,178 +1,192 @@
-import React from 'react';
-import { useTelegram, type ProfileState } from './hooks/useTelegram';
-import type { TelegramUser } from './types/telegram';
-
-/** The signed-in greeting, reused for the server-verified and client-only states. */
-const Greeting: React.FC<{ user: TelegramUser; verified: boolean }> = ({ user, verified }) => (
-  <>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-      {user.photoUrl && (
-        <img
-          src={user.photoUrl}
-          alt={user.firstName}
-          width={48}
-          height={48}
-          style={{ borderRadius: '50%', objectFit: 'cover' }}
-        />
-      )}
-      <div>
-        <h2 style={{ fontSize: '18px', margin: 0 }}>
-          👋 Welcome, {user.firstName}
-          {user.lastName ? ` ${user.lastName}` : ''}
-        </h2>
-        {user.username && (
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>
-            @{user.username}
-          </p>
-        )}
-      </div>
-    </div>
-    <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: '0 0 12px 0' }}>
-      You&apos;re signed in to YouThopiaOS
-      {user.isPremium ? ' — thanks for being a Telegram Premium member! ⭐' : '.'}
-    </p>
-    {verified ? (
-      <p style={{ fontSize: '13px', color: '#16a34a', margin: 0, fontWeight: 600 }}>
-        🟢 Verified by the server
-      </p>
-    ) : (
-      <p style={{ fontSize: '13px', color: '#d97706', margin: 0, fontWeight: 600 }}>
-        ⚠️ Signed in locally — not verified by the server
-      </p>
-    )}
-  </>
-);
-
-/** The YouThopiaOS profile (XP, level, membership) shown beneath a server-verified greeting. */
-const ProfileDetails: React.FC<{ profile: ProfileState }> = ({ profile }) => {
-  switch (profile.status) {
-    case 'idle':
-      return null; // verification hasn't succeeded yet — nothing of ours to show
-    case 'loading':
-      return (
-        <p style={{ fontSize: '13px', color: '#64748b', margin: '12px 0 0 0' }}>
-          Loading your profile…
-        </p>
-      );
-    case 'ok': {
-      const p = profile.profile;
-      return (
-        <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--card-border)' }}>
-          <div style={{ display: 'flex', gap: '24px' }}>
-            <div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--primary-purple)' }}>
-                {p.level}
-              </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>Level</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--primary-purple)' }}>
-                {p.totalXp}
-              </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>Total XP</div>
-            </div>
-          </div>
-          <p style={{ fontSize: '12px', color: '#64748b', margin: '10px 0 0 0' }}>
-            Membership: {p.engagementLevel}
-          </p>
-        </div>
-      );
-    }
-    case 'none':
-      return (
-        <p style={{ fontSize: '13px', color: '#64748b', margin: '12px 0 0 0' }}>
-          You don&apos;t have a YouThopiaOS profile yet.
-        </p>
-      );
-    case 'unverified':
-      return null; // only rendered under the verified branch — a defensive no-op
-    case 'error':
-      return (
-        <p style={{ fontSize: '13px', color: '#dc2626', margin: '12px 0 0 0' }}>
-          Couldn&apos;t load your profile: {profile.message}
-        </p>
-      );
-  }
-};
+import React, { useState } from 'react';
+import { useTelegram } from './hooks/useTelegram';
+import { BottomNav } from './components/BottomNav';
+import { HomeTab } from './components/tabs/HomeTab';
+import { BibleTab } from './components/tabs/BibleTab';
+import { QuizTab } from './components/tabs/QuizTab';
+import { EventsTab } from './components/tabs/EventsTab';
+import { CommunityTab } from './components/tabs/CommunityTab';
+import type { TabId } from './types/navigation';
 
 const App: React.FC = () => {
   const { user, isInsideTelegram, verification, profile } = useTelegram();
+  const [activeTab, setActiveTab] = useState<TabId>('home');
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // One exhaustive switch over the single verification state (TS errors if a
-  // case is missed). 'display' here is not 'trust': the client-claimed user is
-  // only ever shown labeled 'not verified'; real trust is the 'verified' case.
-  const renderCard = () => {
-    switch (verification.status) {
-      case 'loading':
-        return (
-          <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-            Verifying your identity…
-          </p>
-        );
-      case 'verified':
-        return (
-          <>
-            <Greeting user={verification.user} verified />
-            <ProfileDetails profile={profile} />
-          </>
-        );
-      case 'unverified':
-        return user ? (
-          <Greeting user={user} verified={false} />
-        ) : (
-          <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-            Signed in, but the server couldn&apos;t verify you.
-          </p>
-        );
-      case 'no-telegram':
-        return (
-          <>
-            <h2 style={{ fontSize: '18px', margin: '0 0 12px 0' }}>👋 Welcome to YouThopiaOS</h2>
-            <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-              Open this app inside Telegram to sign in and see your profile.
-            </p>
-          </>
-        );
-      case 'error':
-        return (
-          <p style={{ fontSize: '14px', color: '#dc2626', lineHeight: '1.6', margin: 0 }}>
-            ⚠️ Couldn&apos;t reach the server: {verification.message}
-          </p>
-        );
+  const isVerified = verification.status === 'verified';
+  const profileData = profile.status === 'ok' ? profile.profile : null;
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeTab user={user} profile={profile} verified={isVerified} />;
+      case 'bible':
+        return <BibleTab />;
+      case 'quiz':
+        return <QuizTab profile={profile} />;
+      case 'events':
+        return <EventsTab />;
+      case 'community':
+        return <CommunityTab />;
     }
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '480px', margin: '0 auto' }}>
-      <header style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <h1 style={{ color: 'var(--primary-purple)', fontSize: '24px', margin: '0 0 8px 0' }}>
-          YouThopiaOS
-        </h1>
-        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
-          Christian Community Operating System
-        </p>
-      </header>
-
-      <div
+    <div
+      style={{
+        padding: '20px 16px 84px 16px',
+        maxWidth: '480px',
+        margin: '0 auto',
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Top Header */}
+      <header
         style={{
-          backgroundColor: 'var(--card-bg)',
-          border: '1px solid var(--card-border)',
-          borderRadius: '16px',
-          padding: '20px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+          paddingBottom: '12px',
+          borderBottom: '1px solid #e2e8f0',
         }}
       >
-        {renderCard()}
-      </div>
+        <div>
+          <h1 style={{ color: '#6d28d9', fontSize: '20px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
+            YouThopiaOS
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '11px', margin: '2px 0 0 0', fontWeight: 500 }}>
+            Christian Community Operating System
+          </p>
+        </div>
 
-      <p style={{ textAlign: 'center', fontSize: '12px', color: '#94a3b8', marginTop: '16px' }}>
-        {isInsideTelegram
-          ? '🟢 Connected through Telegram'
-          : '⚪ Running outside Telegram (dev preview)'}
-      </p>
-      <p style={{ textAlign: 'center', fontSize: '11px', color: '#cbd5e1', marginTop: '6px' }}>
-        Powered by YouThopia Bible Community
-      </p>
+        {/* Member Profile Button (Always Visible) */}
+        <button
+          onClick={() => setShowProfileModal(!showProfileModal)}
+          style={{
+            background: showProfileModal ? '#6d28d9' : '#ffffff',
+            color: showProfileModal ? '#ffffff' : '#0f172a',
+            border: '1px solid #e2e8f0',
+            borderRadius: '20px',
+            padding: '5px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '11px',
+            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: isVerified ? '#16a34a' : '#d97706',
+            }}
+          />
+          <span>{profileData ? `Lvl ${profileData.level} • ${profileData.totalXp} XP` : 'Profile'}</span>
+        </button>
+      </header>
+
+      {/* Member Profile Modal Overlay (Always toggleable) */}
+      {showProfileModal && (
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '14px',
+            padding: '18px',
+            marginBottom: '16px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Member Identity & Profile
+              </span>
+            </div>
+            <button
+              onClick={() => setShowProfileModal(false)}
+              style={{ background: 'none', border: 'none', fontSize: '14px', color: '#64748b', cursor: 'pointer', fontWeight: 700 }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* User Info Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid #f1f5f9' }}>
+            {user?.photoUrl && (
+              <img
+                src={user.photoUrl}
+                alt={user.firstName}
+                width={40}
+                height={40}
+                style={{ borderRadius: '50%', objectFit: 'cover' }}
+              />
+            )}
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                {user ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}` : 'Guest Member'}
+              </div>
+              {user?.username && (
+                <div style={{ fontSize: '12px', color: '#64748b' }}>@{user.username}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Level & XP Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+            <div style={{ backgroundColor: '#f8fafc', padding: '10px 12px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Level Rank</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#6d28d9', marginTop: '2px' }}>
+                Level {profileData ? profileData.level : 1}
+              </div>
+            </div>
+            <div style={{ backgroundColor: '#f8fafc', padding: '10px 12px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Earned</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
+                {profileData ? `${profileData.totalXp} XP` : '0 XP'}
+              </div>
+            </div>
+          </div>
+
+          {/* Status Meta */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b' }}>
+            <span>Identity Verification:</span>
+            <span style={{ fontWeight: 600, color: isVerified ? '#15803d' : '#b45309' }}>
+              {isVerified ? 'Verified Server-Side' : 'Dev Preview'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
+            <span>Community Tier:</span>
+            <span style={{ fontWeight: 600, color: '#0f172a', textTransform: 'capitalize' }}>
+              {profileData ? profileData.engagementLevel : 'Active Member'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Main Active Tab Content */}
+      <main>{renderActiveTab()}</main>
+
+      {/* Bottom Navigation */}
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Footer Meta */}
+      <footer style={{ textAlign: 'center', marginTop: '24px' }}>
+        <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
+          {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram (Dev Mode)'}
+        </p>
+        <p style={{ fontSize: '10px', color: '#cbd5e1', marginTop: '4px', margin: 0 }}>
+          Powered by YouThopia Bible Community
+        </p>
+      </footer>
     </div>
   );
 };

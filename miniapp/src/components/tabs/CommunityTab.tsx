@@ -1,0 +1,188 @@
+import React, { useState } from 'react';
+
+export const CommunityTab: React.FC = () => {
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  const directoryChannels = [
+    {
+      name: 'Main Community Group',
+      role: 'General Fellowship & Announcements',
+      tag: 'Primary Group',
+    },
+    {
+      name: 'Scripture & Devotional Channel',
+      role: 'Daily VOTD & Reflection Studies',
+      tag: 'Theo Bot',
+    },
+    {
+      name: 'Prayer & Intercession Line',
+      role: 'Prayer Requests & Midweek Sessions',
+      tag: 'Eddy Bot',
+    },
+    {
+      name: 'Quiz & Challenge Arena',
+      role: 'Daily Bible Trivia & Leaderboards',
+      tag: 'Lusy Bot',
+    },
+  ];
+
+  const onboardingSteps = [
+    {
+      step: '01',
+      title: 'Set Bible Preferences',
+      description: 'Choose your default Scripture translation (KJV, ASV, WEB, BBE) in the Bible tab.',
+    },
+    {
+      step: '02',
+      title: 'Earn Community XP',
+      description: 'Participate in daily quizzes and challenges to build your member rank.',
+    },
+    {
+      step: '03',
+      title: 'Join Community Events',
+      description: 'RSVP for weekly Bible studies and midweek prayer calls in the Events tab.',
+    },
+  ];
+
+  const faqs = [
+    {
+      question: 'What is YouThopiaOS?',
+      answer: 'YouThopiaOS is the software ecosystem powering YOUTHOPIA BIBLE COMMUNITY across 5 specialized Telegram assistants and this Mini App.',
+    },
+    {
+      question: 'How do I earn XP and level up?',
+      answer: 'You earn YouTopian Points (XP) by participating in daily quizzes hosted by Lusy Bot and completing Scripture challenges.',
+    },
+    {
+      question: 'How does verification work?',
+      answer: 'When you open the Mini App inside Telegram, your cryptographic initData signature is verified server-side by our FastAPI gateway.',
+    },
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Header */}
+      <div>
+        <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: '#0f172a' }}>
+          Community & Onboarding
+        </h2>
+        <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+          Powered by Susy Bot &bull; Hospitality, Directory & Help
+        </p>
+      </div>
+
+      {/* Susy Host Welcome Banner */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '14px',
+          padding: '18px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Hospitality & Onboarding Host
+          </span>
+        </div>
+        <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: 0 }}>
+          Welcome to the YouThopia Bible Community directory. I am Susy, your hostess and onboarding guide. Use this space to explore our channels, understand community rules, and learn how to participate.
+        </p>
+      </div>
+
+      {/* Directory Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
+          Community Directory
+        </h3>
+
+        {directoryChannels.map((chan, idx) => (
+          <div
+            key={idx}
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '14px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>{chan.name}</div>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{chan.role}</div>
+            </div>
+            <span style={{ fontSize: '11px', color: '#6d28d9', backgroundColor: '#f5f3ff', border: '1px solid #ddd6fe', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
+              {chan.tag}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* 3-Step Onboarding Guide */}
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 14px 0', color: '#0f172a' }}>
+          Member Onboarding Guide
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {onboardingSteps.map((s) => (
+            <div key={s.step} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: '#6d28d9', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '6px' }}>
+                {s.step}
+              </span>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>{s.title}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', lineHeight: '1.5' }}>{s.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Community FAQ */}
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 12px 0', color: '#0f172a' }}>
+          Frequently Asked Questions
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {faqs.map((faq, index) => {
+            const isOpen = activeFaq === index;
+            return (
+              <div key={index} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                <button
+                  onClick={() => setActiveFaq(isOpen ? null : index)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    padding: '6px 0',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#0f172a',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>{faq.question}</span>
+                  <span style={{ color: '#64748b', fontSize: '16px' }}>{isOpen ? '-' : '+'}</span>
+                </button>
+                {isOpen && (
+                  <p style={{ fontSize: '12px', color: '#475569', lineHeight: '1.6', margin: '4px 0 6px 0' }}>
+                    {faq.answer}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};

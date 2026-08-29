@@ -8,11 +8,14 @@ Exposes:
                    trust boundary end-to-end.
   - GET /profile — the verified caller's stored YouThopiaOS profile + XP, fetched
                    from Supabase by the verified telegram_id (404 if no account).
+  - Static Mini App — Serves miniapp/dist compiled SPA at root '/' when deployed.
 """
 from functools import lru_cache
+import os
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from gateway.app.auth import require_telegram_user
 from gateway.app.models import TelegramUser, UserProfile
@@ -22,14 +25,11 @@ from shared.services.user_service import UserService
 
 app = FastAPI(title="YouThopiaOS Gateway")
 
-# The Mini App runs on a different origin (dev: localhost:3000; prod: the
-# BotFather HTTPS URL, added in Module 5) than this gateway. Browsers block
-# cross-origin reads unless the server opts in. Allow only our own front-end
-# origin and only what /me needs: GET + the Authorization header that carries
-# the tma initData. No wildcard, no credentials (we use a header, not cookies).
+# The Mini App runs on a different origin in dev (localhost:3000) than this gateway.
+# Allow dev origins, plus wildcard/same-origin in production when served directly.
 _ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Vite dev server (miniapp/vite.config.ts)
-    "http://127.0.0.1:3000",  # same server, IP form — Vite (host: true) advertises both
+    "http://localhost:3000",  # Vite dev server
+    "http://127.0.0.1:3000",  # Vite dev server IP
 ]
 
 app.add_middleware(
@@ -79,3 +79,9 @@ async def profile(
     if row is None:
         raise HTTPException(status_code=404, detail="No YouThopiaOS profile for this Telegram user")
     return UserProfile.model_validate(row)
+
+
+# Single-service deployment: Mount compiled Mini App frontend at root '/'
+miniapp_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../miniapp/dist"))
+if os.path.exists(miniapp_dist):
+    app.mount("/", StaticFiles(directory=miniapp_dist, html=True), name="miniapp")
