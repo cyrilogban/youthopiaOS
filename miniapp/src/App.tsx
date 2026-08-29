@@ -54,11 +54,11 @@ const App: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ color: '#6d28d9', fontSize: '20px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
-            YouThopiaOS
+          <h1 style={{ color: '#6d28d9', fontSize: '16px', fontWeight: 800, margin: 0, letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
+            YOUTHOPIA BIBLE COMMUNITY
           </h1>
           <p style={{ color: '#64748b', fontSize: '11px', margin: '2px 0 0 0', fontWeight: 500 }}>
-            Christian Community Operating System
+            Sharing God&apos;s Love All The Way
           </p>
         </div>
 

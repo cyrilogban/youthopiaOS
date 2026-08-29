@@ -51,8 +51,12 @@ export const CommunityTab: React.FC = () => {
 
   const faqs = [
     {
+      question: 'What is YouThopia Bible Community?',
+      answer: 'YouThopia Bible Community is a vibrant digital fellowship of believers dedicated to studying sacred Scripture, deepening faith, participating in daily interactive quizzes, and sharing God\'s love all the way.',
+    },
+    {
       question: 'What is YouThopiaOS?',
-      answer: 'YouThopiaOS is the software ecosystem powering YOUTHOPIA BIBLE COMMUNITY across 5 specialized Telegram assistants and this Mini App.',
+      answer: 'YouThopiaOS is the underlying software engine powering our 5 specialized Telegram assistants (Theo, Lusy, Pete, Eddy, Susy) and this unified Mini App platform.',
     },
     {
       question: 'How do I earn XP and level up?',
