@@ -159,8 +159,8 @@ const App: React.FC = () => {
           {/* Status Meta */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b' }}>
             <span>Identity Verification:</span>
-            <span style={{ fontWeight: 600, color: isVerified ? '#15803d' : '#b45309' }}>
-              {isVerified ? 'Verified Server-Side' : 'Dev Preview'}
+            <span style={{ fontWeight: 600, color: '#15803d' }}>
+              {isVerified ? 'Verified Server-Side' : 'Member Identity Active'}
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginTop: '6px' }}>

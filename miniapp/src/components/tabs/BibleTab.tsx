@@ -1,42 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { getRawInitData } from '../../services/telegram';
-import { fetchSettings, updateSettings } from '../../services/api';
+import { fetchSettings, fetchVotd, updateSettings, type VotdItem } from '../../services/api';
 
 type TranslationCode = 'KJV' | 'ASV' | 'WEB' | 'BBE';
-
-interface TranslationInfo {
-  code: TranslationCode;
-  name: string;
-  text: string;
-}
 
 export const BibleTab: React.FC = () => {
   const [selectedTranslation, setSelectedTranslation] = useState<TranslationCode>('KJV');
   const [dailyDevotional, setDailyDevotional] = useState<boolean>(true);
+  const [votd, setVotd] = useState<VotdItem | null>(null);
+  const [loadingVotd, setLoadingVotd] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  const translations: Record<TranslationCode, TranslationInfo> = {
-    KJV: {
-      code: 'KJV',
-      name: 'King James Version',
-      text: 'For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.',
-    },
-    ASV: {
-      code: 'ASV',
-      name: 'American Standard Version',
-      text: 'For I know the thoughts that I think toward you, saith Jehovah, thoughts of peace, and not of evil, to give you hope in your latter end.',
-    },
-    WEB: {
-      code: 'WEB',
-      name: 'World English Bible',
-      text: 'For I know the thoughts that I think toward you, says Yahweh, thoughts of peace, and not of evil, to give you hope and a future.',
-    },
-    BBE: {
-      code: 'BBE',
-      name: 'Bible in Basic English',
-      text: 'For I have conscious knowledge of the thoughts which I have for you, says the Lord, thoughts of peace and not of evil, to give you a future and a hope.',
-    },
+  const translationNames: Record<TranslationCode, string> = {
+    KJV: 'King James Version',
+    ASV: 'American Standard Version',
+    WEB: 'World English Bible',
+    BBE: 'Bible in Basic English',
   };
 
   useEffect(() => {
@@ -45,10 +25,18 @@ export const BibleTab: React.FC = () => {
     void (async () => {
       const settings = await fetchSettings(raw);
       if (cancelled) return;
-      if (['KJV', 'ASV', 'WEB', 'BBE'].includes(settings.translation)) {
-        setSelectedTranslation(settings.translation as TranslationCode);
-      }
+      const initialTrans = ['KJV', 'ASV', 'WEB', 'BBE'].includes(settings.translation)
+        ? (settings.translation as TranslationCode)
+        : 'KJV';
+      setSelectedTranslation(initialTrans);
       setDailyDevotional(settings.dailyDevotional);
+
+      // Fetch dynamic VOTD from Supabase + Bible API for the user's translation
+      const item = await fetchVotd(initialTrans);
+      if (!cancelled) {
+        setVotd(item);
+        setLoadingVotd(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -58,9 +46,19 @@ export const BibleTab: React.FC = () => {
   const handleTranslationChange = async (code: TranslationCode) => {
     setSelectedTranslation(code);
     setIsSaving(true);
+    setLoadingVotd(true);
     const raw = getRawInitData();
-    const ok = await updateSettings(raw, { translation: code, dailyDevotional });
+
+    // Parallel fetch: save preference to Supabase AND load dynamic verse text for new translation
+    const [ok, newVotd] = await Promise.all([
+      updateSettings(raw, { translation: code, dailyDevotional }),
+      fetchVotd(code),
+    ]);
+
+    setVotd(newVotd);
+    setLoadingVotd(false);
     setIsSaving(false);
+
     if (ok) {
       setSaveMessage(`Translation saved to Supabase: ${code}`);
       setTimeout(() => setSaveMessage(null), 3000);
@@ -79,8 +77,6 @@ export const BibleTab: React.FC = () => {
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
-
-  const current = translations[selectedTranslation];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -111,7 +107,7 @@ export const BibleTab: React.FC = () => {
         </div>
       )}
 
-      {/* VOTD Display Card */}
+      {/* Dynamic VOTD Display Card */}
       <div
         style={{
           backgroundColor: '#ffffff',
@@ -123,16 +119,16 @@ export const BibleTab: React.FC = () => {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <span style={{ fontSize: '12px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Daily Scripture Focus
+            Daily Scripture Focus (Supabase Live)
           </span>
           <span style={{ fontSize: '11px', color: '#64748b', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-            {current.code}
+            {selectedTranslation}
           </span>
         </div>
 
         {/* Translation Selector Buttons (Synced Live to Supabase) */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-          {(Object.keys(translations) as TranslationCode[]).map((code) => (
+          {(['KJV', 'ASV', 'WEB', 'BBE'] as TranslationCode[]).map((code) => (
             <button
               key={code}
               disabled={isSaving}
@@ -155,14 +151,22 @@ export const BibleTab: React.FC = () => {
           ))}
         </div>
 
-        <p style={{ fontSize: '15px', color: '#1e293b', lineHeight: '1.7', fontStyle: 'italic', margin: '0 0 14px 0' }}>
-          &ldquo;{current.text}&rdquo;
-        </p>
+        {loadingVotd ? (
+          <div style={{ fontSize: '13px', color: '#64748b', margin: '12px 0' }}>
+            Fetching today&apos;s active Scripture from Supabase…
+          </div>
+        ) : (
+          <>
+            <p style={{ fontSize: '15px', color: '#1e293b', lineHeight: '1.7', fontStyle: 'italic', margin: '0 0 14px 0' }}>
+              &ldquo;{votd?.text}&rdquo;
+            </p>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{current.name}</span>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Jeremiah 29:11</span>
-        </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>{translationNames[selectedTranslation]}</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{votd?.reference}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Supabase Preference Settings Card */}
@@ -190,23 +194,6 @@ export const BibleTab: React.FC = () => {
             {dailyDevotional ? 'Enabled' : 'Disabled'}
           </button>
         </div>
-      </div>
-
-      {/* Devotional Reflection Card */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '14px',
-          padding: '18px',
-        }}
-      >
-        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 8px 0', color: '#0f172a' }}>
-          Daily Reflection
-        </h3>
-        <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-          God&apos;s promises provide unwavering assurance in seasons of transition. Trust His timeline as you build with purpose and faith.
-        </p>
       </div>
     </div>
   );

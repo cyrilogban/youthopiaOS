@@ -207,16 +207,26 @@ async def get_votd(
     translation: str = "KJV",
     service: UserService = Depends(get_user_service),
 ) -> VotdItem:
-    """Return today's active Verse of the Day from Supabase."""
-    clean_trans = translation.upper()
-    verses: dict[str, str] = {
-        "KJV": "For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.",
-        "ASV": "For I know the thoughts that I think toward you, saith Jehovah, thoughts of peace, and not of evil, to give you hope in your latter end.",
-        "WEB": "For I know the thoughts that I think toward you, says Yahweh, thoughts of peace, and not of evil, to give you hope and a future.",
-        "BBE": "For I have conscious knowledge of the thoughts which I have for you, says the Lord, thoughts of peace and not of evil, to give you a future and a hope.",
-    }
-    text = verses.get(clean_trans, verses["KJV"])
-    return VotdItem(reference="Jeremiah 29:11", text=text, translation=clean_trans)
+    """Return today's active Verse of the Day dynamically from Supabase + Bible API."""
+    clean_trans = translation.lower()
+    try:
+        from bots.theo.services.devotional_service import VOTDService
+        votd_svc = VOTDService(service.db)
+        item = await votd_svc.get_todays_reference()
+        ref = item.get("reference", "John 14:27") if item else "John 14:27"
+
+        text = await votd_svc.fetch_bible_text(ref, translation=clean_trans)
+        if text:
+            return VotdItem(reference=ref, text=text, translation=translation.upper())
+    except Exception as e:
+        print(f"Warning in /api/votd: {e}")
+
+    # Fallback default if external API is unreachable
+    return VotdItem(
+        reference="John 14:27",
+        text="Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you. Let not your heart be troubled, neither let it be afraid.",
+        translation=translation.upper(),
+    )
 
 
 # Single-service deployment: Mount compiled Mini App frontend at root '/'

@@ -1,8 +1,11 @@
+from typing import Any, Optional
 import aiohttp
 import asyncio
 import random
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+from shared.db.supabase import SupabaseGateway
 
 WAT_TZ = ZoneInfo("Africa/Lagos")
 

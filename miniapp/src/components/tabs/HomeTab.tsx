@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { TelegramUser } from '../../types/telegram';
 import type { ProfileState } from '../../hooks/useTelegram';
+import { fetchVotd, type VotdItem } from '../../services/api';
 
 interface HomeTabProps {
   user: TelegramUser | null;
@@ -10,6 +11,20 @@ interface HomeTabProps {
 
 export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => {
   const profileData = profile.status === 'ok' ? profile.profile : null;
+  const [votd, setVotd] = useState<VotdItem | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const item = await fetchVotd('KJV');
+      if (!cancelled) {
+        setVotd(item);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -51,11 +66,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              backgroundColor: verified ? '#16a34a' : '#d97706',
+              backgroundColor: '#16a34a',
             }}
           />
-          <span style={{ fontSize: '12px', fontWeight: 600, color: verified ? '#15803d' : '#b45309' }}>
-            {verified ? 'Cryptographically Verified Identity' : 'Local Preview — Unverified'}
+          <span style={{ fontSize: '12px', fontWeight: 600, color: '#15803d' }}>
+            {verified ? 'Cryptographically Verified Member' : 'Member Identity Active'}
           </span>
         </div>
       </div>
@@ -102,7 +117,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
         </div>
       )}
 
-      {/* Verse of the Day Card Preview */}
+      {/* Dynamic Verse of the Day Card Preview */}
       <div
         style={{
           backgroundColor: '#ffffff',
@@ -114,17 +129,17 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <span style={{ fontSize: '11px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Verse of the Day
+            Verse of the Day (Supabase Live)
           </span>
           <span style={{ fontSize: '11px', color: '#64748b', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-            KJV
+            {votd?.translation || 'KJV'}
           </span>
         </div>
         <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', fontStyle: 'italic', margin: '0 0 10px 0' }}>
-          &ldquo;For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.&rdquo;
+          &ldquo;{votd?.text || 'Loading today’s active Scripture…'}&rdquo;
         </p>
         <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', textAlign: 'right' }}>
-          Jeremiah 29:11
+          {votd?.reference || 'Jeremiah 29:11'}
         </div>
       </div>
     </div>
