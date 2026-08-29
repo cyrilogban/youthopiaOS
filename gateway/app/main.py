@@ -111,7 +111,12 @@ async def profile(
     """Return the verified caller's stored YouThopiaOS profile (profile + XP + quiz stats)."""
     row = await service.get_by_telegram_id(user.id)
     if row is None:
-        raise HTTPException(status_code=404, detail="No YouThopiaOS profile for this Telegram user")
+        row = await service.get_or_create_from_telegram({
+            "telegram_id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "username": user.username,
+        })
 
     stats = await quiz_svc.get_user_quiz_stats(row["id"])
     profile_dict = dict(row)
