@@ -6,7 +6,6 @@ type TranslationCode = 'KJV' | 'ASV' | 'WEB' | 'BBE';
 
 export const BibleTab: React.FC = () => {
   const [selectedTranslation, setSelectedTranslation] = useState<TranslationCode>('KJV');
-  const [dailyDevotional, setDailyDevotional] = useState<boolean>(true);
   const [votd, setVotd] = useState<VotdItem | null>(null);
   const [loadingVotd, setLoadingVotd] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -29,7 +28,6 @@ export const BibleTab: React.FC = () => {
         ? (settings.translation as TranslationCode)
         : 'KJV';
       setSelectedTranslation(initialTrans);
-      setDailyDevotional(settings.dailyDevotional);
 
       // Fetch dynamic VOTD from Supabase + Bible API for the user's translation
       const item = await fetchVotd(initialTrans);
@@ -51,7 +49,7 @@ export const BibleTab: React.FC = () => {
 
     // Parallel fetch: save preference to Supabase AND load dynamic verse text for new translation
     const [ok, newVotd] = await Promise.all([
-      updateSettings(raw, { translation: code, dailyDevotional }),
+      updateSettings(raw, { translation: code, dailyDevotional: true }),
       fetchVotd(code),
     ]);
 
@@ -61,19 +59,6 @@ export const BibleTab: React.FC = () => {
 
     if (ok) {
       setSaveMessage(`Translation saved to Supabase: ${code}`);
-      setTimeout(() => setSaveMessage(null), 3000);
-    }
-  };
-
-  const handleToggleDevotional = async () => {
-    const nextVal = !dailyDevotional;
-    setDailyDevotional(nextVal);
-    setIsSaving(true);
-    const raw = getRawInitData();
-    const ok = await updateSettings(raw, { translation: selectedTranslation, dailyDevotional: nextVal });
-    setIsSaving(false);
-    if (ok) {
-      setSaveMessage(`Daily verse reminder ${nextVal ? 'enabled' : 'disabled'} in Supabase`);
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
@@ -119,7 +104,7 @@ export const BibleTab: React.FC = () => {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <span style={{ fontSize: '12px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Daily Scripture Focus (Supabase Live)
+            Daily Scripture Focus
           </span>
           <span style={{ fontSize: '11px', color: '#64748b', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
             {selectedTranslation}
@@ -153,7 +138,7 @@ export const BibleTab: React.FC = () => {
 
         {loadingVotd ? (
           <div style={{ fontSize: '13px', color: '#64748b', margin: '12px 0' }}>
-            Fetching today&apos;s active Scripture from Supabase…
+            Fetching today&apos;s active Scripture…
           </div>
         ) : (
           <>
@@ -167,33 +152,6 @@ export const BibleTab: React.FC = () => {
             </div>
           </>
         )}
-      </div>
-
-      {/* Supabase Preference Settings Card */}
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>Daily Verse Reminders</div>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Receive Theo&apos;s 6:00 AM daily devotional in Telegram</div>
-          </div>
-          <button
-            disabled={isSaving}
-            onClick={handleToggleDevotional}
-            style={{
-              backgroundColor: dailyDevotional ? '#16a34a' : '#cbd5e1',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '20px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {dailyDevotional ? 'Enabled' : 'Disabled'}
-          </button>
-        </div>
       </div>
     </div>
   );

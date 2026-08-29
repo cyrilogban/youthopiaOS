@@ -106,17 +106,17 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
         </div>
       </div>
 
-      {/* Live Supabase Leaderboard Section */}
+      {/* Live Community Leaderboard Section */}
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
-            Live Leaderboard (Supabase)
+            Top Community Leaderboard
           </h3>
           <span style={{ fontSize: '11px', color: '#6d28d9', fontWeight: 600 }}>Top 10</span>
         </div>
 
         {loadingLeaderboard ? (
-          <div style={{ fontSize: '12px', color: '#64748b' }}>Loading live rankings from Supabase…</div>
+          <div style={{ fontSize: '12px', color: '#64748b' }}>Loading community rankings…</div>
         ) : leaderboard.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {leaderboard.map((item, idx) => (
