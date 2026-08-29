@@ -9,8 +9,12 @@
 import type { TelegramUser } from '../types/telegram';
 import type { UserProfile } from '../types/profile';
 
-// Dev default; prod origin injected via env at build time (Module 5).
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:8000';
+// Dev default (localhost:8000); prod origin dynamically derived from window.location.origin when deployed.
+const GATEWAY_URL =
+  import.meta.env.VITE_GATEWAY_URL ??
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+    ? window.location.origin
+    : 'http://localhost:8000');
 
 /** The gateway's /me JSON — Telegram's native snake_case; optionals arrive as null. */
 interface GatewayUser {
