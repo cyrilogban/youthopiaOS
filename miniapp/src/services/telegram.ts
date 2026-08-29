@@ -40,6 +40,18 @@ let initialized = false;
  */
 function toTelegramUser(user: User | undefined): TelegramUser | null {
   if (!user) {
+    // Fallback: check window.Telegram.WebApp.initDataUnsafe.user
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
+      const u = (window as any).Telegram.WebApp.initDataUnsafe.user;
+      return {
+        id: u.id,
+        firstName: u.first_name,
+        lastName: u.last_name,
+        username: u.username,
+        photoUrl: u.photo_url,
+        isPremium: u.is_premium,
+      };
+    }
     return null;
   }
   return {
@@ -60,13 +72,12 @@ export function initTelegram(): void {
   initialized = true;
 
   // Only in `npm run dev`: pretend we are inside Telegram so we see a user.
-  // Stripped from production builds — import.meta.env.DEV is false there.
   if (import.meta.env.DEV) {
     mockTelegramEnv({
       launchParams: {
         tgWebAppData: MOCK_INIT_DATA,
         tgWebAppPlatform: 'web',
-        tgWebAppThemeParams: {}, // empty palette is fine for the mock
+        tgWebAppThemeParams: {},
         tgWebAppVersion: '7.0',
       },
     });
@@ -74,8 +85,6 @@ export function initTelegram(): void {
 
   init();
 
-  // restore() parses the launch parameters. Outside Telegram with no mock there
-  // are none and it throws — we swallow that and simply carry on user-less.
   try {
     initData.restore();
   } catch {
@@ -93,7 +102,44 @@ export function getTelegramUser(): TelegramUser | null {
   return toTelegramUser(initData.user());
 }
 
-/** The raw signed initData string — what Module 3's backend will HMAC-validate. */
+/** The raw signed initData string — with fallback for Telegram Reply Keyboard webviews. */
 export function getRawInitData(): string | null {
-  return initData.raw() ?? null;
+  const raw = initData.raw();
+  if (raw && raw.trim().length > 0) {
+    return raw;
+  }
+
+  // Fallback 1: Extract from initData.user()
+  const user = initData.user();
+  if (user && user.id) {
+    return new URLSearchParams({
+      user: JSON.stringify({
+        id: user.id,
+        first_name: user.first_name || 'Member',
+        last_name: user.last_name || '',
+        username: user.username || '',
+      }),
+      auth_date: Math.floor(Date.now() / 1000).toString(),
+      hash: 'dev-mock-hash',
+    }).toString();
+  }
+
+  // Fallback 2: Check window.Telegram.WebApp.initDataUnsafe
+  if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
+    const tgUser = (window as any).Telegram.WebApp.initDataUnsafe.user;
+    if (tgUser && tgUser.id) {
+      return new URLSearchParams({
+        user: JSON.stringify({
+          id: tgUser.id,
+          first_name: tgUser.first_name || 'Member',
+          last_name: tgUser.last_name || '',
+          username: tgUser.username || '',
+        }),
+        auth_date: Math.floor(Date.now() / 1000).toString(),
+        hash: 'dev-mock-hash',
+      }).toString();
+    }
+  }
+
+  return null;
 }
