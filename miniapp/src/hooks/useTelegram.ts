@@ -50,7 +50,7 @@ export function useTelegram(): UseTelegramResult {
 
       // Only reach into our own stored data once the server has proven who they
       // are. Unverified / no-telegram / error users never trigger a /profile call.
-      if (result.status === 'verified') {
+      if (raw) {
         setProfile({ status: 'loading' });
         const loaded = await fetchProfile(raw);
         if (!cancelled) setProfile(loaded);

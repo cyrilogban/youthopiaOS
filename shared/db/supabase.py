@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+import time
 from typing import Any
 
 from supabase import Client, create_client
@@ -9,6 +10,17 @@ from supabase import Client, create_client
 
 class SupabaseNotConfiguredError(RuntimeError):
     pass
+
+
+def _execute_with_retry(query_fn, retries: int = 3):
+    """Executes a Supabase query function with 3 retries in case of transient network/SSL timeouts."""
+    for attempt in range(retries):
+        try:
+            return query_fn()
+        except Exception as e:
+            if attempt == retries - 1:
+                raise e
+            time.sleep(0.2)
 
 
 @dataclass(slots=True)
@@ -32,7 +44,7 @@ class SupabaseGateway:
 
     async def insert(self, table: str, payload: dict[str, Any]) -> dict[str, Any]:
         def run() -> dict[str, Any]:
-            response = self._client().table(table).insert(payload).execute()
+            response = _execute_with_retry(lambda: self._client().table(table).insert(payload).execute())
             return _first(response.data)
 
         return await asyncio.to_thread(run)
@@ -40,7 +52,7 @@ class SupabaseGateway:
     async def upsert(self, table: str, payload: dict[str, Any], *, on_conflict: str | None = None) -> dict[str, Any]:
         def run() -> dict[str, Any]:
             query = self._client().table(table).upsert(payload, on_conflict=on_conflict)
-            response = query.execute()
+            response = _execute_with_retry(lambda: query.execute())
             return _first(response.data)
 
         return await asyncio.to_thread(run)
@@ -59,7 +71,7 @@ class SupabaseGateway:
             query = self._client().table(table).select("*")
             for column, value in filters.items():
                 query = query.eq(column, value)
-            response = query.limit(1).execute()
+            response = _execute_with_retry(lambda: query.limit(1).execute())
             return response.data[0] if response.data else None
 
         return await asyncio.to_thread(run)
@@ -69,22 +81,21 @@ class SupabaseGateway:
             query = self._client().table(table).select("*")
             for column, value in filters.items():
                 query = query.eq(column, value)
-            response = query.execute()
+            response = _execute_with_retry(lambda: query.execute())
             return response.data or []
 
         return await asyncio.to_thread(run)
 
-    async def update_by_id(self, table: str, record_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    async def update_by_id(self, table: str, record_id: str, updates: dict[str, Any]) -> dict[str, Any]:
         def run() -> dict[str, Any]:
-            response = self._client().table(table).update(payload).eq("id", record_id).execute()
+            query = self._client().table(table).update(updates).eq("id", record_id)
+            response = _execute_with_retry(lambda: query.execute())
             return _first(response.data)
 
         return await asyncio.to_thread(run)
 
 
-def _first(data: list[dict[str, Any]] | Any) -> dict[str, Any]:
-    if isinstance(data, list) and data:
-        return data[0]
-    if isinstance(data, dict):
-        return data
-    return {}
+def _first(data: list[dict[str, Any]] | None) -> dict[str, Any]:
+    if not data:
+        return {}
+    return data[0]

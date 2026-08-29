@@ -18,14 +18,14 @@ import type { TelegramUser } from '../types/telegram';
  */
 const MOCK_INIT_DATA = new URLSearchParams({
   user: JSON.stringify({
-    id: 99281,
+    id: 1701349791,
     first_name: 'Cyril',
     last_name: 'Ogban',
-    username: 'cyrilogban',
+    username: 'ogbancyrilukam',
     language_code: 'en',
     is_premium: false,
   }),
-  auth_date: '1700000000',
+  auth_date: Math.floor(Date.now() / 1000).toString(),
   hash: 'dev-mock-hash',
   signature: 'dev-mock-signature',
 }).toString();
