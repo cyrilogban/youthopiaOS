@@ -10,6 +10,8 @@ Exposes:
                    from Supabase by the verified telegram_id (404 if no account).
   - Static Mini App — Serves miniapp/dist compiled SPA at root '/' when deployed.
 """
+import asyncio
+from contextlib import asynccontextmanager
 from functools import lru_cache
 import os
 
@@ -23,7 +25,25 @@ from shared.config.settings import settings
 from shared.db.supabase import SupabaseGateway
 from shared.services.user_service import UserService
 
-app = FastAPI(title="YouThopiaOS Gateway")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager — starts all 5 Telegram bots concurrently in background
+    tasks when the FastAPI web server boots, ensuring a single process runs both the
+    bots and the gateway web server.
+    """
+    bot_task = None
+    try:
+        from core.bot_manager import run as run_bots
+        bot_task = asyncio.create_task(run_bots())
+    except Exception as e:
+        print(f"Warning: Could not start bot manager in lifespan: {e}")
+    yield
+    if bot_task:
+        bot_task.cancel()
+
+
+app = FastAPI(title="YouThopiaOS Gateway", lifespan=lifespan)
 
 # The Mini App runs on a different origin in dev (localhost:3000) than this gateway.
 # Allow dev origins, plus wildcard/same-origin in production when served directly.
