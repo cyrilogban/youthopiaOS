@@ -109,7 +109,15 @@ export function getRawInitData(): string | null {
     return raw;
   }
 
-  // Fallback 1: Extract from initData.user()
+  // Fallback 1: Check window.Telegram.WebApp.initData from telegram-web-app.js
+  if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initData) {
+    const windowRaw = (window as any).Telegram.WebApp.initData;
+    if (windowRaw && windowRaw.trim().length > 0) {
+      return windowRaw;
+    }
+  }
+
+  // Fallback 2: Extract from initData.user()
   const user = initData.user();
   if (user && user.id) {
     return new URLSearchParams({
@@ -124,7 +132,7 @@ export function getRawInitData(): string | null {
     }).toString();
   }
 
-  // Fallback 2: Check window.Telegram.WebApp.initDataUnsafe
+  // Fallback 3: Check window.Telegram.WebApp.initDataUnsafe
   if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
     const tgUser = (window as any).Telegram.WebApp.initDataUnsafe.user;
     if (tgUser && tgUser.id) {
