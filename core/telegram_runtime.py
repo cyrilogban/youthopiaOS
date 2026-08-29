@@ -134,5 +134,14 @@ async def run_polling_bot(
     logger.info("Starting %s bot polling.", config.name)
     await dispatcher.start_polling(
         bot,
-        allowed_updates=["message", "callback_query", "my_chat_member", "chat_member"]
+        allowed_updates=[
+            "message",
+            "edited_message",
+            "channel_post",
+            "edited_channel_post",
+            "callback_query",
+            "my_chat_member",
+            "chat_member",
+            "chat_join_request",
+        ]
     )
