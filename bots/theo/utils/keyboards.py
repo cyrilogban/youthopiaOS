@@ -108,35 +108,42 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def build_verse_actions_keyboard(category: str, reference: str) -> InlineKeyboardMarkup:
+def build_verse_actions_keyboard(category: str, reference: str, is_group: bool = False) -> InlineKeyboardMarkup:
     """Builds the inline action keyboard for verse cards: [ Open App ] [ 💜 Save ] [ Next Verse ] [ Share ]."""
     clean_ref = reference.replace(" ", "_")
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                get_open_app_inline_button(),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="💜 Save",
-                    callback_data=VerseAction(
-                        action="save", 
-                        category=category, 
-                        reference=clean_ref
-                    ).pack()
-                ),
-                InlineKeyboardButton(
-                    text="Next Verse",
-                    callback_data=VerseAction(
-                        action="next", 
-                        category=category, 
-                        reference=clean_ref
-                    ).pack()
-                ),
-                InlineKeyboardButton(
-                    text="Share",
-                    switch_inline_query=reference
-                ),
-            ]
-        ]
-    )
+    buttons = []
+    
+    if is_group:
+        # In groups, we use a deep link to start the app via Theo's DM
+        buttons.append([
+            InlineKeyboardButton(text="Open App 📱", url="https://t.me/iamtheobot?start=app")
+        ])
+    else:
+        buttons.append([
+            get_open_app_inline_button(),
+        ])
+        
+    buttons.append([
+        InlineKeyboardButton(
+            text="💜 Save",
+            callback_data=VerseAction(
+                action="save", 
+                category=category, 
+                reference=clean_ref
+            ).pack()
+        ),
+        InlineKeyboardButton(
+            text="Next Verse",
+            callback_data=VerseAction(
+                action="next", 
+                category=category, 
+                reference=clean_ref
+            ).pack()
+        ),
+        InlineKeyboardButton(
+            text="Share",
+            switch_inline_query=reference
+        ),
+    ])
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)

@@ -912,7 +912,8 @@ def build_theo_router(description: str) -> Router:
             blockquote = f"<blockquote>{text}</blockquote>"
             reply_text = f"{header}\n{blockquote}"
 
-            markup = build_verse_actions_keyboard(category=callback_data.category, reference=new_ref)
+            is_group = callback.message.chat.type != "private"
+            markup = build_verse_actions_keyboard(category=callback_data.category, reference=new_ref, is_group=is_group)
             await callback.message.edit_text(reply_text, parse_mode="HTML", reply_markup=markup)
             await callback.answer()
         else:
