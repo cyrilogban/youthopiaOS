@@ -53,7 +53,7 @@ def build_eddy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamedyybot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
             ],
             [
                 InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
@@ -73,7 +73,7 @@ def build_eddy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamedyybot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Eddy to Admin", callback_data="eddy_prompt_admin"),
