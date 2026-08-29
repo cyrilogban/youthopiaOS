@@ -165,7 +165,7 @@ async def trigger_auto_quiz_cycle(bot: Bot, services: ServiceContainer) -> None:
                 }
 
                 # Schedule race timeout and self destruct cleanup after 5 minutes (300s)
-                asyncio.create_task(race_timeout_task(race_key, services, bot, 300))
+                asyncio.create_task(race_timeout_task(chat_id, sent_msg.message_id, services, bot, 300))
                 asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 300))
 
             # Mode 2: Native Quiz Polls
