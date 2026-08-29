@@ -138,7 +138,6 @@ BOT_FAMILY_DIRECTORY_TEXT = (
 
 GLOBAL_REPLY_BUTTONS: List[KeyboardButton] = [
     KeyboardButton(text="👤 My Profile"),
-    KeyboardButton(text="Open App", web_app=WebAppInfo(url=MINI_APP_URL)),
     KeyboardButton(text="ℹ️ Help"),
     KeyboardButton(text="🌐 Community"),
 ]
