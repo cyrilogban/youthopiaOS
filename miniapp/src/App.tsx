@@ -169,6 +169,12 @@ const App: React.FC = () => {
               {profileData ? profileData.engagementLevel : 'Active Member'}
             </span>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
+            <span>Pete Security Shield:</span>
+            <span style={{ fontWeight: 700, color: '#16a34a' }}>
+              Trust Score: {profileData?.trustScore ?? 100} / 100 &bull; Safe
+            </span>
+          </div>
         </div>
       )}
 

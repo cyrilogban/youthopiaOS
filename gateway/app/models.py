@@ -46,6 +46,7 @@ class UserProfile(BaseModel):
     engagement_level: str
     total_xp: int
     level: int
+    trust_score: int = 100
 
 
 class UserSettings(BaseModel):

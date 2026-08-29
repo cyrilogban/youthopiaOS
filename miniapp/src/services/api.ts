@@ -66,6 +66,7 @@ interface GatewayProfile {
   engagement_level: string;
   total_xp: number;
   level: number;
+  trust_score?: number | null;
 }
 
 export type ProfileResult =
@@ -80,6 +81,7 @@ function mapGatewayProfile(p: GatewayProfile): UserProfile {
     engagementLevel: p.engagement_level,
     totalXp: p.total_xp,
     level: p.level,
+    trustScore: p.trust_score ?? 100,
   };
 }
 

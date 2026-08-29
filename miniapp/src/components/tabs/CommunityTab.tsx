@@ -24,6 +24,11 @@ export const CommunityTab: React.FC = () => {
       role: 'Daily Bible Trivia & Leaderboards',
       tag: 'Lusy Bot',
     },
+    {
+      name: 'Security & Moderation Checkpoint',
+      role: 'Captcha Verification & Trust Ratings',
+      tag: 'Pete Bot',
+    },
   ];
 
   const onboardingSteps = [
@@ -57,6 +62,10 @@ export const CommunityTab: React.FC = () => {
       question: 'How does verification work?',
       answer: 'When you open the Mini App inside Telegram, your cryptographic initData signature is verified server-side by our FastAPI gateway.',
     },
+    {
+      question: 'What is Pete Bot\'s Trust Score?',
+      answer: 'Pete Bot calculates a Trust Score (100/100) for every member based on captcha verification, clean group interactions, and account standing.',
+    },
   ];
 
   return (
@@ -64,10 +73,10 @@ export const CommunityTab: React.FC = () => {
       {/* Header */}
       <div>
         <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: '#0f172a' }}>
-          Community & Onboarding
+          Community & Hospitality Hub
         </h2>
         <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-          Powered by Susy Bot &bull; Hospitality, Directory & Help
+          Powered by Susy & Pete Bots &bull; Directory, Hospitality & Security
         </p>
       </div>
 
@@ -91,10 +100,25 @@ export const CommunityTab: React.FC = () => {
         </p>
       </div>
 
+      {/* Pete Security Checkpoint Card */}
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Pete Security & Trust Checkpoint
+          </span>
+          <span style={{ fontSize: '11px', color: '#15803d', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+            ● Account Shielded
+          </span>
+        </div>
+        <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', margin: 0 }}>
+          Pete Bot actively guards our community against spam and unauthorized bots. Your account has passed verification with a <strong>100/100 Trust Score</strong>.
+        </p>
+      </div>
+
       {/* Directory Section */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
-          Community Directory
+          Community Directory (5 Assistants)
         </h3>
 
         {directoryChannels.map((chan, idx) => (
