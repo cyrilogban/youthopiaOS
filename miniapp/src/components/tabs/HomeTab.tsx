@@ -70,7 +70,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
             }}
           />
           <span style={{ fontSize: '12px', fontWeight: 600, color: '#15803d' }}>
-            {verified ? 'Cryptographically Verified Member' : 'Member Identity Active'}
+            {verified ? 'Verified Member' : 'Member Identity Active'}
           </span>
         </div>
       </div>
