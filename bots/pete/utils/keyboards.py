@@ -47,6 +47,9 @@ def build_pete_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
+                get_open_app_inline_button(),
+            ],
+            [
                 InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
             ],
@@ -63,6 +66,9 @@ def build_pete_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="⚡ Promote Pete to Admin", callback_data="pete_prompt_admin"),
             ],

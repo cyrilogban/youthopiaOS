@@ -57,6 +57,9 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
+                get_open_app_inline_button(),
+            ],
+            [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
                 InlineKeyboardButton(text="🏆 Rankings", callback_data="lusy_menu_leaderboard"),
             ],
@@ -73,6 +76,9 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="⚡ Promote Lusy to Admin", callback_data="lusy_prompt_admin"),
             ],

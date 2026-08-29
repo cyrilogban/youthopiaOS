@@ -61,6 +61,9 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
+                get_open_app_inline_button(),
+            ],
+            [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ],
@@ -77,6 +80,9 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="⚡ Promote Theo to Admin", callback_data="theo_prompt_admin"),
             ],
@@ -103,10 +109,13 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
 
 
 def build_verse_actions_keyboard(category: str, reference: str) -> InlineKeyboardMarkup:
-    """Builds the inline action keyboard for verse cards: [ 💜 Save ] [ Next Verse ] [ Share ]."""
+    """Builds the inline action keyboard for verse cards: [ Open App ] [ 💜 Save ] [ Next Verse ] [ Share ]."""
     clean_ref = reference.replace(" ", "_")
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(
                     text="💜 Save",

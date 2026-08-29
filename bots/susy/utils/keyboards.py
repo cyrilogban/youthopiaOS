@@ -72,11 +72,15 @@ def build_onboarding_tour_keyboard(page: int) -> InlineKeyboardMarkup:
 def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     Group welcome notice inline keyboard (Admin):
+    [ Open App ]
     [ 💬 Meet Susy ]  [ 🌐 Community ]
     [ 🌐 Explore Ecosystem ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="💬 Meet Susy", url="https://t.me/iamsusiebot?start=welcome"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),
@@ -91,11 +95,15 @@ def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
 def build_susy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     Group welcome notice inline keyboard (Regular Member):
+    [ Open App ]
     [ ⚡ Promote Susy to Admin ]
     [ 💬 Meet Susy ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="⚡ Promote Susy to Admin", callback_data="susy_prompt_admin"),
             ],

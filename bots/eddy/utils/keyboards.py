@@ -53,6 +53,9 @@ def build_eddy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
+                get_open_app_inline_button(),
+            ],
+            [
                 InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
             ],
@@ -69,6 +72,9 @@ def build_eddy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                get_open_app_inline_button(),
+            ],
             [
                 InlineKeyboardButton(text="⚡ Promote Eddy to Admin", callback_data="eddy_prompt_admin"),
             ],
