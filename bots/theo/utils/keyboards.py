@@ -109,41 +109,31 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
 
 
 def build_verse_actions_keyboard(category: str, reference: str, is_group: bool = False, bot_username: str = "iamtheobot") -> InlineKeyboardMarkup:
-    """Builds the inline action keyboard for verse cards: [ Open App ] [ 💜 Save ] [ Next Verse ] [ Share ]."""
+    """Builds the inline action keyboard for verse cards: [ 💜 Save ] [ Next Verse ] [ Share ]."""
     clean_ref = reference.replace(" ", "_")
-    buttons = []
-    
-    if is_group:
-        # In groups, we use the direct Telegram Mini App URL (t.me/botname/appname)
-        buttons.append([
-            InlineKeyboardButton(text="Open App", url=f"https://t.me/{bot_username}/app")
-        ])
-    else:
-        buttons.append([
-            get_open_app_inline_button(),
-        ])
-        
-    buttons.append([
-        InlineKeyboardButton(
-            text="💜 Save",
-            callback_data=VerseAction(
-                action="save", 
-                category=category, 
-                reference=clean_ref
-            ).pack()
-        ),
-        InlineKeyboardButton(
-            text="Next Verse",
-            callback_data=VerseAction(
-                action="next", 
-                category=category, 
-                reference=clean_ref
-            ).pack()
-        ),
-        InlineKeyboardButton(
-            text="Share",
-            switch_inline_query=reference
-        ),
-    ])
-    
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="💜 Save",
+                    callback_data=VerseAction(
+                        action="save", 
+                        category=category, 
+                        reference=clean_ref
+                    ).pack()
+                ),
+                InlineKeyboardButton(
+                    text="Next Verse",
+                    callback_data=VerseAction(
+                        action="next", 
+                        category=category, 
+                        reference=clean_ref
+                    ).pack()
+                ),
+                InlineKeyboardButton(
+                    text="Share",
+                    switch_inline_query=reference
+                ),
+            ]
+        ]
+    )
