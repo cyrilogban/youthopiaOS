@@ -75,9 +75,12 @@ def build_theo_router(description: str) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:
+        from aiogram.types import BotCommandScopeAllChatAdministrators
+
         private_commands = [
             BotCommand(command="start", description="Wake Up Theo"),
             BotCommand(command="help", description="Show help information"),
+            BotCommand(command="translation", description="Change personal translation"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
             BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
         ]
@@ -88,10 +91,14 @@ def build_theo_router(description: str) -> Router:
             BotCommand(command="start", description="Wake Up Theo"),
             BotCommand(command="help", description="Show help information"),
         ]
+        admin_group_commands = group_commands + [
+            BotCommand(command="translation", description="Change group translation"),
+        ]
 
         try:
             await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
             await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+            await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
 
             import os
             from aiogram.types import BotCommandScopeChat
@@ -758,6 +765,19 @@ def build_theo_router(description: str) -> Router:
 
     @router.message(Command("translation"))
     async def set_translation_command(message: Message, services: ServiceContainer) -> None:
+        is_group = message.chat.type != "private"
+        
+        if is_group:
+            # Enforce admin verification immediately
+            try:
+                member = await message.bot.get_chat_member(chat_id=message.chat.id, user_id=message.from_user.id)
+                if member.status not in ("administrator", "creator"):
+                    await message.answer("⚠️ Only group administrators can use the translation command.")
+                    return
+            except Exception as e:
+                logger.error(f"Failed to check admin status: {e}")
+                return
+
         parts = message.text.split(maxsplit=1) if message.text else []
         if len(parts) < 2:
             await message.answer(
