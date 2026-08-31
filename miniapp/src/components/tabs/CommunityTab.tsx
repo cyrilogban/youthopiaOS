@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Card, Pill, SectionTitle } from '../ui';
 
 export const CommunityTab: React.FC = () => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -52,11 +53,13 @@ export const CommunityTab: React.FC = () => {
   const faqs = [
     {
       question: 'What is YouThopia Bible Community?',
-      answer: 'YouThopia Bible Community is a vibrant digital fellowship of believers dedicated to studying sacred Scripture, deepening faith, participating in daily interactive quizzes, and sharing God\'s love all the way.',
+      answer:
+        'YouThopia Bible Community is a vibrant digital fellowship of believers dedicated to studying sacred Scripture, deepening faith, participating in daily interactive quizzes, and sharing God\'s love all the way.',
     },
     {
       question: 'What is YouThopiaOS?',
-      answer: 'YouThopiaOS is the underlying software engine powering our 5 specialized Telegram assistants (Theo, Lusy, Pete, Eddy, Susy) and this unified Mini App platform.',
+      answer:
+        'YouThopiaOS is the underlying software engine powering our 5 specialized Telegram assistants (Theo, Lusy, Pete, Eddy, Susy) and this unified Mini App platform.',
     },
     {
       question: 'How do I earn XP and level up?',
@@ -68,18 +71,19 @@ export const CommunityTab: React.FC = () => {
     },
     {
       question: 'What is Pete Bot\'s Trust Score?',
-      answer: 'Pete Bot calculates a Trust Score (100/100) for every member based on captcha verification, clean group interactions, and account standing.',
+      answer:
+        'Pete Bot calculates a Trust Score (100/100) for every member based on captcha verification, clean group interactions, and account standing.',
     },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header */}
       <div>
-        <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: '#0f172a' }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-color)', letterSpacing: '-0.02em' }}>
           Community & Hospitality Hub
         </h2>
-        <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
           Powered by Susy & Pete Bots &bull; Directory, Hospitality & Security
         </p>
       </div>
@@ -87,100 +91,116 @@ export const CommunityTab: React.FC = () => {
       {/* Susy Host Welcome Banner */}
       <div
         style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '14px',
-          padding: '18px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+          background: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 18,
+          border: '1px solid var(--purple-100)',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: -30,
+            right: -20,
+            width: 90,
+            height: 90,
+            borderRadius: '50%',
+            background: 'rgba(109,40,217,0.08)',
+          }}
+        />
+        <div style={{ position: 'relative' }}>
+          <Pill color="purple" style={{ marginBottom: 8 }}>
             Hospitality & Onboarding Host
-          </span>
+          </Pill>
+          <p style={{ fontSize: 14, color: 'var(--slate-700)', lineHeight: 1.65, margin: 0 }}>
+            Welcome to the YouThopia Bible Community directory. I am Susy, your hostess and onboarding guide. Use this space to explore our
+            channels, understand community rules, and learn how to participate.
+          </p>
         </div>
-        <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: 0 }}>
-          Welcome to the YouThopia Bible Community directory. I am Susy, your hostess and onboarding guide. Use this space to explore our channels, understand community rules, and learn how to participate.
-        </p>
       </div>
 
       {/* Pete Security Checkpoint Card */}
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Pete Security & Trust Checkpoint
-          </span>
-          <span style={{ fontSize: '11px', color: '#15803d', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-            ● Account Shielded
-          </span>
-        </div>
-        <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', margin: 0 }}>
-          Pete Bot actively guards our community against spam and unauthorized bots. Your account has passed verification with a <strong>100/100 Trust Score</strong>.
-        </p>
-      </div>
-
-      {/* Directory Section */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
-          Community Directory (5 Assistants)
-        </h3>
-
-        {directoryChannels.map((chan, idx) => (
-          <div
-            key={idx}
+      <Card style={{ padding: 18 }} hover>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <span
             style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px',
-              padding: '14px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--success)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
             }}
           >
+            Pete Security & Trust Checkpoint
+          </span>
+          <Pill color="success">● Account Shielded</Pill>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
+          Pete Bot actively guards our community against spam and unauthorized bots. Your account has passed verification with a{' '}
+          <strong style={{ color: 'var(--success)' }}>100/100 Trust Score</strong>.
+        </p>
+      </Card>
+
+      {/* Directory Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <SectionTitle>Community Directory (5 Assistants)</SectionTitle>
+
+        {directoryChannels.map((chan, idx) => (
+          <Card key={idx} hover style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>{chan.name}</div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{chan.role}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-color)' }}>{chan.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{chan.role}</div>
             </div>
-            <span style={{ fontSize: '11px', color: '#6d28d9', backgroundColor: '#f5f3ff', border: '1px solid #ddd6fe', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
-              {chan.tag}
-            </span>
-          </div>
+            <Pill color="purple">{chan.tag}</Pill>
+          </Card>
         ))}
       </div>
 
       {/* 3-Step Onboarding Guide */}
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 14px 0', color: '#0f172a' }}>
+      <Card style={{ padding: 18 }} hover>
+        <SectionTitle
+          right={<Pill color="purple">3 Steps</Pill>}
+        >
           Member Onboarding Guide
-        </h3>
+        </SectionTitle>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {onboardingSteps.map((s) => (
-            <div key={s.step} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#6d28d9', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '6px' }}>
+            <div key={s.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: 'var(--primary-purple)',
+                  background: 'var(--purple-50)',
+                  border: '1px solid var(--purple-100)',
+                  padding: '5px 9px',
+                  borderRadius: 'var(--radius-md)',
+                  flexShrink: 0,
+                }}
+              >
                 {s.step}
               </span>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>{s.title}</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', lineHeight: '1.5' }}>{s.description}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-color)' }}>{s.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.5 }}>{s.description}</div>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Community FAQ */}
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 12px 0', color: '#0f172a' }}>
-          Frequently Asked Questions
-        </h3>
+      <Card style={{ padding: 18 }} hover>
+        <SectionTitle>Frequently Asked Questions</SectionTitle>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {faqs.map((faq, index) => {
             const isOpen = activeFaq === index;
             return (
-              <div key={index} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+              <div key={index} style={{ borderBottom: '1px solid var(--slate-100)', paddingBottom: 8 }}>
                 <button
                   onClick={() => setActiveFaq(isOpen ? null : index)}
                   style={{
@@ -188,10 +208,10 @@ export const CommunityTab: React.FC = () => {
                     textAlign: 'left',
                     background: 'none',
                     border: 'none',
-                    padding: '6px 0',
-                    fontSize: '13px',
+                    padding: '8px 0',
+                    fontSize: 13,
                     fontWeight: 600,
-                    color: '#0f172a',
+                    color: 'var(--text-color)',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -199,18 +219,33 @@ export const CommunityTab: React.FC = () => {
                   }}
                 >
                   <span>{faq.question}</span>
-                  <span style={{ color: '#64748b', fontSize: '16px' }}>{isOpen ? '-' : '+'}</span>
+                  <span
+                    style={{
+                      color: isOpen ? 'var(--primary-purple)' : 'var(--text-muted)',
+                      fontSize: 18,
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      marginLeft: 12,
+                      transition: 'color 0.15s var(--ease)',
+                    }}
+                  >
+                    {isOpen ? '−' : '+'}
+                  </span>
                 </button>
-                {isOpen && (
-                  <p style={{ fontSize: '12px', color: '#475569', lineHeight: '1.6', margin: '4px 0 6px 0' }}>
-                    {faq.answer}
-                  </p>
-                )}
+                <div
+                  style={{
+                    maxHeight: isOpen ? 200 : 0,
+                    overflow: 'hidden',
+                    transition: 'max-height 0.25s var(--ease)',
+                  }}
+                >
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '2px 0 6px 0' }}>{faq.answer}</p>
+                </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

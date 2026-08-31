@@ -111,13 +111,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
         left: 0,
         right: 0,
         backgroundColor: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderTop: '1px solid #e2e8f0',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderTop: '1px solid var(--slate-200)',
+        boxShadow: '0 -6px 24px rgba(15, 23, 42, 0.06)',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        padding: '8px 0 12px 0',
+        padding: '6px 0 12px 0',
         zIndex: 1000,
         maxWidth: '480px',
         margin: '0 auto',
@@ -136,16 +137,43 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px',
+              gap: 4,
               cursor: 'pointer',
-              padding: '6px 12px',
-              color: active ? 'var(--primary-purple, #6d28d9)' : '#64748b',
-              fontWeight: active ? 600 : 400,
-              fontSize: '11px',
-              transition: 'color 0.15s ease',
+              padding: '8px 12px',
+              color: active ? 'var(--primary-purple)' : 'var(--text-muted)',
+              fontWeight: active ? 700 : 400,
+              fontSize: 11,
+              transition: 'color 0.15s var(--ease)',
+              position: 'relative',
             }}
           >
-            <Icon active={active} />
+            {active && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -8,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 28,
+                  height: 3,
+                  borderRadius: 2,
+                  background: 'var(--primary-purple)',
+                }}
+              />
+            )}
+            <span
+              style={{
+                backgroundColor: active ? 'var(--purple-50)' : 'transparent',
+                borderRadius: 'var(--radius-md)',
+                padding: '5px 12px',
+                transition: 'background 0.15s var(--ease)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon active={active} />
+            </span>
             <span>{label}</span>
           </button>
         );

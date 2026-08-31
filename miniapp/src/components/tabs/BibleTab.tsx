@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { getRawInitData } from '../../services/telegram';
 import { fetchSettings, fetchVotd, updateSettings, type VotdItem } from '../../services/api';
+import { Card, Skeleton } from '../ui';
 
 type TranslationCode = 'KJV' | 'ASV' | 'WEB' | 'BBE';
+
+const TRANSLATIONS: TranslationCode[] = ['KJV', 'ASV', 'WEB', 'BBE'];
 
 export const BibleTab: React.FC = () => {
   const [selectedTranslation, setSelectedTranslation] = useState<TranslationCode>('KJV');
@@ -24,12 +27,11 @@ export const BibleTab: React.FC = () => {
     void (async () => {
       const settings = await fetchSettings(raw);
       if (cancelled) return;
-      const initialTrans = ['KJV', 'ASV', 'WEB', 'BBE'].includes(settings.translation)
+      const initialTrans = TRANSLATIONS.includes(settings.translation as TranslationCode)
         ? (settings.translation as TranslationCode)
         : 'KJV';
       setSelectedTranslation(initialTrans);
 
-      // Fetch dynamic VOTD from Supabase + Bible API for the user's translation
       const item = await fetchVotd(initialTrans);
       if (!cancelled) {
         setVotd(item);
@@ -47,7 +49,6 @@ export const BibleTab: React.FC = () => {
     setLoadingVotd(true);
     const raw = getRawInitData();
 
-    // Parallel fetch: save preference to Supabase AND load dynamic verse text for new translation
     const [ok, newVotd] = await Promise.all([
       updateSettings(raw, { translation: code, dailyDevotional: true }),
       fetchVotd(code),
@@ -64,13 +65,13 @@ export const BibleTab: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header */}
       <div>
-        <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: '#0f172a' }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-color)', letterSpacing: '-0.02em' }}>
           Scripture Hub
         </h2>
-        <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
           Powered by Theo Bot &bull; Multi-Translation Scripture & Devotionals
         </p>
       </div>
@@ -79,13 +80,14 @@ export const BibleTab: React.FC = () => {
       {saveMessage && (
         <div
           style={{
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            color: '#15803d',
-            borderRadius: '10px',
+            background: 'var(--success-bg)',
+            border: '1px solid var(--success-border)',
+            color: 'var(--success)',
+            borderRadius: 'var(--radius-md)',
             padding: '10px 14px',
-            fontSize: '12px',
+            fontSize: 12,
             fontWeight: 600,
+            animation: 'fadeSlideIn 0.2s var(--ease) both',
           }}
         >
           {saveMessage}
@@ -93,66 +95,104 @@ export const BibleTab: React.FC = () => {
       )}
 
       {/* Dynamic VOTD Display Card */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '14px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <Card style={{ padding: 20 }} hover>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--primary-purple)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
             Daily Scripture Focus
           </span>
-          <span style={{ fontSize: '11px', color: '#64748b', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+          <span
+            style={{
+              fontSize: 11,
+              color: 'var(--primary-purple)',
+              background: 'var(--purple-50)',
+              border: '1px solid var(--purple-200)',
+              padding: '2px 8px',
+              borderRadius: 'var(--radius-full)',
+              fontWeight: 600,
+            }}
+          >
             {selectedTranslation}
           </span>
         </div>
 
-        {/* Translation Selector Buttons (Synced Live to Supabase) */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-          {(['KJV', 'ASV', 'WEB', 'BBE'] as TranslationCode[]).map((code) => (
-            <button
-              key={code}
-              disabled={isSaving}
-              onClick={() => handleTranslationChange(code)}
-              style={{
-                background: selectedTranslation === code ? '#6d28d9' : '#f1f5f9',
-                color: selectedTranslation === code ? '#ffffff' : '#64748b',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '5px 12px',
-                fontSize: '11px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                opacity: isSaving ? 0.7 : 1,
-              }}
-            >
-              {code}
-            </button>
-          ))}
+        {/* Translation Selector Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            marginBottom: 18,
+            background: 'var(--slate-100)',
+            borderRadius: 'var(--radius-md)',
+            padding: 4,
+          }}
+        >
+          {TRANSLATIONS.map((code) => {
+            const active = selectedTranslation === code;
+            return (
+              <button
+                key={code}
+                disabled={isSaving}
+                onClick={() => handleTranslationChange(code)}
+                style={{
+                  flex: 1,
+                  background: active ? 'var(--surface)' : 'transparent',
+                  color: active ? 'var(--primary-purple)' : 'var(--text-secondary)',
+                  border: 'none',
+                  borderRadius: 'calc(var(--radius-md) - 4px)',
+                  padding: '8px 4px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: active ? 'var(--shadow-xs)' : 'none',
+                  transition: 'all 0.15s var(--ease)',
+                  opacity: isSaving ? 0.6 : 1,
+                }}
+              >
+                {code}
+              </button>
+            );
+          })}
         </div>
 
         {loadingVotd ? (
-          <div style={{ fontSize: '13px', color: '#64748b', margin: '12px 0' }}>
-            Fetching today&apos;s active Scripture…
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
+            <Skeleton height={16} />
+            <Skeleton height={16} width="92%" />
+            <Skeleton height={16} width="70%" />
           </div>
         ) : (
           <>
-            <p style={{ fontSize: '15px', color: '#1e293b', lineHeight: '1.7', fontStyle: 'italic', margin: '0 0 14px 0' }}>
-              &ldquo;{votd?.text}&rdquo;
-            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, background: 'var(--grad-hero)', flexShrink: 0 }} />
+              <p style={{ fontSize: 16, color: 'var(--text-color)', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>
+                &ldquo;{votd?.text}&rdquo;
+              </p>
+            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>{translationNames[selectedTranslation]}</span>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{votd?.reference}</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTop: '1px solid var(--slate-100)',
+                paddingTop: 12,
+                marginTop: 16,
+              }}
+            >
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{translationNames[selectedTranslation]}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary-purple)' }}>{votd?.reference}</span>
             </div>
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
