@@ -1,10 +1,62 @@
 :root {
-  --bg-color: #f8fafc;
+  /* Backgrounds & surfaces */
+  --bg-color: #f6f7fb;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+
+  /* Text */
   --text-color: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  /* Primary purple ramp */
   --primary-purple: #6d28d9;
   --primary-purple-light: #8b5cf6;
-  --card-bg: #ffffff;
-  --card-border: #e2e8f0;
+  --primary-purple-dark: #5b21b6;
+  --purple-50: #f5f3ff;
+  --purple-100: #ede9fe;
+  --purple-200: #ddd6fe;
+
+  /* Slate ramp */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-500: #64748b;
+  --slate-700: #334155;
+
+  /* Status colors */
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+  --warning: #d97706;
+
+  /* Gradients */
+  --grad-hero: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 55%, #a78bfa 100%);
+  --grad-quiz: linear-gradient(135deg, #4c1d95 0%, #6d28d9 100%);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08);
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 0.15s;
+  --dur: 0.25s;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
@@ -14,4 +66,74 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Entrance animation for tab content */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-enter {
+  animation: fadeSlideIn 0.28s var(--ease) both;
+}
+
+/* Shimmer for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--slate-100) 25%, #eceff4 37%, var(--slate-100) 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Card hover lift */
+@keyframes cardLift {
+  from {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+  to {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Full app fade-in on load */
+@keyframes appFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.app-enter {
+  animation: appFade 0.4s ease both;
+}
+
+/* Misc */
+::selection {
+  background: var(--purple-200);
 }

@@ -187,4 +187,4 @@ This is a faith tool for community use to support Christian digital communities 
 ## 💜 About YOUTHOPIA BIBLE COMMUNITY
 YouThopiaOS is built for the **YOUTHOPIA BIBLE COMMUNITY** ecosystem — a Christ-centered digital community focused on faith, spiritual growth, personal development, and meaningful connection.
 
-**SHARING GOD'S LOVE ALL THE WAY 💜🎉**
+**SHARING GOD'S LOVE ALL THE WAY 💜**

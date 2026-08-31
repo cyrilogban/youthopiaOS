@@ -73,11 +73,15 @@ class DeliveryService:
                 
                 markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=True, bot_username=bot_username)
                 
+                metadata = sub.get("metadata") or {}
+                message_thread_id = metadata.get("message_thread_id")
+
                 await self.bot.send_message(
                     chat_id=telegram_chat_id, 
                     text=message, 
                     parse_mode="HTML",
-                    reply_markup=markup
+                    reply_markup=markup,
+                    message_thread_id=message_thread_id,
                 )
                 success_count += 1
             except Exception as e:
