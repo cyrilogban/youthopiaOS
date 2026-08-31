@@ -714,16 +714,47 @@ def build_theo_router(description: str) -> Router:
             await callback.answer("Invalid translation option.", show_alert=True)
             return
 
-        user = await services.identity.resolve_telegram_user(callback.from_user)
-        state = await services.users.get_user_state(user["id"], "theo")
-        state["translation"] = trans_code
-        await services.users.set_user_state(user["id"], "theo", state)
+        is_group = callback.message.chat.type != "private"
 
-        await callback.answer(f"Translation set to {trans_code.upper()}!")
-        await callback.message.edit_text(
-            f"✅ Bible translation updated to <b>{trans_code.upper()}</b>.",
-            parse_mode="HTML"
-        )
+        if is_group:
+            # 1. Authorize: Only admins/creators can change translation for the group
+            try:
+                member = await callback.bot.get_chat_member(chat_id=callback.message.chat.id, user_id=callback.from_user.id)
+                if member.status not in ("administrator", "creator"):
+                    await callback.answer("⚠️ Only group administrators can change the group's translation!", show_alert=True)
+                    return
+            except Exception as e:
+                logger.error(f"Failed to check admin status: {e}")
+                await callback.answer("⚠️ Failed to verify admin permissions.", show_alert=True)
+                return
+
+            # 2. Update Group translation in DB
+            chat = await register_group_chat(callback.message, services, "theo")
+            if chat:
+                await services.chats.set_bot_settings(
+                    bot_name="theo",
+                    chat_id=chat["id"],
+                    settings={"translation": trans_code},
+                )
+                await callback.answer(f"Group translation set to {trans_code.upper()}!")
+                await callback.message.edit_text(
+                    f"✅ Group translation updated to <b>{trans_code.upper()}</b>.",
+                    parse_mode="HTML"
+                )
+            else:
+                await callback.answer("⚠️ Error updating group translation.", show_alert=True)
+        else:
+            # 3. Update user's personal translation preference in DB (Private DM)
+            user = await services.identity.resolve_telegram_user(callback.from_user)
+            state = await services.users.get_user_state(user["id"], "theo")
+            state["translation"] = trans_code
+            await services.users.set_user_state(user["id"], "theo", state)
+
+            await callback.answer(f"Personal translation set to {trans_code.upper()}!")
+            await callback.message.edit_text(
+                f"✅ Personal translation updated to <b>{trans_code.upper()}</b>.",
+                parse_mode="HTML"
+            )
 
     @router.message(Command("translation"))
     async def set_translation_command(message: Message, services: ServiceContainer) -> None:
@@ -817,11 +848,15 @@ def build_theo_router(description: str) -> Router:
             asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             return
 
+        thread_id = getattr(message, "message_thread_id", None)
+        sub_meta = {"message_thread_id": thread_id} if thread_id else {}
+
         await services.chats.set_subscription(
             bot_name="theo",
             chat_id=chat["id"],
             subscription_type="daily_devotional",
             enabled=True,
+            metadata=sub_meta,
         )
         sent_msg = await message.answer(
             f"✅ <b>{message.chat.title}</b> is now subscribed to Theo's Daily Verse (6:00 AM).",
