@@ -248,11 +248,11 @@ const App: React.FC = () => {
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Footer Meta */}
-      <footer style={{ textAlign: 'center', marginTop: 24 }}>
+      <footer style={{ textAlign: 'center', marginTop: 28 }}>
         <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
           {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram (Dev Mode)'}
         </p>
-        <p style={{ fontSize: 10, color: 'var(--slate-300)', marginTop: 4 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)', marginTop: 6 }}>
           Powered by YouThopia Bible Community
         </p>
       </footer>
