@@ -45,7 +45,7 @@ function toTelegramUser(user: User | undefined): TelegramUser | null {
       const u = (window as any).Telegram.WebApp.initDataUnsafe.user;
       return {
         id: u.id,
-        firstName: u.first_name,
+        firstName: (u.first_name || '').split(' ')[0],
         lastName: u.last_name,
         username: u.username,
         photoUrl: u.photo_url,
@@ -56,7 +56,7 @@ function toTelegramUser(user: User | undefined): TelegramUser | null {
   }
   return {
     id: user.id,
-    firstName: user.first_name,
+    firstName: (user.first_name || '').split(' ')[0],
     lastName: user.last_name,
     username: user.username,
     photoUrl: user.photo_url,

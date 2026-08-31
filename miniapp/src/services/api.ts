@@ -30,7 +30,7 @@ export type VerifyResult =
 function mapGatewayUser(u: GatewayUser): TelegramUser {
   return {
     id: u.id,
-    firstName: u.first_name,
+    firstName: (u.first_name || '').split(' ')[0],
     lastName: u.last_name ?? undefined,
     username: u.username ?? undefined,
     photoUrl: u.photo_url ?? undefined,
