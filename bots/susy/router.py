@@ -62,6 +62,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     @router.startup()
     async def on_startup(bot: Bot) -> None:
+        from aiogram.types import BotCommandScopeAllChatAdministrators
+
         private_commands = [
             BotCommand(command="start", description="Meet Susy"),
             BotCommand(command="profile", description="View your profile"),
@@ -73,6 +75,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             BotCommand(command="help", description="Susy Hostess Guide"),
         ]
         
+        admin_group_commands = group_commands + [
+            BotCommand(command="setup_gateway", description="Setup group app gateway card"),
+        ]
+
         import os
         from aiogram.types import BotCommandScopeChat
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
@@ -85,6 +91,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
 
     # -------------------------------------------------------------------------
     # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)
@@ -217,6 +224,62 @@ def build_susy_router(description: str, music_service=None) -> Router:
             asyncio.create_task(self_destruct_message(bot, callback.message.chat.id, sent_msg.message_id, 20))
         except Exception:
             pass
+
+    # -------------------------------------------------------------------------
+    # ADMIN COMMAND: /setup_gateway
+    # -------------------------------------------------------------------------
+    @router.message(Command("setup_gateway"))
+    async def handle_setup_gateway(message: Message, bot: Bot, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await message.answer("⚠️ This command is only for group chats.")
+            return
+
+        chat_id = message.chat.id
+        admin_id = message.from_user.id if message.from_user else None
+
+        # Clean trigger message
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
+        # Check if caller is admin
+        try:
+            member = await bot.get_chat_member(chat_id, admin_id)
+            if member.status not in ("creator", "administrator"):
+                msg = await message.answer("⚠️ Only group administrators can use /setup_gateway.")
+                asyncio.create_task(self_destruct_message(bot, chat_id, msg.message_id, 10))
+                return
+        except Exception:
+            return
+
+        welcome_text = (
+            "<b>WELCOME TO YOUTHOPIA BIBLE COMMUNITY 💜</b>\n\n"
+            "<blockquote>Here, we grow together in God's Word, challenge ourselves with Bible quizzes, and connect with fellow believers.\n\n"
+            "Tap the button below to launch the YouThopiaOS Mini App and unlock your YouTopian profile!</blockquote>"
+        )
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app")]
+        ])
+
+        try:
+            sent_msg = await message.answer(
+                welcome_text,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            # Try to pin it
+            try:
+                await bot.pin_chat_message(chat_id=chat_id, message_id=sent_msg.message_id)
+            except Exception as e:
+                logger.warning(f"Failed to pin gateway card: {e}")
+                warn_msg = await message.answer(
+                    "⚠️ <b>Gateway Created</b>, but I could not pin it automatically.\n"
+                    "Please grant Susy <b>Pin Messages</b> rights, or pin the card manually!"
+                )
+                asyncio.create_task(self_destruct_message(bot, chat_id, warn_msg.message_id, 15))
+        except Exception as e:
+            logger.error(f"Failed to send gateway card: {e}")
 
     # -------------------------------------------------------------------------
     # ADMIN COMMAND: /leave or /remove_susy
