@@ -303,7 +303,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         await register_group_chat(message, services, "susy")
         user = await services.identity.resolve_telegram_user(message.from_user)
-        first_name = message.from_user.first_name or "Friend"
+        first_name = (message.from_user.first_name or "Friend").split()[0]
         
         if user.get("engagement_level") == "new":
             welcome_text = (
@@ -501,7 +501,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         card_text = render_shared_profile_card(
             user_data=user,
-            telegram_first_name=user_from.first_name or "Friend",
+            telegram_first_name=(user_from.first_name or "Friend").split()[0],
             bot_specific_stats=bot_stats
         )
 
@@ -551,7 +551,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 pass
             return
 
-        first_name = event.from_user.first_name or "Friend"
+        first_name = (event.from_user.first_name or "Friend").split()[0]
         help_text = (
             f"<b>🎵 Susy | Welcome Bot Help Guide, {first_name}!</b>\n"
             "<blockquote>I am Susy (@iamsusiebot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
