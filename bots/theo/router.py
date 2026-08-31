@@ -93,6 +93,8 @@ def build_theo_router(description: str) -> Router:
         ]
         admin_group_commands = group_commands + [
             BotCommand(command="translation", description="Change group translation"),
+            BotCommand(command="subscribe", description="Subscribe group to daily verses"),
+            BotCommand(command="unsubscribe", description="Unsubscribe group from daily verses"),
         ]
 
         try:
