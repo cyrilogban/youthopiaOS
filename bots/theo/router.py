@@ -133,6 +133,7 @@ def build_theo_router(description: str) -> Router:
                 if not sub:
                     await services.chats.set_subscription("theo", chat_id, "daily_devotional", enabled=True)
             logger.info("Theo startup: Successfully backfilled VOTD subscriptions for all users and chats.")
+            await services.users.backfill_user_display_names()
         except Exception as e:
             logger.warning(f"Theo startup backfill warning: {e}")
 

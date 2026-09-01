@@ -43,9 +43,12 @@ function toTelegramUser(user: User | undefined): TelegramUser | null {
     // Fallback: check window.Telegram.WebApp.initDataUnsafe.user
     if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
       const u = (window as any).Telegram.WebApp.initDataUnsafe.user;
+      const firstName = (u.first_name || '').trim();
+      const lastName = (u.last_name || '').trim();
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
       return {
         id: u.id,
-        firstName: u.first_name,
+        firstName: fullName || firstName || 'Member',
         lastName: u.last_name,
         username: u.username,
         photoUrl: u.photo_url,
@@ -54,9 +57,12 @@ function toTelegramUser(user: User | undefined): TelegramUser | null {
     }
     return null;
   }
+  const firstName = (user.first_name || '').trim();
+  const lastName = (user.last_name || '').trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
   return {
     id: user.id,
-    firstName: user.first_name,
+    firstName: fullName || firstName || 'Member',
     lastName: user.last_name,
     username: user.username,
     photoUrl: user.photo_url,

@@ -26,6 +26,12 @@ class UserService:
         from datetime import datetime, timezone
         telegram_id = int(telegram["telegram_id"])
         account = await self.db.find_one("telegram_accounts", "telegram_id", telegram_id)
+        
+        first_name = (telegram.get("first_name") or "").strip()
+        last_name = (telegram.get("last_name") or "").strip()
+        full_name = f"{first_name} {last_name}".strip()
+        display_name = full_name or telegram.get("username") or "YouTopian"
+
         if account:
             await self.db.update_by_id(
                 "telegram_accounts",
@@ -38,13 +44,11 @@ class UserService:
                     "last_seen_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
-            # Ensure display_name is actively synced with current Telegram name
-            display_name = telegram.get("first_name") or telegram.get("username")
+            # Ensure display_name is actively synced with current full Telegram name
             if display_name:
                 await self.db.update_by_id("users", account["user_id"], {"display_name": display_name})
             return await self.db.get_by_id("users", account["user_id"])
 
-        display_name = telegram.get("first_name") or telegram.get("username")
         user = await self.create_user(display_name=display_name)
         await self.db.insert(
             "telegram_accounts",
@@ -64,6 +68,24 @@ class UserService:
             on_conflict="user_id",
         )
         return user
+
+    async def backfill_user_display_names(self) -> None:
+        """Backfills and syncs full display names for all existing users from telegram_accounts into users table."""
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            accounts = await self.db.find_many("telegram_accounts", {})
+            for acc in accounts:
+                first = (acc.get("first_name") or "").strip()
+                last = (acc.get("last_name") or "").strip()
+                full_name = f"{first} {last}".strip()
+                display_name = full_name or acc.get("username")
+                user_id = acc.get("user_id")
+                if display_name and user_id:
+                    await self.db.update_by_id("users", user_id, {"display_name": display_name})
+            logger.info("Successfully backfilled full display names for all existing users.")
+        except Exception as e:
+            logger.warning(f"Failed to backfill user display names: {e}")
 
     async def set_engagement_level(self, user_id: str, level: str) -> None:
         await self.db.update_by_id("users", user_id, {"engagement_level": level})
