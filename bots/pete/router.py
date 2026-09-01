@@ -747,7 +747,7 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
 
     await register_group_chat(message, services, "pete")
     user = await services.identity.resolve_telegram_user(message.from_user)
-    first_name = (message.from_user.first_name or "Friend").split()[0]
+    first_name = message.from_user.first_name or "Friend"
     
     try:
         warnings = await services.moderation.get_user_warnings_count(user["id"])
@@ -827,7 +827,7 @@ async def send_pete_profile(
 
     card_text = render_shared_profile_card(
         user_data=user,
-        telegram_first_name=(user_from.first_name or "Friend").split()[0],
+        telegram_first_name=user_from.first_name or "Friend",
         bot_specific_stats=bot_stats
     )
 
@@ -872,7 +872,7 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
             pass
         return
 
-    first_name = (event.from_user.first_name or "Friend").split()[0]
+    first_name = event.from_user.first_name or "Friend"
     help_text = (
         f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
         "<blockquote>I am Pete (@iampetebot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
@@ -1017,7 +1017,7 @@ async def welcome_decree_handler(message: Message, bot: Bot) -> None:
     for new_member in message.new_chat_members:
         if new_member.is_bot:
             continue
-        await execute_quarantine_decree(bot, message.chat.id, new_member.id, (new_member.first_name or "Friend").split()[0])
+        await execute_quarantine_decree(bot, message.chat.id, new_member.id, new_member.first_name)
 
 
 @router.chat_member()
@@ -1034,7 +1034,7 @@ async def member_status_update_handler(event: ChatMemberUpdated, bot: Bot) -> No
     # Triggered when user enters group: from left/kicked/restricted -> member
     if old_status in ("left", "kicked", "restricted") and new_status == "member":
         if user.id not in PENDING_CAPTCHAS:
-            await execute_quarantine_decree(bot, event.chat.id, user.id, (user.first_name or "Friend").split()[0])
+            await execute_quarantine_decree(bot, event.chat.id, user.id, user.first_name)
 
 @router.callback_query(F.data.startswith("captcha|"))
 async def captcha_callback_handler(callback_query: CallbackQuery) -> None:

@@ -26,30 +26,26 @@ class UserService:
         from datetime import datetime, timezone
         telegram_id = int(telegram["telegram_id"])
         account = await self.db.find_one("telegram_accounts", "telegram_id", telegram_id)
-        
-        # Clean first_name to keep only the first word
-        raw_first_name = telegram.get("first_name") or ""
-        first_name = raw_first_name.split()[0] if raw_first_name else ""
-
         if account:
             await self.db.update_by_id(
                 "telegram_accounts",
                 account["id"],
                 {
                     "username": telegram.get("username"),
-                    "first_name": first_name,
+                    "first_name": telegram.get("first_name"),
                     "last_name": telegram.get("last_name"),
                     "is_bot": bool(telegram.get("is_bot", False)),
                     "last_seen_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
-            # Ensure the user's display_name in the users table is also updated/unified
+            # Ensure display_name is synced if missing
             user_rec = await self.db.get_by_id("users", account["user_id"])
-            if user_rec and (not user_rec.get("display_name") or " " in user_rec.get("display_name", "")):
-                await self.db.update_by_id("users", account["user_id"], {"display_name": first_name or telegram.get("username")})
+            if user_rec and not user_rec.get("display_name"):
+                display_name = telegram.get("first_name") or telegram.get("username")
+                await self.db.update_by_id("users", account["user_id"], {"display_name": display_name})
             return await self.db.get_by_id("users", account["user_id"])
 
-        display_name = first_name or telegram.get("username")
+        display_name = telegram.get("first_name") or telegram.get("username")
         user = await self.create_user(display_name=display_name)
         await self.db.insert(
             "telegram_accounts",
@@ -57,7 +53,7 @@ class UserService:
                 "user_id": user["id"],
                 "telegram_id": telegram_id,
                 "username": telegram.get("username"),
-                "first_name": first_name,
+                "first_name": telegram.get("first_name"),
                 "last_name": telegram.get("last_name"),
                 "is_bot": bool(telegram.get("is_bot", False)),
                 "last_seen_at": datetime.now(timezone.utc).isoformat(),

@@ -118,7 +118,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         await register_group_chat(message, services, "lusy")
         user = await services.identity.resolve_telegram_user(message.from_user)
         user_id = user["id"]
-        first_name = (message.from_user.first_name or "Friend").split()[0]
+        first_name = message.from_user.first_name or "Friend"
 
         # Check if user is returning by checking game history
         try:
@@ -404,7 +404,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         card_text = render_shared_profile_card(
             user_data=user,
-            telegram_first_name=(user_from.first_name or "Friend").split()[0],
+            telegram_first_name=user_from.first_name or "Friend",
             bot_specific_stats=bot_stats
         )
 

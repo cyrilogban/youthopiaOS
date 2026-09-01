@@ -187,7 +187,7 @@ def build_theo_router(description: str) -> Router:
 
         await register_group_chat(message, services, "theo")
         user = await services.identity.resolve_telegram_user(message.from_user)
-        first_name = (message.from_user.first_name or "Friend").split()[0]
+        first_name = message.from_user.first_name or "Friend"
 
         # Auto-subscribe user to Theo's Daily Verse of the Day on /start
         try:
@@ -289,7 +289,7 @@ def build_theo_router(description: str) -> Router:
 
         card_text = render_shared_profile_card(
             user_data=user,
-            telegram_first_name=(user_from.first_name or "Friend").split()[0],
+            telegram_first_name=user_from.first_name or "Friend",
             bot_specific_stats=bot_stats
         )
 
