@@ -38,10 +38,9 @@ class UserService:
                     "last_seen_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
-            # Ensure display_name is synced if missing
-            user_rec = await self.db.get_by_id("users", account["user_id"])
-            if user_rec and not user_rec.get("display_name"):
-                display_name = telegram.get("first_name") or telegram.get("username")
+            # Ensure display_name is actively synced with current Telegram name
+            display_name = telegram.get("first_name") or telegram.get("username")
+            if display_name:
                 await self.db.update_by_id("users", account["user_id"], {"display_name": display_name})
             return await self.db.get_by_id("users", account["user_id"])
 

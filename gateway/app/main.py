@@ -109,14 +109,13 @@ async def profile(
     quiz_svc: QuizService = Depends(get_quiz_service),
 ) -> UserProfile:
     """Return the verified caller's stored YouThopiaOS profile (profile + XP + quiz stats)."""
-    row = await service.get_by_telegram_id(user.id)
-    if row is None:
-        row = await service.get_or_create_from_telegram({
-            "telegram_id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "username": user.username,
-        })
+    # Always synchronize Supabase profile with the verified Telegram user data
+    row = await service.get_or_create_from_telegram({
+        "telegram_id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "username": user.username,
+    })
 
     stats = await quiz_svc.get_user_quiz_stats(row["id"])
     profile_dict = dict(row)
