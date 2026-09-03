@@ -49,6 +49,10 @@ class UserProfile(BaseModel):
     trust_score: int = 100
     quizzes_played: int = 0
     accuracy_pct: int = 100
+    rank_title: str = "YouTopian Seeker"
+    rank_tier: str = "Entry Level"
+    rank_badge_color: str = "#D98A95"
+    rank_emoji: str = "🌸"
 
 
 class UserSettings(BaseModel):
@@ -64,6 +68,9 @@ class LeaderboardItem(BaseModel):
     display_name: str | None = None
     total_xp: int
     level: int
+    rank_title: str = "YouTopian Seeker"
+    rank_badge_color: str = "#D98A95"
+    rank_emoji: str = "🌸"
 
 
 class EventItem(BaseModel):

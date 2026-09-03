@@ -34,6 +34,7 @@ from shared.config.settings import settings
 from shared.db.supabase import SupabaseGateway
 from shared.services.event_service import EventService
 from shared.services.quiz_service import QuizService
+from shared.services.rank_service import RankService
 from shared.services.user_service import UserService
 
 
@@ -108,7 +109,7 @@ async def profile(
     service: UserService = Depends(get_user_service),
     quiz_svc: QuizService = Depends(get_quiz_service),
 ) -> UserProfile:
-    """Return the verified caller's stored YouThopiaOS profile (profile + XP + quiz stats)."""
+    """Return the verified caller's stored YouThopiaOS profile (profile + XP + quiz stats + official rank)."""
     # Always synchronize Supabase profile with the verified Telegram user data
     row = await service.get_or_create_from_telegram({
         "telegram_id": user.id,
@@ -121,6 +122,16 @@ async def profile(
     profile_dict = dict(row)
     profile_dict["quizzes_played"] = stats.get("quizzes_played", 0)
     profile_dict["accuracy_pct"] = stats.get("accuracy_pct", 100)
+
+    # Resolve official YouThopia rank from RankService
+    total_xp = int(row.get("total_xp", 0))
+    manual_rank = row.get("manual_rank_id")
+    rank = RankService.resolve_rank(total_xp, manual_rank)
+
+    profile_dict["rank_title"] = rank.title
+    profile_dict["rank_tier"] = rank.tier
+    profile_dict["rank_badge_color"] = rank.bg_color
+    profile_dict["rank_emoji"] = rank.emoji
 
     return UserProfile.model_validate(profile_dict)
 
@@ -175,9 +186,22 @@ async def update_settings(
 async def get_leaderboard(
     service: UserService = Depends(get_user_service),
 ) -> list[LeaderboardItem]:
-    """Return top 10 community members ordered by total_xp descending from Supabase."""
+    """Return top 10 community members ordered by total_xp descending from Supabase with official rank badges."""
     items = await service.get_leaderboard(limit=10)
-    return [LeaderboardItem.model_validate(item) for item in items]
+    leaderboard_items = []
+    for item in items:
+        xp = int(item.get("total_xp", 0))
+        manual_rank = item.get("manual_rank_id")
+        rank = RankService.resolve_rank(xp, manual_rank)
+        leaderboard_items.append(LeaderboardItem(
+            display_name=item.get("display_name"),
+            total_xp=xp,
+            level=int(item.get("level", 1)),
+            rank_title=rank.title,
+            rank_badge_color=rank.bg_color,
+            rank_emoji=rank.emoji,
+        ))
+    return leaderboard_items
 
 
 @app.get("/api/events")

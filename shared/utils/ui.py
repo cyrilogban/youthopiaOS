@@ -157,23 +157,27 @@ def render_shared_profile_card(
     
     Structure:
     👤 [Display Name]
+    🏅 Rank: [Emoji] [Rank Title] (Lvl [Level])
     ━━━━━━━━━━━━━━━━
-    🏅 Level: [Level]
-    ⭐ XP: [XP Points]
+    ⭐ XP: [XP Points] YP
     🛡️ Trust Score: [Score]/100
     ━━━━━━━━━━━━━━━━
     [Bot-Specific Stats Below]
     """
+    from shared.services.rank_service import RankService
+
     display_name = user_data.get("display_name") or telegram_first_name or "YouTopian"
     level = user_data.get("level", 1)
     xp = user_data.get("total_xp", 0)
     trust = user_data.get("trust_score", 100)
+    manual_rank = user_data.get("manual_rank_id")
+    rank = RankService.resolve_rank(xp, manual_rank)
 
     card_lines = [
         f"👤 <b>{display_name}</b>",
+        f"🏅 Rank: <b>{rank.emoji} {rank.title}</b> (Lvl {level})",
         "━━━━━━━━━━━━━━━━",
-        f"🏅 Level: <b>{level}</b>",
-        f"⭐ XP: <b>{xp}</b>",
+        f"⭐ XP: <b>{xp} YP</b>",
         f"🛡️ Trust Score: <b>{trust}/100</b>",
         "━━━━━━━━━━━━━━━━"
     ]
@@ -275,12 +279,24 @@ async def handle_global_onboarding_callback(callback_query: CallbackQuery, servi
             except Exception as e:
                 logger.warning(f"Failed to record orientation action: {e}")
 
+            try:
+                await services.xp.award_xp(
+                    user_id=user["id"],
+                    amount=50,
+                    bot_name="susy",
+                    source="onboarding_tour",
+                    idempotency_key=f"onboarding_xp_{user['id']}"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to award onboarding XP: {e}")
+
             finish_text = (
                 "<b>Exploration Complete! 🎉</b>\n"
-                "<blockquote>You are now officially a YouTopian! I've granted you <b>+50 Trust Points</b> for completing your exploration.</blockquote>\n\n"
+                "<blockquote>Congratulations! You have advanced to <b>🌾 YouTopian Gathered One</b>!\n"
+                "You have been awarded <b>+50 YP</b> & <b>+50 Trust Points</b> for completing your orientation.</blockquote>\n\n"
                 "Connect with us across all platforms below: 💜"
             )
-            await callback_query.answer("Exploration Complete! +50 Trust Points!")
+            await callback_query.answer("🎉 Advanced to YouTopian Gathered One! (+50 YP)")
         else:
             finish_text = (
                 "<b>Exploration Reviewed!</b>\n"

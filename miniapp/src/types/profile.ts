@@ -16,4 +16,12 @@ export interface UserProfile {
   quizzesPlayed?: number;
   /** Quiz accuracy percentage (0-100%). */
   accuracyPct?: number;
+  /** Official YouThopia rank title (e.g. 'YouTopian Seeker', 'YouTopian Spark'). */
+  rankTitle?: string;
+  /** Official YouThopia rank tier (e.g. 'Entry Level', 'Active Contributors'). */
+  rankTier?: string;
+  /** Official hex background color for rank badge. */
+  rankBadgeColor?: string;
+  /** Official rank emoji. */
+  rankEmoji?: string;
 }

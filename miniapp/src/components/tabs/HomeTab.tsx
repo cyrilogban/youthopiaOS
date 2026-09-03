@@ -3,6 +3,7 @@ import type { TelegramUser } from '../../types/telegram';
 import type { ProfileState } from '../../hooks/useTelegram';
 import { fetchVotd, type VotdItem } from '../../services/api';
 import { Card, Skeleton } from '../ui';
+import { RankBadge } from '../RankBadge';
 
 interface HomeTabProps {
   user: TelegramUser | null;
@@ -113,20 +114,37 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
         <div
           style={{
             position: 'relative',
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
-            gap: 7,
-            marginTop: 16,
-            background: 'rgba(255,255,255,0.16)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            borderRadius: 'var(--radius-full)',
-            padding: '5px 12px',
-            fontSize: 12,
-            fontWeight: 600,
+            gap: 8,
+            marginTop: 14,
+            flexWrap: 'wrap',
           }}
         >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 0 3px rgba(74,222,128,0.25)' }} />
-          {verified ? 'Verified Member' : 'Member Identity Active'}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              background: 'rgba(255,255,255,0.16)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              borderRadius: 'var(--radius-full)',
+              padding: '5px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 0 3px rgba(74,222,128,0.25)' }} />
+            {verified ? 'Verified Member' : 'Member Identity Active'}
+          </div>
+          {profileData?.rankTitle && (
+            <RankBadge
+              title={profileData.rankTitle}
+              emoji={profileData.rankEmoji}
+              color={profileData.rankBadgeColor}
+              size="md"
+            />
+          )}
         </div>
       </div>
 
@@ -135,10 +153,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <Card hover style={{ padding: 14 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Current Level
+              Rank & Level
             </div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary-purple)', marginTop: 4 }}>Level {profileData.level}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{profileData.engagementLevel} tier</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary-purple)', marginTop: 4 }}>Level {profileData.level}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              {profileData.rankTitle || `${profileData.engagementLevel} tier`}
+            </div>
           </Card>
           <Card hover style={{ padding: 14 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

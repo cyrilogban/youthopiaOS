@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { ProfileState } from '../../hooks/useTelegram';
 import { fetchLeaderboard, type LeaderboardItem } from '../../services/api';
 import { Card, Skeleton, SectionTitle, Pill } from '../ui';
+import { RankBadge } from '../RankBadge';
 
 interface QuizTabProps {
   profile: ProfileState;
@@ -84,7 +85,17 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 11, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Your Rank Status</div>
-            <div style={{ fontSize: 28, fontWeight: 800, marginTop: 2 }}>{p ? `Level ${p.level}` : 'Level 1'}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span>Level {p ? p.level : 1}</span>
+              {p?.rankTitle && (
+                <RankBadge
+                  title={p.rankTitle}
+                  emoji={p.rankEmoji}
+                  color={p.rankBadgeColor}
+                  size="sm"
+                />
+              )}
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 11, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Earned</div>
@@ -145,6 +156,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
             {leaderboard.map((item, idx) => {
               const medal = MEDALS[idx];
               const isTop3 = medal !== undefined;
+
               return (
                 <div
                   key={idx}
@@ -153,18 +165,19 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '10px 12px',
+                    borderRadius: 'var(--radius-md)',
                     background: isTop3 ? medal.bg : 'var(--surface-soft)',
                     border: '1px solid var(--slate-100)',
-                    borderRadius: 'var(--radius-md)',
+                    gap: 8,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span
                       style={{
                         fontSize: 12,
-                        fontWeight: 800,
+                        fontWeight: 700,
                         color: isTop3 ? medal.color : 'var(--text-muted)',
-                        width: 30,
+                        width: 24,
                       }}
                     >
                       {isTop3 ? medal.label : `#${idx + 1}`}
@@ -172,9 +185,17 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-color)' }}>
                       {item.displayName || 'Anonymous Member'}
                     </span>
+                    {item.rankTitle && (
+                      <RankBadge
+                        title={item.rankTitle}
+                        emoji={item.rankEmoji}
+                        color={item.rankBadgeColor}
+                        size="sm"
+                      />
+                    )}
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)' }}>
-                    {item.totalXp} XP (Lvl {item.level})
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)', whiteSpace: 'nowrap' }}>
+                    {item.totalXp.toLocaleString()} XP (Lvl {item.level})
                   </span>
                 </div>
               );

@@ -72,6 +72,10 @@ interface GatewayProfile {
   trust_score?: number | null;
   quizzes_played?: number | null;
   accuracy_pct?: number | null;
+  rank_title?: string | null;
+  rank_tier?: string | null;
+  rank_badge_color?: string | null;
+  rank_emoji?: string | null;
 }
 
 export type ProfileResult =
@@ -89,6 +93,10 @@ function mapGatewayProfile(p: GatewayProfile): UserProfile {
     trustScore: p.trust_score ?? 100,
     quizzesPlayed: p.quizzes_played ?? 0,
     accuracyPct: p.accuracy_pct ?? 100,
+    rankTitle: p.rank_title ?? undefined,
+    rankTier: p.rank_tier ?? undefined,
+    rankBadgeColor: p.rank_badge_color ?? undefined,
+    rankEmoji: p.rank_emoji ?? undefined,
   };
 }
 
@@ -101,18 +109,17 @@ export async function fetchProfile(rawInitData: string | null): Promise<ProfileR
       headers: { Authorization: `tma ${rawInitData}` },
     });
   } catch {
-    return { status: 'error', message: 'Could not reach the server.' };
+    return { status: 'error', message: 'Unable to reach the server.' };
   }
 
   if (res.status === 401) return { status: 'unverified' };
-  if (res.status === 404) return { status: 'none' };
-  if (!res.ok) return { status: 'error', message: `Unexpected response (${res.status}).` };
+  if (!res.ok) return { status: 'error', message: `Server returned HTTP ${res.status}` };
 
   try {
     const data = (await res.json()) as GatewayProfile;
     return { status: 'ok', profile: mapGatewayProfile(data) };
   } catch {
-    return { status: 'error', message: 'Malformed response from server.' };
+    return { status: 'error', message: 'Malformed profile response from server.' };
   }
 }
 
@@ -123,19 +130,26 @@ export interface UserSettings {
 
 export async function fetchSettings(rawInitData: string | null): Promise<UserSettings> {
   if (!rawInitData) return { translation: 'KJV', dailyDevotional: true };
+
   try {
     const res = await fetch(`${GATEWAY_URL}/api/settings`, {
       headers: { Authorization: `tma ${rawInitData}` },
     });
     if (!res.ok) return { translation: 'KJV', dailyDevotional: true };
     const data = await res.json();
-    return { translation: data.translation, dailyDevotional: data.daily_devotional };
+    return {
+      translation: data.translation ?? 'KJV',
+      dailyDevotional: data.daily_devotional ?? true,
+    };
   } catch {
     return { translation: 'KJV', dailyDevotional: true };
   }
 }
 
-export async function updateSettings(rawInitData: string | null, settings: UserSettings): Promise<boolean> {
+export async function updateSettings(
+  rawInitData: string | null,
+  settings: UserSettings
+): Promise<boolean> {
   if (!rawInitData) return false;
   try {
     const res = await fetch(`${GATEWAY_URL}/api/settings`, {
@@ -159,6 +173,9 @@ export interface LeaderboardItem {
   displayName?: string;
   totalXp: number;
   level: number;
+  rankTitle?: string;
+  rankBadgeColor?: string;
+  rankEmoji?: string;
 }
 
 export async function fetchLeaderboard(): Promise<LeaderboardItem[]> {
@@ -170,6 +187,9 @@ export async function fetchLeaderboard(): Promise<LeaderboardItem[]> {
       displayName: item.display_name ?? undefined,
       totalXp: item.total_xp,
       level: item.level,
+      rankTitle: item.rank_title ?? undefined,
+      rankBadgeColor: item.rank_badge_color ?? undefined,
+      rankEmoji: item.rank_emoji ?? undefined,
     }));
   } catch {
     return [];

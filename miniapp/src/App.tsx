@@ -7,6 +7,7 @@ import { QuizTab } from './components/tabs/QuizTab';
 import { EventsTab } from './components/tabs/EventsTab';
 import { CommunityTab } from './components/tabs/CommunityTab';
 import { Card } from './components/ui';
+import { RankBadge } from './components/RankBadge';
 import type { TabId } from './types/navigation';
 
 const App: React.FC = () => {
@@ -189,9 +190,19 @@ const App: React.FC = () => {
             )}
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-color)' }}>
-                {user ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}` : 'Guest Member'}
+                {user ? user.firstName : 'Guest Member'}
               </div>
               {user?.username && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>@{user.username}</div>}
+              {profileData?.rankTitle && (
+                <div style={{ marginTop: 5 }}>
+                  <RankBadge
+                    title={profileData.rankTitle}
+                    emoji={profileData.rankEmoji}
+                    color={profileData.rankBadgeColor}
+                    size="sm"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

@@ -137,7 +137,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 total_xp = user.get("total_xp", 0)
                 level = user.get("level", 1)
 
-            rank_title = "Novice" if level < 2 else ("Scripture Sage" if level < 5 else ("Wisdom Warrior" if level < 10 else "High Priest"))
+            rank = services.ranks.resolve_rank(total_xp, user.get("manual_rank_id"))
+            rank_title = f"{rank.emoji} {rank.title}"
             correct_answers = len([h for h in history if h.get("is_correct", False)])
             accuracy = (correct_answers / total_quizzes * 100) if total_quizzes > 0 else 0.0
 
@@ -380,15 +381,9 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         total_xp = level_info["total_xp"]
         level = level_info["level"]
 
-        # Define rank title based on level
-        if level < 2:
-            rank_title = "Novice"
-        elif level < 5:
-            rank_title = "Scripture Sage"
-        elif level < 10:
-            rank_title = "Wisdom Warrior"
-        else:
-            rank_title = "High Priest"
+        # Define rank title based on centralized RankService
+        rank = services.ranks.resolve_rank(total_xp, user.get("manual_rank_id"))
+        rank_title = f"{rank.emoji} {rank.title}"
 
         # Fetch game history statistics
         history = await services.quizzes.get_game_history(user_id)
@@ -592,12 +587,13 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         leaderboard_text = "<b>🏆 Top YouTopians (Global Leaderboard)</b>\n\n"
         medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
-        for idx, user in enumerate(users_list):
-            display_name = user.get("display_name") or "Anonymous"
-            xp = user.get("total_xp", 0)
-            level = user.get("level", 1)
+        for idx, u in enumerate(users_list):
+            display_name = u.get("display_name") or "Anonymous"
+            xp = u.get("total_xp", 0)
+            level = u.get("level", 1)
+            rank = services.ranks.resolve_rank(xp, u.get("manual_rank_id"))
             medal = medals[idx] if idx < len(medals) else f"#{idx+1}"
-            leaderboard_text += f"{medal} <b>{display_name}</b> (Lvl {level}) - <code>{xp} YP</code>\n"
+            leaderboard_text += f"{medal} <b>{display_name}</b> ({rank.emoji} {rank.title}) - <code>{xp} YP</code>\n"
 
         if is_group:
             leaderboard_text += "\n<i>🧹 This leaderboard will self-destruct in 30 seconds...</i>"
@@ -661,14 +657,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         xp_to_next = 100 - progress_xp
         next_level = level + 1
 
-        if level < 2:
-            rank_title = "Novice"
-        elif level < 5:
-            rank_title = "Scripture Sage"
-        elif level < 10:
-            rank_title = "Wisdom Warrior"
-        else:
-            rank_title = "High Priest"
+        rank = services.ranks.resolve_rank(total_xp, user.get("manual_rank_id"))
+        rank_title = f"{rank.emoji} {rank.title}"
 
         history = await services.quizzes.get_game_history(user_id)
         total_quizzes = len(history)

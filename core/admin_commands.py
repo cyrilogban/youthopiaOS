@@ -79,6 +79,7 @@ def create_admin_router(bot_name: str = "global") -> Router:
             BotCommand(command="stats", description="👑 Global Admin Statistics"),
             BotCommand(command="botstats", description="🤖 Per-Bot Performance Breakdown"),
             BotCommand(command="groups", description="🏰 Active Groups Directory"),
+            BotCommand(command="setrank", description="👑 Appoint User Rank (Admin)"),
         ]
 
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
@@ -171,5 +172,83 @@ def create_admin_router(bot_name: str = "global") -> Router:
             lines.append(f"• <b>{title}</b>{official}\n  Telegram ID: <code>{chat_id}</code>")
 
         await message.answer("\n\n".join(lines), parse_mode="HTML")
+
+    @router.message(Command("setrank"), IsGlobalAdminFilter())
+    async def handle_set_rank(message: Message, services: ServiceContainer) -> None:
+        """Sets or resets a member's official YouTopian rank.
+        Usage: /setrank @username <rank_id> or /setrank <telegram_id> <rank_id>
+        Or reply to a user message: /setrank <rank_id>
+        """
+        args = (message.text or "").split()[1:]
+        target_account = None
+        rank_arg = None
+
+        if message.reply_to_message and message.reply_to_message.from_user:
+            target_user_from = message.reply_to_message.from_user
+            target_account = await services.supabase.find_one("telegram_accounts", "telegram_id", target_user_from.id)
+            if args:
+                rank_arg = args[0].lower()
+        elif len(args) >= 2:
+            identifier = args[0]
+            rank_arg = args[1].lower()
+            if identifier.startswith("@"):
+                username = identifier.lstrip("@")
+                target_account = await services.supabase.find_one("telegram_accounts", "username", username)
+            elif identifier.isdigit():
+                target_account = await services.supabase.find_one("telegram_accounts", "telegram_id", int(identifier))
+            else:
+                target_account = await services.supabase.find_one("telegram_accounts", "username", identifier)
+
+        if not target_account:
+            valid_ranks = ", ".join([f"<code>{r.id}</code>" for r in services.ranks.get_all_ranks()])
+            await message.answer(
+                "⚠️ <b>Usage:</b>\n"
+                "• <code>/setrank @username &lt;rank&gt;</code>\n"
+                "• <code>/setrank &lt;telegram_id&gt; &lt;rank&gt;</code>\n"
+                "• Reply to a user: <code>/setrank &lt;rank&gt;</code>\n\n"
+                f"<b>Available Ranks:</b>\n{valid_ranks}, <code>auto</code> (reset to automated XP)",
+                parse_mode="HTML"
+            )
+            return
+
+        user_id = target_account["user_id"]
+        user = await services.supabase.get_by_id("users", user_id)
+        display_name = (user or {}).get("display_name") or target_account.get("first_name") or "YouTopian"
+
+        if rank_arg == "auto":
+            await services.supabase.update_by_id("users", user_id, {"manual_rank_id": None})
+            xp = int((user or {}).get("total_xp", 0))
+            resolved = services.ranks.resolve_rank(xp)
+            await message.answer(
+                f"✅ <b>Rank Reset to Automated!</b>\n\n"
+                f"👤 Member: <b>{display_name}</b>\n"
+                f"🏅 Current XP Rank: <b>{resolved.emoji} {resolved.title}</b> ({resolved.tier})\n"
+                f"⭐ XP: <code>{xp} YP</code>",
+                parse_mode="HTML"
+            )
+            return
+
+        rank = services.ranks.get_rank_by_id(rank_arg or "")
+        if not rank:
+            valid_ranks = ", ".join([f"<code>{r.id}</code>" for r in services.ranks.get_all_ranks()])
+            await message.answer(
+                f"❌ Invalid rank <code>{rank_arg}</code>.\n\n"
+                f"<b>Valid options:</b>\n{valid_ranks}, <code>auto</code>",
+                parse_mode="HTML"
+            )
+            return
+
+        # Update manual_rank_id in Supabase
+        await services.supabase.update_by_id("users", user_id, {"manual_rank_id": rank.id})
+
+        announcement = (
+            f"👑 <b>Official Rank Appointment!</b> 🎉\n\n"
+            f"👤 Member: <b>{display_name}</b>\n"
+            f"🏅 New Rank: <b>{rank.emoji} {rank.title}</b>\n"
+            f"🏛️ Tier: <b>{rank.tier}</b>\n"
+            f"📜 <i>{rank.description}</i>\n\n"
+            f"<i>Rank updated across all bots and the YouThopia Mini App.</i>"
+        )
+        await message.answer(announcement, parse_mode="HTML")
 
     return router
