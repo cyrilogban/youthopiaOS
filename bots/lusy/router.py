@@ -72,6 +72,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         group_admin_commands = group_commands + [
             BotCommand(command="autoquiz_on", description="Enable daily casual quizzes (Admin)"),
             BotCommand(command="autoquiz_off", description="Disable daily casual quizzes (Admin)"),
+            BotCommand(command="setrank", description="Set user rank (@user <rank> | auto)"),
         ]
         import os
         from aiogram.types import BotCommandScopeChat

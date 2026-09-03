@@ -85,8 +85,14 @@ def build_eddy_router(description: str) -> Router:
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
         ]
         
+        admin_group_commands = group_commands + [
+            BotCommand(command="new_event", description="Create a pop-up event (Admin)"),
+            BotCommand(command="setrank", description="Set user rank (@user <rank> | auto)"),
+        ]
+
         await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
         await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
 
         # Admin commands registration
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS")

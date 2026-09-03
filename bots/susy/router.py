@@ -77,6 +77,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         admin_group_commands = group_commands + [
             BotCommand(command="setup_gateway", description="Setup group app gateway card"),
+            BotCommand(command="setrank", description="Set user rank (@user <rank> | auto)"),
         ]
 
         import os

@@ -1246,7 +1246,8 @@ async def on_startup(bot: Bot) -> None:
         BotCommand(command="lock", description="Lock the group chat"),
         BotCommand(command="unlock", description="Unlock the group chat"),
         BotCommand(command="biblestudy", description="Silence chat for a teaching session"),
-        BotCommand(command="endbiblestudy", description="Unlock chat after teaching session")
+        BotCommand(command="endbiblestudy", description="Unlock chat after teaching session"),
+        BotCommand(command="setrank", description="Set user rank (@user <rank> | auto)")
     ]
     
     user_commands = [
