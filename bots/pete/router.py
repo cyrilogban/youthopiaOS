@@ -1273,11 +1273,15 @@ async def on_startup(bot: Bot) -> None:
         BotCommand(command="help", description="Pete Safety Guide")
     ]
 
-    # Set public commands for Private DMs only
-    await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
-    
-    # Normal group members see /start and /help
-    await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
-    
-    # Group Administrators see /start, /help, and moderation tools in groups
-    await bot.set_my_commands(group_commands + admin_commands, scope=BotCommandScopeAllChatAdministrators())
+    try:
+        # Set public commands for Private DMs only
+        await bot.set_my_commands(user_commands, scope=BotCommandScopeAllPrivateChats())
+        
+        # Normal group members see /start and /help
+        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+        
+        # Group Administrators see /start, /help, and moderation tools in groups
+        await bot.set_my_commands(group_commands + admin_commands, scope=BotCommandScopeAllChatAdministrators())
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to set menu commands for Pete: {e}")

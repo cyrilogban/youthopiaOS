@@ -90,9 +90,12 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
 
-        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
-        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
-        await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
+        try:
+            await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+            await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+            await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
+        except Exception as e:
+            logger.warning(f"Failed to set menu commands for Susy: {e}")
 
     # -------------------------------------------------------------------------
     # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)

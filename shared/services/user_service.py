@@ -154,16 +154,29 @@ class UserService:
         """Returns the top users ordered by total_xp descending."""
         import asyncio
         def run() -> list[dict[str, Any]]:
-            response = (
-                self.db._client()
-                .table("users")
-                .select("id, display_name, total_xp, level, manual_rank_id")
-                .gt("total_xp", 0)
-                .order("total_xp", desc=True)
-                .limit(limit)
-                .execute()
-            )
-            return response.data or []
+            try:
+                response = (
+                    self.db._client()
+                    .table("users")
+                    .select("id, display_name, total_xp, level, manual_rank_id")
+                    .gt("total_xp", 0)
+                    .order("total_xp", desc=True)
+                    .limit(limit)
+                    .execute()
+                )
+                return response.data or []
+            except Exception:
+                # Fallback if manual_rank_id column is not yet created in Supabase schema
+                response = (
+                    self.db._client()
+                    .table("users")
+                    .select("id, display_name, total_xp, level")
+                    .gt("total_xp", 0)
+                    .order("total_xp", desc=True)
+                    .limit(limit)
+                    .execute()
+                )
+                return response.data or []
         return await asyncio.to_thread(run)
 
     async def get_user_state(self, user_id: str, bot_name: str) -> dict[str, Any]:

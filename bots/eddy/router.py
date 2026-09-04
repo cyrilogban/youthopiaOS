@@ -7,6 +7,7 @@ from aiogram.types import (
     BotCommand,
     BotCommandScopeAllPrivateChats,
     BotCommandScopeAllGroupChats,
+    BotCommandScopeAllChatAdministrators,
     ReplyKeyboardMarkup,
     KeyboardButton,
     InlineKeyboardMarkup,
@@ -90,9 +91,12 @@ def build_eddy_router(description: str) -> Router:
             BotCommand(command="setrank", description="Set user rank (@user <rank> | auto)"),
         ]
 
-        await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
-        await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
-        await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
+        try:
+            await bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+            await bot.set_my_commands(group_commands, scope=BotCommandScopeAllGroupChats())
+            await bot.set_my_commands(admin_group_commands, scope=BotCommandScopeAllChatAdministrators())
+        except Exception as e:
+            logger.warning(f"Failed to register menu commands for Eddy: {e}")
 
         # Admin commands registration
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS")
@@ -108,8 +112,11 @@ def build_eddy_router(description: str) -> Router:
                     logger.error(f"Failed to set admin commands for {admin_id}: {e}")
 
         # Start background scheduler
-        from bots.eddy.services.scheduler import setup_eddy_scheduler
-        setup_eddy_scheduler(bot)
+        try:
+            from bots.eddy.services.scheduler import setup_eddy_scheduler
+            setup_eddy_scheduler(bot)
+        except Exception as e:
+            logger.error(f"Failed to setup Eddy scheduler: {e}")
 
     # -------------------------------------------------------------------------
     # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)

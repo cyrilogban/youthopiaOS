@@ -55,15 +55,19 @@ class BotManager:
             logger.warning("No bots are enabled with tokens; startup completed without polling.")
             return
 
-        await asyncio.gather(*runners)
+        await asyncio.gather(*runners, return_exceptions=True)
 
     async def _run_bot(self, bot_name: str, bot_config: BotConfig) -> None:
-        module = import_module(f"bots.{bot_name}.bot")
-        print(f"DEBUG: Loaded bot '{bot_name}' from: {module.__file__}")
-        run_bot: BotRunner | None = getattr(module, "run_bot", None)
-        if run_bot is None:
-            raise RuntimeError(f"bots.{bot_name}.bot must expose run_bot(config, services).")
-        await run_bot(bot_config, self.services)
+        logger = get_logger("youthopia.bot_manager")
+        try:
+            module = import_module(f"bots.{bot_name}.bot")
+            logger.info("Loaded bot '%s' from: %s", bot_name, module.__file__)
+            run_bot: BotRunner | None = getattr(module, "run_bot", None)
+            if run_bot is None:
+                raise RuntimeError(f"bots.{bot_name}.bot must expose run_bot(config, services).")
+            await run_bot(bot_config, self.services)
+        except Exception as e:
+            logger.error("Bot runner for '%s' encountered an unhandled error: %s", bot_name, e, exc_info=True)
 
 
 async def run() -> None:

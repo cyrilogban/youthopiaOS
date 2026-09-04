@@ -75,8 +75,7 @@ async def register_group_chat(
 
 def build_router(bot_name: str, description: str, *, include_base_commands: bool = True) -> Router:
     router = Router(name=bot_name)
-    if bot_name.lower() == "eddy":
-        router.include_router(create_admin_router(bot_name))
+    router.include_router(create_admin_router(bot_name))
 
     if include_base_commands:
         @router.message(Command("start"))
