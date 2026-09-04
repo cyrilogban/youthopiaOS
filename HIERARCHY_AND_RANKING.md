@@ -76,19 +76,23 @@ flowchart TD
 * `bg_color` & `text_color`: Exact hex styling tokens from the design specification
 * `emoji`: Representative icon (`🌸`, `⚡`, `👑`, etc.)
 * `description`: Character motto
+* `requires_manual_approval`: Flag (`True` for Tier 4 `elite` and `ambassador`)
 
-**Resolution Logic:**
+**Resolution Logic with Algorithmic Ceiling:**
 ```python
-def resolve_rank(total_xp: int = 0, manual_rank_id: str | None = None) -> RankDefinition:
+@classmethod
+def resolve_rank(cls, total_xp: int = 0, manual_rank_id: str | None = None) -> RankDefinition:
     # 1. Check if user has an admin-appointed leadership override
     if manual_rank_id:
-        custom = RankService.get_rank_by_id(manual_rank_id)
+        custom = cls.get_rank_by_id(manual_rank_id)
         if custom:
             return custom
 
-    # 2. Otherwise evaluate automatic XP ladder
+    # 2. Automated XP ladder capped at Pillar (Tier 3)
     current_rank = RANKS[0]
     for rank in RANKS:
+        if rank.requires_manual_approval:
+            break
         if total_xp >= rank.min_xp:
             current_rank = rank
         else:
@@ -98,14 +102,34 @@ def resolve_rank(total_xp: int = 0, manual_rank_id: str | None = None) -> RankDe
 
 ---
 
-### B. Gateway REST API (`gateway/app/models.py` & `main.py`)
+### B. 24-Hour Multi-Bot Scout & Founder Gating (`bots/eddy/services/scheduler.py`)
+To prevent gaming and ensure Tier 4 leaders represent genuine spiritual maturity and trust:
+* **The Algorithmic Ceiling:** Automated XP progression stops at **Tier 3 (Pillar)**. Even with 100,000 YP, no user can automatically become **Elite** or **Ambassador**.
+* **Daily 24h Background Sweep (`02:00 AM WAT`):** Eddy's scheduler runs `sweep_daily_rank_nominations(bot)` every 24 hours.
+* **Scouting Criteria:** Members with $\ge 10,000\text{ YP}$, $\ge 95\text{ Pete Trust Score}$, and active engagement are scouted.
+* **Founder Nomination Card:** Eddy sends a private alert directly to the Founder (`ADMIN_OWNER_ID`):
+  ```text
+  👑 Leadership Nomination Scout (24h Daily Sweep)
+
+  👤 Candidate: Cyril Ogban (@cyril | ID: 12345678)
+  ⭐ Total XP: 14,500 YP (Capped at 🏛️ Pillar ceiling)
+  🛡️ Pete Trust Score: 100/100
+  🏅 Eligible Rank: 👑 YouTopian Elite (Core Leadership)
+
+  👉 To Appoint:
+  /setrank @cyril elite
+  ```
+
+---
+
+### C. Gateway REST API (`gateway/app/models.py` & `main.py`)
 * **`UserProfile` Model:** Includes `rank_title`, `rank_tier`, `rank_badge_color`, and `rank_emoji`.
 * **`LeaderboardItem` Model:** Delivers rank metadata alongside score rankings so the Mini App never needs to calculate ranks client-side.
 * **`GET /profile` & `GET /api/leaderboard`:** Resolve user records through `RankService.resolve_rank(total_xp, manual_rank_id)`.
 
 ---
 
-### C. Telegram Bot Harmonization
+### D. Telegram Bot Harmonization
 1. **Shared Profile Card (`shared/utils/ui.py`):**
    * Invoked across Theo, Susy, Pete, Lusy, and Eddy for `/profile` commands.
    * Renders:
@@ -125,7 +149,7 @@ def resolve_rank(total_xp: int = 0, manual_rank_id: str | None = None) -> RankDe
 
 ---
 
-### D. React Mini App Integration
+### E. React Mini App Integration
 1. **`<RankBadge />` Component (`miniapp/src/components/RankBadge.tsx`):**
    * Reusable pill badge component supporting sizes `sm`, `md`, and `lg`.
    * Computes automatic high-contrast foreground text based on background color luminance.
@@ -139,7 +163,7 @@ def resolve_rank(total_xp: int = 0, manual_rank_id: str | None = None) -> RankDe
 
 ---
 
-### E. Admin Command Governance (`core/admin_commands.py`)
+### F. Admin Command Governance (`core/admin_commands.py`)
 Administrators can appoint members to Tier 3 and Tier 4 leadership ranks using:
 ```text
 /setrank @username <rank_id>

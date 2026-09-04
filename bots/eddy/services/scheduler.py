@@ -315,6 +315,110 @@ async def trigger_live_event(bot: Bot, group_chat_id: int):
     except Exception as e:
         logger.error(f"Failed to send 9PM trigger: {e}")
 
+
+async def sweep_daily_rank_nominations(bot: Bot):
+    """Daily 24-hour background sweep (runs at 02:00 AM WAT).
+    Scouts members who meet the multi-bot criteria for Tier 4 (Elite/Ambassador)
+    and sends a private Nomination Card to the Founder (ADMIN_OWNER_ID) with pre-filled /setrank command.
+    """
+    admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
+    admin_ids = [int(aid.strip()) for aid in admin_ids_str.split(",") if aid.strip().isdigit()]
+    if not admin_ids:
+        return
+
+    from shared.db.supabase import SupabaseGateway
+    from shared.services.rank_service import RankService
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY", "")
+    if not supabase_url or not supabase_key:
+        return
+
+    db = SupabaseGateway(supabase_url, supabase_key)
+    try:
+        import asyncio
+        def query_candidates():
+            res = (
+                db._client()
+                .table("users")
+                .select("id, display_name, total_xp, level, manual_rank_id, trust_score")
+                .gte("total_xp", RankService.NOMINATION_MIN_XP)
+                .is_("manual_rank_id", "null")
+                .execute()
+            )
+            return res.data or []
+
+        candidates = await asyncio.to_thread(query_candidates)
+        if not candidates:
+            return
+
+        for user in candidates:
+            user_id = user["id"]
+            xp = int(user.get("total_xp", 0))
+            trust = int(user.get("trust_score", 100))
+            
+            if not RankService.is_nomination_eligible(xp, trust):
+                continue
+
+            # Fetch telegram account details
+            account = await db.find_one("telegram_accounts", "user_id", user_id)
+            if not account:
+                continue
+
+            username = account.get("username")
+            tg_id = account.get("telegram_id")
+            display_name = user.get("display_name") or account.get("first_name") or "YouTopian"
+            mention = f"@{username}" if username else f"<code>{tg_id}</code>"
+            setrank_target = f"@{username}" if username else str(tg_id)
+
+            target_rank_id = "ambassador" if xp >= 25000 else "elite"
+            target_rank = RankService.get_rank_by_id(target_rank_id)
+            if not target_rank:
+                continue
+
+            # Check if we already notified the founder for this milestone level to avoid duplicate spam
+            state_record = await db.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy_nomination"})
+            state_data = (state_record or {}).get("state") or {}
+            last_notified_rank = state_data.get("last_notified_rank")
+
+            if last_notified_rank == target_rank_id:
+                continue
+
+            nomination_card = (
+                "👑 <b>Leadership Nomination Scout (24h Daily Sweep)</b>\n\n"
+                f"👤 <b>Candidate:</b> <b>{display_name}</b> ({mention})\n"
+                f"⭐ <b>Total XP:</b> <code>{xp:,} YP</code> (Capped at 🏛️ Pillar ceiling)\n"
+                f"🛡️ <b>Pete Trust Score:</b> <code>{trust}/100</code>\n"
+                f"🏅 <b>Eligible Rank:</b> {target_rank.emoji} <b>{target_rank.title}</b> ({target_rank.tier})\n\n"
+                "<i>This member has surpassed the algorithmic ceiling and meets all multi-bot prerequisites.</i>\n\n"
+                f"👉 <b>To Appoint:</b>\n"
+                f"<code>/setrank {setrank_target} {target_rank_id}</code>\n\n"
+                "<i>(If declined, no action is needed. The member remains at their Pillar rank ceiling.)</i>"
+            )
+
+            for admin_id in admin_ids:
+                try:
+                    await bot.send_message(
+                        chat_id=admin_id,
+                        text=nomination_card,
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to dispatch nomination card to admin {admin_id}: {e}")
+
+            # Mark milestone as notified in Supabase
+            await db.upsert(
+                "bot_user_state",
+                {
+                    "user_id": user_id,
+                    "bot_name": "eddy_nomination",
+                    "state": {"last_notified_rank": target_rank_id, "notified_at": datetime.now(timezone.utc).isoformat()}
+                },
+                on_conflict="user_id,bot_name"
+            )
+    except Exception as e:
+        logger.error(f"Error during daily rank nomination sweep: {e}", exc_info=True)
+
+
 def setup_eddy_scheduler(bot: Bot):
     """Initializes the APScheduler for Eddy's cron jobs."""
     scheduler = AsyncIOScheduler(timezone="Africa/Lagos")
@@ -353,6 +457,13 @@ def setup_eddy_scheduler(bot: Bot):
         trigger_live_event,
         CronTrigger(hour=21, minute=0, timezone="Africa/Lagos"),
         args=[bot, main_group_id]
+    )
+    
+    # 5. Daily 24-hour leadership nomination sweep at 2:00 AM WAT
+    scheduler.add_job(
+        sweep_daily_rank_nominations,
+        CronTrigger(hour=2, minute=0, timezone="Africa/Lagos"),
+        args=[bot]
     )
     
     scheduler.start()
