@@ -99,7 +99,8 @@ async def handle_bible_detection(message: Message, services: ServiceContainer) -
             category="general", 
             reference=refs[0].reference, 
             is_group=is_group,
-            bot_username=bot_me.username
+            bot_username=bot_me.username,
+            trans=translation
         )
         
     await message.reply(reply_text, parse_mode="HTML", reply_markup=markup)

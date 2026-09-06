@@ -71,7 +71,7 @@ class DeliveryService:
                 blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
                 message = f"{header}\n{blockquote}"
                 
-                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=True, bot_username=bot_username)
+                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=True, bot_username=bot_username, trans=translation)
                 
                 metadata = sub.get("metadata") or {}
                 message_thread_id = metadata.get("message_thread_id")
@@ -114,7 +114,7 @@ class DeliveryService:
                 blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
                 message = f"{header}\n{blockquote}"
                 
-                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=False, bot_username=bot_username)
+                markup = build_verse_actions_keyboard(category="daily", reference=reference, is_group=False, bot_username=bot_username, trans=translation)
                 
                 await self.bot.send_message(
                     chat_id=telegram_user_id, 

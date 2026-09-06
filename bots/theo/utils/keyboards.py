@@ -3,9 +3,10 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 class VerseAction(CallbackData, prefix="verse", sep="|"):
-    action: str  # "save" or "next"
+    action: str  # "save", "compare_menu", "switch_trans", "back"
     category: str
     reference: str
+    trans: str = "kjv"
 
 class SavedVersesPage(CallbackData, prefix="sv_page"):
     page: int
@@ -108,9 +109,15 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def build_verse_actions_keyboard(category: str, reference: str, is_group: bool = False, bot_username: str = "iamtheobot") -> InlineKeyboardMarkup:
+def build_verse_actions_keyboard(
+    category: str,
+    reference: str,
+    is_group: bool = False,
+    bot_username: str = "iamtheobot",
+    trans: str = "kjv"
+) -> InlineKeyboardMarkup:
     """Builds the mobile-optimized inline action keyboard for verse cards:
-    Row 1: [ Save ] [ Next Verse ]
+    Row 1: [ Save ] [ Compare ]
     Row 2: [ Share ]
     """
     clean_ref = reference.replace(" ", "_")
@@ -122,15 +129,17 @@ def build_verse_actions_keyboard(category: str, reference: str, is_group: bool =
                     callback_data=VerseAction(
                         action="save", 
                         category=category, 
-                        reference=clean_ref
+                        reference=clean_ref,
+                        trans=trans
                     ).pack()
                 ),
                 InlineKeyboardButton(
-                    text="Next Verse",
+                    text="Compare",
                     callback_data=VerseAction(
-                        action="next", 
+                        action="compare_menu", 
                         category=category, 
-                        reference=clean_ref
+                        reference=clean_ref,
+                        trans=trans
                     ).pack()
                 ),
             ],
@@ -138,6 +147,62 @@ def build_verse_actions_keyboard(category: str, reference: str, is_group: bool =
                 InlineKeyboardButton(
                     text="Share",
                     switch_inline_query=reference
+                ),
+            ]
+        ]
+    )
+
+
+def build_verse_compare_drawer(
+    category: str,
+    reference: str,
+    active_trans: str = "kjv",
+    is_group: bool = False,
+    bot_username: str = "iamtheobot"
+) -> InlineKeyboardMarkup:
+    """Builds the interactive translation drawer keyboard for verse cards:
+    Row 1: [ ● KJV ] [ ASV ] [ WEB ] [ BBE ]
+    Row 2: [ ◀ Back ] [ Save ]
+    """
+    clean_ref = reference.replace(" ", "_")
+    available_trans = ["kjv", "asv", "web", "bbe"]
+    trans_buttons = []
+
+    for t in available_trans:
+        label = f"● {t.upper()}" if t.lower() == active_trans.lower() else t.upper()
+        trans_buttons.append(
+            InlineKeyboardButton(
+                text=label,
+                callback_data=VerseAction(
+                    action="switch_trans",
+                    category=category,
+                    reference=clean_ref,
+                    trans=t
+                ).pack()
+            )
+        )
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            trans_buttons,
+            [
+                InlineKeyboardButton(
+                    text="◀ Back",
+                    callback_data=VerseAction(
+                        action="back",
+                        category=category,
+                        reference=clean_ref,
+                        trans=active_trans
+                    ).pack()
+                ),
+                InlineKeyboardButton(
+                    text="Save",
+                    callback_data=VerseAction(
+                        action="save",
+                        category=category,
+                        reference=clean_ref,
+                        trans=active_trans
+                    ).pack()
                 ),
             ]
         ]

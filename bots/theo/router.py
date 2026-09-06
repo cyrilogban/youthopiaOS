@@ -38,6 +38,7 @@ from bots.theo.utils.keyboards import (
     build_theo_member_welcome_keyboard,
     build_theo_farewell_keyboard,
     build_verse_actions_keyboard,
+    build_verse_compare_drawer,
 )
 
 logger = logging.getLogger(__name__)
@@ -930,7 +931,7 @@ def build_theo_router(description: str) -> Router:
             asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
 
     # -------------------------------------------------------------------------
-    # VERSE CALLBACK ACTIONS (Save / Next Verse)
+    # VERSE CALLBACK ACTIONS (Save / Compare Menu / Switch Translation / Back)
     # -------------------------------------------------------------------------
     @router.callback_query(VerseAction.filter(F.action == "save"))
     async def handle_save_verse(
@@ -949,40 +950,76 @@ def build_theo_router(description: str) -> Router:
         else:
             await callback.answer("This verse is already in your saved verses.", show_alert=True)
 
-    @router.callback_query(VerseAction.filter(F.action == "next"))
-    async def handle_next_verse(
+    @router.callback_query(VerseAction.filter(F.action == "compare_menu"))
+    async def handle_compare_menu(
+        callback: CallbackQuery, callback_data: VerseAction
+    ) -> None:
+        reference = callback_data.reference.replace("_", " ")
+        is_group = callback.message.chat.type != "private"
+        bot_me = await callback.bot.get_me()
+        markup = build_verse_compare_drawer(
+            category=callback_data.category,
+            reference=reference,
+            active_trans=callback_data.trans,
+            is_group=is_group,
+            bot_username=bot_me.username
+        )
+        try:
+            await callback.message.edit_reply_markup(reply_markup=markup)
+            await callback.answer("Select a translation to compare:")
+        except Exception:
+            await callback.answer()
+
+    @router.callback_query(VerseAction.filter(F.action == "switch_trans"))
+    async def handle_switch_trans(
         callback: CallbackQuery, callback_data: VerseAction, services: ServiceContainer
     ) -> None:
-        import random
-        from bots.theo.utils.seed_votd import CURATED_REFERENCES
+        reference = callback_data.reference.replace("_", " ")
+        target_trans = callback_data.trans.lower()
 
         votd_service = VOTDService(services.supabase)
-        user = await services.identity.resolve_telegram_user(callback.from_user)
-        user_state = await services.users.get_user_state(user["id"], "theo")
-        translation = user_state.get("translation", "kjv") if user_state else "kjv"
-
-        current_ref = callback_data.reference.replace("_", " ")
-        choices = [r for r in CURATED_REFERENCES if r != current_ref]
-        new_ref = random.choice(choices) if choices else current_ref
-
-        text = await votd_service.fetch_bible_text(new_ref, translation)
+        text = await votd_service.fetch_bible_text(reference, target_trans)
         if text:
-            header = f"<b>{new_ref} ({translation.upper()})</b>"
-            blockquote = f"<blockquote>{text}</blockquote>"
+            header = f"<b>{reference} ({target_trans.upper()})</b>"
+            blockquote = f"<blockquote expandable>{text}</blockquote>" if len(text) > 150 else f"<blockquote>{text}</blockquote>"
             reply_text = f"{header}\n{blockquote}"
 
             is_group = callback.message.chat.type != "private"
             bot_me = await callback.bot.get_me()
-            markup = build_verse_actions_keyboard(
-                category=callback_data.category, 
-                reference=new_ref, 
+            markup = build_verse_compare_drawer(
+                category=callback_data.category,
+                reference=reference,
+                active_trans=target_trans,
                 is_group=is_group,
                 bot_username=bot_me.username
             )
-            await callback.message.edit_text(reply_text, parse_mode="HTML", reply_markup=markup)
-            await callback.answer()
+            try:
+                await callback.message.edit_text(reply_text, parse_mode="HTML", reply_markup=markup)
+                await callback.answer(f"Switched to {target_trans.upper()}")
+            except Exception:
+                await callback.answer()
         else:
-            await callback.answer("Failed to fetch text.", show_alert=True)
+            await callback.answer(f"Failed to fetch {target_trans.upper()} translation.", show_alert=True)
+
+    @router.callback_query(VerseAction.filter(F.action == "back"))
+    async def handle_back_to_verse(
+        callback: CallbackQuery, callback_data: VerseAction
+    ) -> None:
+        reference = callback_data.reference.replace("_", " ")
+        is_group = callback.message.chat.type != "private"
+        bot_me = await callback.bot.get_me()
+        markup = build_verse_actions_keyboard(
+            category=callback_data.category,
+            reference=reference,
+            is_group=is_group,
+            bot_username=bot_me.username,
+            trans=callback_data.trans
+        )
+        try:
+            await callback.message.edit_reply_markup(reply_markup=markup)
+            await callback.answer()
+        except Exception:
+            await callback.answer()
 
     # -------------------------------------------------------------------------
     # FALLBACK SCRIPTURE DETECTION (Catch-all for text containing scriptures)
