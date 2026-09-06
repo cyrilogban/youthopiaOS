@@ -51,7 +51,6 @@ BOT_NATIVE_COMMANDS = {
     "susy": [
         BotCommand(command="start", description="Meet Susy"),
         BotCommand(command="app", description="Open YouThopia Community Mini App"),
-        BotCommand(command="where", description="Community topic directory & guide"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Susy Hostess Guide"),
     ],
