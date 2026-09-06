@@ -79,7 +79,7 @@ def build_theo_router(description: str) -> Router:
         from aiogram.types import BotCommandScopeAllChatAdministrators
 
         private_commands = [
-            BotCommand(command="start", description="Wake Up Theo"),
+            BotCommand(command="start", description="Meet Theo"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="translation", description="Change personal translation"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
@@ -89,7 +89,7 @@ def build_theo_router(description: str) -> Router:
             BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
         ]
         group_commands = [
-            BotCommand(command="start", description="Wake Up Theo"),
+            BotCommand(command="start", description="Meet Theo"),
             BotCommand(command="help", description="Show help information"),
         ]
         admin_group_commands = group_commands + [

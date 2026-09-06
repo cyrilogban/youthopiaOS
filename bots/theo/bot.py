@@ -9,7 +9,7 @@ from bots.theo.router import build_theo_router
 
 # Commands that appear in Telegram's sidebar menu button
 THEO_COMMANDS = [
-    BotCommand(command="start", description="Wake Up Theo"),
+    BotCommand(command="start", description="Meet Theo"),
     BotCommand(command="help", description="Show help information"),
     BotCommand(command="subscribe", description="Subscribe to daily verses"),
     BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),

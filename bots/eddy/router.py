@@ -69,7 +69,7 @@ def build_eddy_router(description: str) -> Router:
     async def on_startup(bot: Bot) -> None:
         # Define sidebar commands for DMs per spec
         private_commands = [
-            BotCommand(command="start", description="Open Ed main dashboard"),
+            BotCommand(command="start", description="Meet Eddy"),
             BotCommand(command="calendar", description="View this week's event schedule"),
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),
@@ -80,7 +80,7 @@ def build_eddy_router(description: str) -> Router:
         ]
 
         group_commands = [
-            BotCommand(command="start", description="Meet Ed"),
+            BotCommand(command="start", description="Meet Eddy"),
             BotCommand(command="help", description="Show Ed's instructions"),
             BotCommand(command="calendar", description="View all upcoming events"),
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Native side menu commands for each bot to merge with admin commands
 BOT_NATIVE_COMMANDS = {
     "theo": [
-        BotCommand(command="start", description="Wake Up Theo"),
+        BotCommand(command="start", description="Meet Theo"),
         BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="help", description="Show help information"),
         BotCommand(command="subscribe", description="Subscribe to daily verses"),
@@ -56,7 +56,7 @@ BOT_NATIVE_COMMANDS = {
         BotCommand(command="help", description="Susy Hostess Guide"),
     ],
     "eddy": [
-        BotCommand(command="start", description="Open Ed main dashboard"),
+        BotCommand(command="start", description="Meet Eddy"),
         BotCommand(command="app", description="Open YouThopia Community Mini App"),
         BotCommand(command="calendar", description="View this week's event schedule"),
         BotCommand(command="my_events", description="View events I am attending"),
