@@ -249,6 +249,10 @@ def create_admin_router(bot_name: str = "global") -> Router:
             f"📜 <i>{rank.description}</i>\n\n"
             f"<i>Rank updated across all bots and the YouThopia Mini App.</i>"
         )
-        await message.answer(announcement, parse_mode="HTML")
+        sent_msg = await message.answer(announcement, parse_mode="HTML")
+        if message.chat.type != "private":
+            from core.telegram_runtime import delayed_delete_message
+            import asyncio
+            asyncio.create_task(delayed_delete_message(message.bot, message.chat.id, sent_msg.message_id, delay_seconds=180))
 
     return router

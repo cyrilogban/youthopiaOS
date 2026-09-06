@@ -123,17 +123,23 @@ async def handle_warn(message: Message, command: CommandObject, services: Servic
         except Exception as e:
             logger.error(f"Automated mute failed: {e}")
             
-    await message.reply(response_text, parse_mode="Markdown")
+    resp = await message.reply(response_text, parse_mode="Markdown")
+    if message.chat.type != "private":
+        asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
 
 @router.message(Command("kick"), IsAdminFilter())
 async def handle_kick(message: Message, command: CommandObject, services: ServiceContainer) -> None:
     if not message.reply_to_message:
-        await message.reply("🛡️ You must reply to the user's message to kick them.")
+        err_msg = await message.reply("🛡️ You must reply to the user's message to kick them.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     target_user = message.reply_to_message.from_user
     if target_user.id == message.bot.id:
-        await message.reply("I cannot kick myself!")
+        err_msg = await message.reply("I cannot kick myself!")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     reason = command.args or "No reason provided."
@@ -157,20 +163,28 @@ async def handle_kick(message: Message, command: CommandObject, services: Servic
         # A "kick" in Telegram is a ban followed immediately by an unban
         await message.chat.ban(user_id=target_user.id)
         await message.chat.unban(user_id=target_user.id)
-        await message.reply(f"👢 {target_user.first_name} has been kicked from the community.\n**Reason:** {reason}", parse_mode="Markdown")
+        resp = await message.reply(f"👢 {target_user.first_name} has been kicked from the community.\n**Reason:** {reason}", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Kick failed: {e}")
-        await message.reply("❌ Failed to kick user. Make sure I have admin rights.")
+        err_msg = await message.reply("❌ Failed to kick user. Make sure I have admin rights.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("ban"), IsAdminFilter())
 async def handle_ban(message: Message, command: CommandObject, services: ServiceContainer) -> None:
     if not message.reply_to_message:
-        await message.reply("🛡️ You must reply to the user's message to ban them.")
+        err_msg = await message.reply("🛡️ You must reply to the user's message to ban them.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     target_user = message.reply_to_message.from_user
     if target_user.id == message.bot.id:
-        await message.reply("I cannot ban myself!")
+        err_msg = await message.reply("I cannot ban myself!")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     reason = command.args or "No reason provided."
@@ -192,20 +206,28 @@ async def handle_ban(message: Message, command: CommandObject, services: Service
             )
 
         await message.chat.ban(user_id=target_user.id)
-        await message.reply(f"🔨 {target_user.first_name} has been permanently banned.\n**Reason:** {reason}", parse_mode="Markdown")
+        resp = await message.reply(f"🔨 {target_user.first_name} has been permanently banned.\n**Reason:** {reason}", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Ban failed: {e}")
-        await message.reply("❌ Failed to ban user. Make sure I have admin rights.")
+        err_msg = await message.reply("❌ Failed to ban user. Make sure I have admin rights.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("mute"), IsAdminFilter())
 async def handle_mute(message: Message, command: CommandObject, services: ServiceContainer) -> None:
     if not message.reply_to_message:
-        await message.reply("🛡️ You must reply to the user's message to mute them.")
+        err_msg = await message.reply("🛡️ You must reply to the user's message to mute them.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     target_user = message.reply_to_message.from_user
     if target_user.id == message.bot.id:
-        await message.reply("I cannot mute myself!")
+        err_msg = await message.reply("I cannot mute myself!")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     reason = command.args or "No reason provided."
@@ -248,15 +270,21 @@ async def handle_mute(message: Message, command: CommandObject, services: Servic
 
         permissions = ChatPermissions(can_send_messages=False)
         await message.chat.restrict(user_id=target_user.id, permissions=permissions, until_date=until_date)
-        await message.reply(f"🔇 {target_user.first_name} has been muted{duration_str}.\n**Reason:** {reason}", parse_mode="Markdown")
+        resp = await message.reply(f"🔇 {target_user.first_name} has been muted{duration_str}.\n**Reason:** {reason}", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Mute failed: {e}")
-        await message.reply("❌ Failed to mute user. Make sure I have admin rights.")
+        err_msg = await message.reply("❌ Failed to mute user. Make sure I have admin rights.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("unban"), IsAdminFilter())
 async def handle_unban(message: Message, command: CommandObject, services: ServiceContainer) -> None:
     if not message.reply_to_message:
-        await message.reply("🛡️ You must reply to the user's message to unban them.")
+        err_msg = await message.reply("🛡️ You must reply to the user's message to unban them.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     target_user = message.reply_to_message.from_user
@@ -278,15 +306,21 @@ async def handle_unban(message: Message, command: CommandObject, services: Servi
             )
 
         await message.chat.unban(user_id=target_user.id)
-        await message.reply(f"🕊️ {target_user.first_name} has been forgiven and unbanned.\n**Reason:** {reason}", parse_mode="Markdown")
+        resp = await message.reply(f"🕊️ {target_user.first_name} has been forgiven and unbanned.\n**Reason:** {reason}", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Unban failed: {e}")
-        await message.reply("❌ Failed to unban user. Make sure I have admin rights.")
+        err_msg = await message.reply("❌ Failed to unban user. Make sure I have admin rights.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("unmute"), IsAdminFilter())
 async def handle_unmute(message: Message, command: CommandObject, services: ServiceContainer) -> None:
     if not message.reply_to_message:
-        await message.reply("🛡️ You must reply to the user's message to unmute them.")
+        err_msg = await message.reply("🛡️ You must reply to the user's message to unmute them.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
         return
         
     target_user = message.reply_to_message.from_user
@@ -321,10 +355,14 @@ async def handle_unmute(message: Message, command: CommandObject, services: Serv
             can_invite_users=True
         )
         await message.chat.restrict(user_id=target_user.id, permissions=permissions)
-        await message.reply(f"🕊️ {target_user.first_name} has been forgiven and unmuted.\n**Reason:** {reason}", parse_mode="Markdown")
+        resp = await message.reply(f"🕊️ {target_user.first_name} has been forgiven and unmuted.\n**Reason:** {reason}", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Unmute failed: {e}")
-        await message.reply("❌ Failed to unmute user. Make sure I have admin rights.")
+        err_msg = await message.reply("❌ Failed to unmute user. Make sure I have admin rights.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 # -----------------------------------------------------------------------------
 # CHAT FLOW CONTROL (LOCKDOWN COMMANDS)
@@ -334,10 +372,14 @@ async def handle_unmute(message: Message, command: CommandObject, services: Serv
 async def handle_lock(message: Message) -> None:
     try:
         await message.chat.set_permissions(ChatPermissions(can_send_messages=False))
-        await message.reply("🔒 **CHAT LOCKED**\n\nThe group has been temporarily locked by an admin. Only administrators can send messages right now.", parse_mode="Markdown")
+        resp = await message.reply("🔒 **CHAT LOCKED**\n\nThe group has been temporarily locked by an admin. Only administrators can send messages right now.", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Lock failed: {e}")
-        await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
+        err_msg = await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("unlock"), IsAdminFilter())
 async def handle_unlock(message: Message) -> None:
@@ -356,10 +398,14 @@ async def handle_unlock(message: Message) -> None:
             can_invite_users=True
         )
         await message.chat.set_permissions(permissions)
-        await message.reply("🔓 **CHAT UNLOCKED**\n\nThe group is open again. You may now send messages.", parse_mode="Markdown")
+        resp = await message.reply("🔓 **CHAT UNLOCKED**\n\nThe group is open again. You may now send messages.", parse_mode="Markdown")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Unlock failed: {e}")
-        await message.reply("❌ Failed to unlock the chat. Ensure I have the 'Change Group Info' permission.")
+        err_msg = await message.reply("❌ Failed to unlock the chat. Ensure I have the 'Change Group Info' permission.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("biblestudy"), IsAdminFilter())
 async def handle_biblestudy(message: Message) -> None:
@@ -370,10 +416,14 @@ async def handle_biblestudy(message: Message) -> None:
             "<blockquote>The chat has been temporarily silenced so the teacher can minister without interruption.\n\n"
             "Please listen attentively and take notes. The chat will be unlocked for questions when the session is over.</blockquote>"
         )
-        await message.answer(study_banner, parse_mode="HTML")
+        resp = await message.answer(study_banner, parse_mode="HTML")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Bible study lock failed: {e}")
-        await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
+        err_msg = await message.reply("❌ Failed to lock the chat. Ensure I have the 'Change Group Info' permission.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 @router.message(Command("endbiblestudy"), IsAdminFilter())
 async def handle_endbiblestudy(message: Message) -> None:
@@ -396,10 +446,14 @@ async def handle_endbiblestudy(message: Message) -> None:
             "<b>BIBLE STUDY HAS ENDED</b>\n\n"
             "<blockquote>The chat is now open! Feel free to ask questions, share your notes, or discuss what we just learned.</blockquote>"
         )
-        await message.answer(end_banner, parse_mode="HTML")
+        resp = await message.answer(end_banner, parse_mode="HTML")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, resp.message_id, 180))
     except Exception as e:
         logger.error(f"Bible study unlock failed: {e}")
-        await message.reply("❌ Failed to unlock the chat. Ensure I have the 'Change Group Info' permission.")
+        err_msg = await message.reply("❌ Failed to unlock the chat. Ensure I have the 'Change Group Info' permission.")
+        if message.chat.type != "private":
+            asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 # -----------------------------------------------------------------------------
 # UNAUTHORIZED / FALLBACK HANDLERS
@@ -408,7 +462,9 @@ async def handle_endbiblestudy(message: Message) -> None:
 @router.message(Command("warn", "kick", "ban", "mute", "unban", "unmute", "lock", "unlock", "biblestudy", "endbiblestudy"))
 async def handle_unauthorized(message: Message) -> None:
     """Catches anyone trying to run an admin command who failed the IsAdminFilter."""
-    await message.reply("🛑 Only group administrators can wield the sword of justice.")
+    err_msg = await message.reply("🛑 Only group administrators can wield the sword of justice.")
+    if message.chat.type != "private":
+        asyncio.create_task(self_destruct_message(message.bot, message.chat.id, err_msg.message_id, 15))
 
 # -----------------------------------------------------------------------------
 # YOUTOPIAN STATUS & APPEALS

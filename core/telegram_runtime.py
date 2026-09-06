@@ -1,15 +1,99 @@
 from __future__ import annotations
 
 import os
-from aiogram import Bot, Dispatcher, Router
+import asyncio
+from collections.abc import Awaitable, Callable
+from typing import Any
+from aiogram import BaseMiddleware, Bot, Dispatcher, Router
 from aiogram.filters import Command
-from aiogram.types import BotCommand, Chat, ChatMemberUpdated, Message, InlineKeyboardMarkup, BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats, BotCommandScopeAllChatAdministrators, BotCommandScopeChat
+from aiogram.types import (
+    BotCommand,
+    Chat,
+    ChatMemberUpdated,
+    Message,
+    TelegramObject,
+    InlineKeyboardMarkup,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeAllGroupChats,
+    BotCommandScopeAllChatAdministrators,
+    BotCommandScopeChat,
+)
 
 from core.config import BotConfig
 from core.admin_commands import create_admin_router
 from shared.logging.logger import get_logger
 from shared.services.container import ServiceContainer
 from shared.utils.ui import get_open_app_inline_button
+
+
+async def delayed_delete_message(bot: Bot, chat_id: int, message_id: int, delay_seconds: int = 0) -> None:
+    """Safely deletes a message after a non-blocking delay."""
+    if delay_seconds > 0:
+        await asyncio.sleep(delay_seconds)
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception:
+        pass
+
+
+class SmartGroupCommandCleanerMiddleware(BaseMiddleware):
+    """Middleware that automatically manages group command & button trigger message lifecycle:
+    - Moderation & Governance commands (/warn, /mute, /ban, /setrank, /biblestudy, etc.):
+      Retained for 3 minutes (180s) so the community sees the disciplinary action,
+      then cleanly deleted in the background.
+    - Navigation, Menus, Queries, & Bottom Reply Button clicks (/start, /profile, 🏆 Rankings, etc.):
+      Deleted immediately (0s) to keep group chat history clean.
+    - Private DMs: Untouched (0 deletion) so user command history is preserved.
+    """
+
+    MODERATION_GOVERNANCE_COMMANDS: set[str] = {
+        "warn", "mute", "unmute", "ban", "unban", "kick",
+        "lock", "unlock", "biblestudy", "endbiblestudy", "appeal",
+        "setrank", "stats", "botstats", "groups", "admin",
+        "new_event", "send_votd", "setup_gateway", "autoquiz_on", "autoquiz_off",
+    }
+
+    # Standard persistent reply keyboard button labels across all 5 bots
+    REPLY_KEYBOARD_TRIGGERS: set[str] = {
+        "👤 My Profile", "Open App", "ℹ️ Help", "🌐 Community",
+        "🔍 Search Scripture", "🔖 Saved Verses", "🌐 Translation",
+        "🎯 Play Quizzes", "🏆 Leaderboard", "🏆 Rankings", "⭐ My Points", "🛑 Quit Quiz",
+        "📅 View Calendar", "📅 Calendar", "🎫 My Events", "🎂 Add Birthday", "🔔 Reminders",
+        "📝 Submit Appeal", "📝 Appeal",
+    }
+
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        if isinstance(event, Message) and event.chat.type in ("group", "supergroup") and event.text:
+            text = event.text.strip()
+            bot: Bot | None = data.get("bot") or getattr(event, "bot", None)
+
+            if bot:
+                if text.startswith("/"):
+                    cmd = self._extract_command(text)
+                    if cmd:
+                        delay = 180 if cmd in self.MODERATION_GOVERNANCE_COMMANDS else 0
+                        asyncio.create_task(
+                            delayed_delete_message(bot, event.chat.id, event.message_id, delay_seconds=delay)
+                        )
+                elif text in self.REPLY_KEYBOARD_TRIGGERS:
+                    # Reply keyboard button tap in group: delete immediately (0s)
+                    asyncio.create_task(
+                        delayed_delete_message(bot, event.chat.id, event.message_id, delay_seconds=0)
+                    )
+
+        return await handler(event, data)
+
+    @staticmethod
+    def _extract_command(text: str) -> str | None:
+        if not text.startswith("/"):
+            return None
+        token = text.split()[0][1:]
+        return token.split("@")[0].lower() if token else None
 
 
 DEFAULT_BOT_SETTINGS = {
@@ -131,6 +215,7 @@ async def run_polling_bot(
     bot = Bot(token=config.token)
     dispatcher = Dispatcher()
     dispatcher["services"] = services
+    dispatcher.message.outer_middleware(SmartGroupCommandCleanerMiddleware())
     print(f"DEBUG: run_polling_bot for '{config.name}' received router: {router}")
     dispatcher.include_router(router or build_router(config.name, description))
 
