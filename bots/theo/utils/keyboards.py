@@ -109,13 +109,16 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
 
 
 def build_verse_actions_keyboard(category: str, reference: str, is_group: bool = False, bot_username: str = "iamtheobot") -> InlineKeyboardMarkup:
-    """Builds the inline action keyboard for verse cards: [ 💜 Save ] [ Next Verse ] [ Share ]."""
+    """Builds the mobile-optimized inline action keyboard for verse cards:
+    Row 1: [ Save ] [ Next Verse ]
+    Row 2: [ Share ]
+    """
     clean_ref = reference.replace(" ", "_")
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="💜 Save",
+                    text="Save",
                     callback_data=VerseAction(
                         action="save", 
                         category=category, 
@@ -130,6 +133,8 @@ def build_verse_actions_keyboard(category: str, reference: str, is_group: bool =
                         reference=clean_ref
                     ).pack()
                 ),
+            ],
+            [
                 InlineKeyboardButton(
                     text="Share",
                     switch_inline_query=reference

@@ -645,7 +645,7 @@ def build_theo_router(description: str) -> Router:
         reply_target = message.message if is_callback else message
 
         if not verses:
-            msg = "You have no saved verses yet.\n\nTap <b>💜 Save</b> on any verse to bookmark it here."
+            msg = "You have no saved verses yet.\n\nTap <b>Save</b> on any verse to bookmark it here."
             if is_callback:
                 await reply_target.edit_text(msg, parse_mode="HTML")
             else:
@@ -945,7 +945,7 @@ def build_theo_router(description: str) -> Router:
             category=callback_data.category
         )
         if saved:
-            await callback.answer("Verse saved to your bookmarks! 💜", show_alert=True)
+            await callback.answer("Verse saved to your bookmarks!", show_alert=True)
         else:
             await callback.answer("This verse is already in your saved verses.", show_alert=True)
 
