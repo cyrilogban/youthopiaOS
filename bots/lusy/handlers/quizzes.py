@@ -1052,8 +1052,46 @@ async def execute_quit_game(
                 active_poll_data = p_data
                 break
 
-    # 2. Permission check for group chats (ONLY if an active quiz is currently running)
-    if not is_private and (active_poll_data or active_race_data):
+    has_active_session = bool(active_poll_data or active_race_data)
+
+    # 2. Guard: If NO active session is running
+    if not has_active_session:
+        if is_private:
+            from bots.lusy.utils.keyboards import build_game_selection_inline_keyboard
+            game_mode_markup = build_game_selection_inline_keyboard(is_group=False)
+            idle_text = (
+                "ℹ️ <b>No Active Quiz</b>\n\n"
+                "You don't have an active quiz session running right now. Pick a category below to start playing! 🎯"
+            )
+            if callback:
+                try:
+                    await callback.answer("No active quiz running.", show_alert=True)
+                except Exception:
+                    pass
+                try:
+                    await callback.message.answer(idle_text, parse_mode="HTML", reply_markup=game_mode_markup)
+                except Exception:
+                    pass
+            elif message:
+                await message.answer(idle_text, parse_mode="HTML", reply_markup=game_mode_markup)
+        else:
+            idle_text = (
+                "⚠️ <b>No Active Quiz</b>\n\n"
+                "There is no active quiz running in this group right now. Type /playquiz to start one!"
+            )
+            if callback:
+                try:
+                    await callback.answer("No active quiz is currently running in this group.", show_alert=True)
+                except Exception:
+                    pass
+            elif message:
+                sent_msg = await message.answer(idle_text, parse_mode="HTML")
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, chat_id, sent_msg.message_id, 10))
+        return
+
+    # 3. Permission check for group chats (ONLY if an active quiz is currently running)
+    if not is_private:
         host_id = (active_poll_data.get("host_id") if active_poll_data else active_race_data.get("host_id"))
         is_host = (host_id is not None and user.id == host_id)
 
@@ -1076,10 +1114,12 @@ async def execute_quit_game(
             if callback:
                 await callback.answer(denial, show_alert=True)
             elif message:
-                await message.answer(denial)
+                denial_msg = await message.answer(denial)
+                import asyncio
+                asyncio.create_task(self_destruct_message(bot, chat_id, denial_msg.message_id, 10))
             return
 
-    # 3. Terminate active session if one exists
+    # 4. Terminate active session if one exists
     if active_poll_data:
         active_poll_data["closed"] = True
         p_msg_id = active_poll_data.get("message_id")
@@ -1106,7 +1146,7 @@ async def execute_quit_game(
     if chat_id in ACTIVE_GROUP_QUIZZES:
         del ACTIVE_GROUP_QUIZZES[chat_id]
 
-    # 4. Return to Quiz Mode Selection Menu unconditionally
+    # 5. Return to Quiz Mode Selection Menu on genuine termination
     from bots.lusy.utils.keyboards import build_game_selection_inline_keyboard
     game_mode_markup = build_game_selection_inline_keyboard(is_group=not is_private)
 
