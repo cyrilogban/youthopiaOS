@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { TelegramUser } from '../../types/telegram';
 import type { ProfileState } from '../../hooks/useTelegram';
-import { fetchVotd, type VotdItem } from '../../services/api';
+import { fetchCommunityStats, fetchVotd, type CommunityStats, type VotdItem } from '../../services/api';
 import { Card, Skeleton } from '../ui';
 import { RankBadge } from '../RankBadge';
 
@@ -15,14 +15,23 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
   const profileData = profile.status === 'ok' ? profile.profile : null;
   const [votd, setVotd] = useState<VotdItem | null>(null);
   const [loadingVotd, setLoadingVotd] = useState(true);
+  const [stats, setStats] = useState<CommunityStats>({
+    totalMembers: 250,
+    quizzesPlayed: 1400,
+    versesRead: 3200,
+  });
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const item = await fetchVotd('KJV');
+      const [item, commStats] = await Promise.all([
+        fetchVotd('KJV'),
+        fetchCommunityStats(),
+      ]);
       if (!cancelled) {
         setVotd(item);
         setLoadingVotd(false);
+        setStats(commStats);
       }
     })();
     return () => {
@@ -147,6 +156,48 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
           )}
         </div>
       </div>
+
+      {/* Live Community Impact & Stats Banner */}
+      <Card
+        style={{
+          padding: '14px 16px',
+          background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+          border: '1px solid #e9d5ff',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--primary-purple)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            🏛️ YOUTHOPIA BIBLE COMMUNITY
+          </span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#581c87',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13 }}>👥</span>
+            <span>{stats.totalMembers.toLocaleString()}+ Active Members</span>
+          </div>
+          <span style={{ color: '#c084fc' }}>•</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13 }}>🏆</span>
+            <span>{stats.quizzesPlayed.toLocaleString()}+ Quizzes Played</span>
+          </div>
+          <span style={{ color: '#c084fc' }}>•</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13 }}>📖</span>
+            <span>{stats.versesRead.toLocaleString()}+ Verses Read</span>
+          </div>
+        </div>
+      </Card>
 
       {/* Quick Profile Summary Bar */}
       {profileData && (

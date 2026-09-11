@@ -89,3 +89,11 @@ class VotdItem(BaseModel):
     reference: str
     text: str
     translation: str = "KJV"
+
+
+class CommunityStats(BaseModel):
+    """Community-wide aggregate statistics."""
+
+    total_members: int = 250
+    quizzes_played: int = 1400
+    verses_read: int = 3200
