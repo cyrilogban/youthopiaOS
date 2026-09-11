@@ -184,17 +184,17 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified }) => 
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ fontSize: 13 }}>👥</span>
-            <span>{stats.totalMembers.toLocaleString()}+ Active Members</span>
+            <span>{stats.totalMembers.toLocaleString()} Active Members</span>
           </div>
           <span style={{ color: '#c084fc' }}>•</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ fontSize: 13 }}>🏆</span>
-            <span>{stats.quizzesPlayed.toLocaleString()}+ Quizzes Played</span>
+            <span>{stats.quizzesPlayed.toLocaleString()} Quizzes Played</span>
           </div>
           <span style={{ color: '#c084fc' }}>•</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ fontSize: 13 }}>📖</span>
-            <span>{stats.versesRead.toLocaleString()}+ Verses Read</span>
+            <span>{stats.versesRead.toLocaleString()} Verses Saved</span>
           </div>
         </div>
       </Card>

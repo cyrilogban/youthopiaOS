@@ -277,16 +277,16 @@ async def get_votd(
 async def get_community_stats(
     service: UserService = Depends(get_user_service),
 ) -> CommunityStats:
-    """Return live community statistics (total active members, quizzes played, verses read)."""
+    """Return 100% live raw community statistics directly from Supabase."""
     try:
         users = await service.db.find_many("users", {})
-        user_count = max(250, len(users) + 245)
+        user_count = len(users)
 
         history = await service.db.find_many("lusy_game_history", {})
-        quizzes_count = max(1400, len(history) * 10 + 1400)
+        quizzes_count = len(history)
 
         saved = await service.db.find_many("user_saved_verses", {})
-        verses_count = max(3200, len(saved) * 15 + 3200)
+        verses_count = len(saved)
 
         return CommunityStats(
             total_members=user_count,
@@ -295,7 +295,7 @@ async def get_community_stats(
         )
     except Exception as e:
         print(f"Warning in /api/community/stats: {e}")
-        return CommunityStats()
+        return CommunityStats(total_members=0, quizzes_played=0, verses_read=0)
 
 
 # Single-service deployment: Mount compiled Mini App frontend at root '/'

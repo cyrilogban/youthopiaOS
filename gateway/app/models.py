@@ -94,6 +94,6 @@ class VotdItem(BaseModel):
 class CommunityStats(BaseModel):
     """Community-wide aggregate statistics."""
 
-    total_members: int = 250
-    quizzes_played: int = 1400
-    verses_read: int = 3200
+    total_members: int = 0
+    quizzes_played: int = 0
+    verses_read: int = 0

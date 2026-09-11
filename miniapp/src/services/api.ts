@@ -258,15 +258,15 @@ export async function fetchCommunityStats(): Promise<CommunityStats> {
     if (!res.ok) throw new Error();
     const data = await res.json();
     return {
-      totalMembers: data.total_members ?? 250,
-      quizzesPlayed: data.quizzes_played ?? 1400,
-      versesRead: data.verses_read ?? 3200,
+      totalMembers: data.total_members ?? 0,
+      quizzesPlayed: data.quizzes_played ?? 0,
+      versesRead: data.verses_read ?? 0,
     };
   } catch {
     return {
-      totalMembers: 250,
-      quizzesPlayed: 1400,
-      versesRead: 3200,
+      totalMembers: 0,
+      quizzesPlayed: 0,
+      versesRead: 0,
     };
   }
 }
