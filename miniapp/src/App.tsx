@@ -8,6 +8,7 @@ import { EventsTab } from './components/tabs/EventsTab';
 import { CommunityTab } from './components/tabs/CommunityTab';
 import { Card } from './components/ui';
 import { RankBadge } from './components/RankBadge';
+import { CommunityTicker } from './components/CommunityTicker';
 import type { TabId } from './types/navigation';
 
 const App: React.FC = () => {
@@ -43,16 +44,30 @@ const App: React.FC = () => {
 
   return (
     <div
-      className="app-enter"
       style={{
-        padding: '20px 16px 84px 16px',
-        maxWidth: '480px',
-        margin: '0 auto',
         minHeight: '100vh',
         backgroundColor: 'var(--bg-color)',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* Top Header */}
+      {/* Floating / Sticky Live Community Marquee Ticker */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, width: '100%' }}>
+        <CommunityTicker />
+      </div>
+
+      <div
+        className="app-enter"
+        style={{
+          padding: '16px 16px 84px 16px',
+          maxWidth: '480px',
+          margin: '0 auto',
+          width: '100%',
+          boxSizing: 'border-box',
+          flex: 1,
+        }}
+      >
+        {/* Top Header */}
       <header
         style={{
           display: 'flex',
@@ -267,6 +282,7 @@ const App: React.FC = () => {
           Powered by YouThopia Bible Community
         </p>
       </footer>
+      </div>
     </div>
   );
 };

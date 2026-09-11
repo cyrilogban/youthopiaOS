@@ -282,20 +282,20 @@ async def get_community_stats(
         users = await service.db.find_many("users", {})
         user_count = len(users)
 
+        chats = await service.db.find_many("telegram_chats", {"is_active": True})
+        group_count = len(chats)
+
         history = await service.db.find_many("lusy_game_history", {})
         quizzes_count = len(history)
 
-        saved = await service.db.find_many("user_saved_verses", {})
-        verses_count = len(saved)
-
         return CommunityStats(
             total_members=user_count,
+            active_groups=group_count,
             quizzes_played=quizzes_count,
-            verses_read=verses_count,
         )
     except Exception as e:
         print(f"Warning in /api/community/stats: {e}")
-        return CommunityStats(total_members=0, quizzes_played=0, verses_read=0)
+        return CommunityStats(total_members=0, active_groups=0, quizzes_played=0)
 
 
 # Single-service deployment: Mount compiled Mini App frontend at root '/'

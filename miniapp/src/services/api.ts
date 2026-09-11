@@ -248,8 +248,8 @@ export async function fetchVotd(translation: string = 'KJV'): Promise<VotdItem> 
 
 export interface CommunityStats {
   totalMembers: number;
+  activeGroups: number;
   quizzesPlayed: number;
-  versesRead: number;
 }
 
 export async function fetchCommunityStats(): Promise<CommunityStats> {
@@ -259,14 +259,14 @@ export async function fetchCommunityStats(): Promise<CommunityStats> {
     const data = await res.json();
     return {
       totalMembers: data.total_members ?? 0,
+      activeGroups: data.active_groups ?? 0,
       quizzesPlayed: data.quizzes_played ?? 0,
-      versesRead: data.verses_read ?? 0,
     };
   } catch {
     return {
       totalMembers: 0,
+      activeGroups: 0,
       quizzesPlayed: 0,
-      versesRead: 0,
     };
   }
 }

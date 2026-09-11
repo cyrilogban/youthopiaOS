@@ -95,5 +95,5 @@ class CommunityStats(BaseModel):
     """Community-wide aggregate statistics."""
 
     total_members: int = 0
+    active_groups: int = 0
     quizzes_played: int = 0
-    verses_read: int = 0
