@@ -115,10 +115,18 @@ def create_admin_router(bot_name: str = "global") -> Router:
         stats = await services.admin.get_global_stats()
         breakdown = await services.admin.get_bot_breakdown()
 
+        total_users = stats.get("total_users", 0)
+        mau = stats.get("mau", 0)
+        dau = stats.get("dau", 0)
+        retention = f"{(mau / total_users * 100):.1f}%" if total_users > 0 else "0.0%"
+
         text = (
             "👑 <b>YouThopiaOS Admin Summary</b>\n\n"
-            "📊 <b>Community Reach</b>\n"
-            f"• Total Members: <b>{stats['total_users']}</b>\n"
+            "📊 <b>Community Reach & Activity</b>\n"
+            f"• Total Registered: <b>{total_users:,}</b>\n"
+            f"• <b>Monthly Active (MAU):</b> <b>{mau:,}</b> (last 30d)\n"
+            f"• <b>Daily Active (DAU):</b> <b>{dau:,}</b> (last 24h)\n"
+            f"• 30-Day Activity Rate: <b>{retention}</b>\n"
             f"• Active Groups: <b>{stats['active_groups']}</b>\n"
             f"• User Subscriptions: <b>{stats['user_subscriptions']}</b>\n"
             f"• Group Subscriptions: <b>{stats['chat_subscriptions']}</b>\n\n"
@@ -163,14 +171,21 @@ def create_admin_router(bot_name: str = "global") -> Router:
             await message.answer("🏰 No active registered groups found in YouThopiaOS.")
             return
 
-        lines = [f"🏰 <b>Active Groups Directory ({len(groups)})</b>\n"]
+        header = f"🏰 <b>Active Groups Directory ({len(groups)})</b>\n\n"
+        entries = []
         for g in groups:
             title = g.get("title") or "Unnamed Group"
             chat_id = g.get("telegram_chat_id") or g.get("id")
             official = " ⭐ (Official)" if g.get("is_official") else ""
-            lines.append(f"• <b>{title}</b>{official}\n  Telegram ID: <code>{chat_id}</code>")
+            entries.append(f"• <b>{title}</b>{official}\n  Telegram ID: <code>{chat_id}</code>")
 
-        await message.answer("\n\n".join(lines), parse_mode="HTML")
+        # Chunk to stay safely under Telegram's 4096-character limit (15 groups per message)
+        chunk_size = 15
+        for i in range(0, len(entries), chunk_size):
+            chunk = entries[i : i + chunk_size]
+            page_header = header if i == 0 else f"🏰 <b>Active Groups Directory (Cont.)</b>\n\n"
+            text = page_header + "\n\n".join(chunk)
+            await message.answer(text, parse_mode="HTML")
 
     @router.message(Command("setrank"), IsGlobalAdminFilter())
     async def handle_set_rank(message: Message, services: ServiceContainer) -> None:
