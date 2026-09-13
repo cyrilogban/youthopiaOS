@@ -6,174 +6,134 @@ interface BottomNavProps {
   onTabChange: (tab: TabId) => void;
 }
 
-// Crisp inline vector SVG icons (20x20)
-const HomeIcon: React.FC<{ active: boolean }> = ({ active }) => (
+const Icon: React.FC<{ active: boolean; path: React.ReactNode }> = ({ active, path }) => (
   <svg
-    width="20"
-    height="20"
+    width="21"
+    height="21"
     viewBox="0 0 24 24"
     fill="none"
-    stroke={active ? 'var(--primary-purple, #6d28d9)' : '#94a3b8'}
-    strokeWidth="2"
+    stroke={active ? 'var(--primary-purple)' : 'var(--text-muted)'}
+    strokeWidth="2.15"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <rect x="3" y="3" width="7" height="7" rx="1.5" />
-    <rect x="14" y="3" width="7" height="7" rx="1.5" />
-    <rect x="14" y="14" width="7" height="7" rx="1.5" />
-    <rect x="3" y="14" width="7" height="7" rx="1.5" />
-  </svg>
-);
-
-const BibleIcon: React.FC<{ active: boolean }> = ({ active }) => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={active ? 'var(--primary-purple, #6d28d9)' : '#94a3b8'}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-  </svg>
-);
-
-const QuizIcon: React.FC<{ active: boolean }> = ({ active }) => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={active ? 'var(--primary-purple, #6d28d9)' : '#94a3b8'}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-    <line x1="12" y1="17" x2="12.01" y2="17" />
-  </svg>
-);
-
-const EventsIcon: React.FC<{ active: boolean }> = ({ active }) => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={active ? 'var(--primary-purple, #6d28d9)' : '#94a3b8'}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
-
-const CommunityIcon: React.FC<{ active: boolean }> = ({ active }) => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={active ? 'var(--primary-purple, #6d28d9)' : '#94a3b8'}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    {path}
   </svg>
 );
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
-  const tabs: { id: TabId; label: string; Icon: React.FC<{ active: boolean }> }[] = [
-    { id: 'home', label: 'Home', Icon: HomeIcon },
-    { id: 'bible', label: 'Bible', Icon: BibleIcon },
-    { id: 'quiz', label: 'Quiz', Icon: QuizIcon },
-    { id: 'events', label: 'Events', Icon: EventsIcon },
-    { id: 'community', label: 'Community', Icon: CommunityIcon },
+  const tabs: { id: TabId; label: string; path: React.ReactNode }[] = [
+    {
+      id: 'home',
+      label: 'Home',
+      path: (
+        <>
+          <rect x="3" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="14" width="7" height="7" rx="2" />
+          <rect x="3" y="14" width="7" height="7" rx="2" />
+        </>
+      ),
+    },
+    {
+      id: 'bible',
+      label: 'Bible',
+      path: (
+        <>
+          <path d="M5 19.5A2.5 2.5 0 0 1 7.5 17H20" />
+          <path d="M7.5 3H20v19H7.5A2.5 2.5 0 0 1 5 19.5v-14A2.5 2.5 0 0 1 7.5 3z" />
+          <path d="M10 7h6" />
+        </>
+      ),
+    },
+    {
+      id: 'quiz',
+      label: 'Lusy',
+      path: (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.5 9.3a2.7 2.7 0 0 1 5.1 1.2c0 1.8-2.6 2.3-2.6 4" />
+          <path d="M12 18h.01" />
+        </>
+      ),
+    },
+    {
+      id: 'events',
+      label: 'Eddy',
+      path: (
+        <>
+          <rect x="3" y="4.5" width="18" height="16" rx="3" />
+          <path d="M8 2.5v4" />
+          <path d="M16 2.5v4" />
+          <path d="M3 10h18" />
+        </>
+      ),
+    },
+    {
+      id: 'community',
+      label: 'Hub',
+      path: (
+        <>
+          <path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-6A3.5 3.5 0 0 0 3 18.5V20" />
+          <circle cx="9.5" cy="7.5" r="3.5" />
+          <path d="M21 20v-1.2a3 3 0 0 0-2.2-2.9" />
+          <path d="M16.8 4.2a3.5 3.5 0 0 1 0 6.6" />
+        </>
+      ),
+    },
   ];
 
   return (
     <nav
+      aria-label="Main navigation"
       style={{
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderTop: '1px solid var(--slate-200)',
-        boxShadow: '0 -6px 24px rgba(15, 23, 42, 0.06)',
-        display: 'flex',
-        justifyContent: 'space-around',
+        left: '50%',
+        bottom: 12,
+        transform: 'translateX(-50%)',
+        width: 'calc(100% - 24px)',
+        maxWidth: 500,
+        minHeight: 70,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
         alignItems: 'center',
-        padding: '6px 0 12px 0',
+        gap: 4,
+        padding: 6,
+        borderRadius: 28,
+        background: 'rgba(255,255,255,0.9)',
+        border: '1px solid rgba(221, 214, 254, 0.78)',
+        boxShadow: '0 18px 50px rgba(41, 19, 69, 0.18)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         zIndex: 1000,
-        maxWidth: '480px',
-        margin: '0 auto',
       }}
     >
-      {tabs.map(({ id, label, Icon }) => {
+      {tabs.map(({ id, label, path }) => {
         const active = activeTab === id;
         return (
           <button
             key={id}
+            aria-current={active ? 'page' : undefined}
             onClick={() => onTabChange(id)}
             style={{
-              background: 'none',
-              border: 'none',
+              minWidth: 0,
+              minHeight: 58,
+              border: 0,
+              borderRadius: 22,
+              background: active ? 'var(--purple-50)' : 'transparent',
+              color: active ? 'var(--primary-purple)' : 'var(--text-muted)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 4,
+              gap: 5,
+              fontSize: 10,
+              fontWeight: active ? 900 : 750,
               cursor: 'pointer',
-              padding: '8px 12px',
-              color: active ? 'var(--primary-purple)' : 'var(--text-muted)',
-              fontWeight: active ? 700 : 400,
-              fontSize: 11,
-              transition: 'color 0.15s var(--ease)',
-              position: 'relative',
+              transition: 'background 0.18s var(--ease), color 0.18s var(--ease)',
             }}
           >
-            {active && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: -8,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 28,
-                  height: 3,
-                  borderRadius: 2,
-                  background: 'var(--primary-purple)',
-                }}
-              />
-            )}
-            <span
-              style={{
-                backgroundColor: active ? 'var(--purple-50)' : 'transparent',
-                borderRadius: 'var(--radius-md)',
-                padding: '5px 12px',
-                transition: 'background 0.15s var(--ease)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon active={active} />
-            </span>
+            <Icon active={active} path={path} />
             <span>{label}</span>
           </button>
         );

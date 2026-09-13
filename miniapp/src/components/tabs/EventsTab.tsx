@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchEvents, type EventItem } from '../../services/api';
-import { Card, Skeleton, Pill } from '../ui';
+import { Card, Skeleton, Pill, SectionTitle } from '../ui';
 
 export const EventsTab: React.FC = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -35,19 +35,32 @@ export const EventsTab: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Header */}
-      <div>
-        <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-color)', letterSpacing: '-0.02em' }}>
-          Events & Schedule
-        </h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-          Powered by Eddy Bot &bull; Community Calendar & Reminders
+    <div className="section-stack">
+      {/* Eddy Events Hero Banner */}
+      <section
+        style={{
+          borderRadius: 28,
+          padding: 20,
+          color: '#ffffff',
+          background: 'linear-gradient(135deg, #0e7490 0%, #0284c7 52%, #38bdf8 100%)',
+          boxShadow: '0 18px 48px rgba(14, 116, 144, 0.25)',
+        }}
+      >
+        <Pill color="deep" style={{ background: 'rgba(255,255,255,0.18)', borderColor: 'rgba(255,255,255,0.28)', marginBottom: 12 }}>
+          Eddy Calendar Hub
+        </Pill>
+        <h2 style={{ margin: 0, fontSize: 26, lineHeight: 1.08, fontWeight: 950 }}>Fellowship Schedule & Gatherings</h2>
+        <p style={{ margin: '9px 0 0', color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 1.55 }}>
+          Stay updated with weekly Bible studies, prayer intercessions, birthdays, and church community hangouts.
         </p>
-      </div>
+      </section>
 
       {/* Upcoming Events List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <SectionTitle eyebrow="Calendar" right={<Pill color="purple">{events.length} Events</Pill>}>
+          Upcoming Gatherings
+        </SectionTitle>
+
         {loading ? (
           <Card style={{ padding: 16 }}>
             <div style={{ display: 'flex', gap: 14 }}>
@@ -63,72 +76,77 @@ export const EventsTab: React.FC = () => {
           events.map((evt, idx) => {
             const date = parseDate(evt.startsAt || '');
             return (
-              <Card key={idx} hover style={{ padding: 16, display: 'flex', gap: 14 }}>
-                {date.day !== null ? (
-                  <div
-                    style={{
-                      width: 54,
-                      height: 54,
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--grad-hero)',
-                      color: '#fff',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      boxShadow: '0 4px 12px rgba(109,40,217,0.25)',
-                    }}
-                  >
-                    <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{date.day}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.9 }}>{date.month}</span>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      width: 54,
-                      height: 54,
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--slate-100)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      fontSize: 18,
-                      fontWeight: 800,
-                      color: 'var(--primary-purple)',
-                    }}
-                  >
-                    ✦
-                  </div>
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span
+              <Card key={idx} hover style={{ padding: 16 }}>
+                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  {date.day !== null ? (
+                    <div
                       style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: 'var(--primary-purple)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
+                        width: 52,
+                        height: 52,
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--grad-hero)',
+                        color: '#fff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: '0 4px 14px rgba(109,40,217,0.22)',
                       }}
                     >
-                      {evt.category || 'Community Gathering'}
-                    </span>
-                    <Pill>{evt.location || 'Telegram Main Channel'}</Pill>
+                      <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{date.day}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.9 }}>{date.month}</span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--slate-100)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: 'var(--primary-purple)',
+                      }}
+                    >
+                      ✦
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span className="eyebrow" style={{ fontSize: 10 }}>
+                        {evt.category || 'Community Gathering'}
+                      </span>
+                      <Pill color="neutral">{evt.location || 'Telegram Channel'}</Pill>
+                    </div>
+                    <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-color)', margin: '0 0 4px 0' }}>{evt.title}</h3>
+                    <p className="muted-copy" style={{ margin: 0, fontSize: 12 }}>
+                      {date.time ? date.full : evt.startsAt}
+                    </p>
+                    <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                      <a
+                        href="https://t.me/iamedyybot?start=calendar"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ghost-button"
+                        style={{ textDecoration: 'none', height: 32, minHeight: 32, fontSize: 11, padding: '0 12px' }}
+                      >
+                        RSVP with Eddy →
+                      </a>
+                    </div>
                   </div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-color)', margin: '0 0 4px 0' }}>{evt.title}</h3>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
-                    {date.time ? date.full : evt.startsAt}
-                  </p>
                 </div>
               </Card>
             );
           })
         ) : (
-          <Card style={{ padding: 16 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              No upcoming events scheduled right now. Check back soon!
+          <Card style={{ padding: 18 }}>
+            <div className="muted-copy">
+              No upcoming events scheduled right now. Check back soon or message @iamedyybot to register your birthday!
             </div>
           </Card>
         )}

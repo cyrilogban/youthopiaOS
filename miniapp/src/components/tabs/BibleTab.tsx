@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getRawInitData } from '../../services/telegram';
 import { fetchSettings, fetchVotd, updateSettings, type VotdItem } from '../../services/api';
-import { Card, Skeleton } from '../ui';
+import { Card, Pill, SectionTitle, Skeleton } from '../ui';
 
 type TranslationCode = 'KJV' | 'ASV' | 'WEB' | 'BBE';
 
@@ -65,73 +65,55 @@ export const BibleTab: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Header */}
-      <div>
-        <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-color)', letterSpacing: '-0.02em' }}>
-          Scripture Hub
-        </h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-          Powered by Theo Bot &bull; Multi-Translation Scripture & Devotionals
+    <div className="section-stack">
+      <section
+        style={{
+          borderRadius: 28,
+          padding: 20,
+          color: '#fff',
+          background: 'var(--grad-bible)',
+          boxShadow: 'var(--shadow-purple)',
+        }}
+      >
+        <Pill color="deep" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.26)', marginBottom: 12 }}>
+          Theo Scripture Hub
+        </Pill>
+        <h2 style={{ margin: 0, fontSize: 26, lineHeight: 1.08, fontWeight: 950 }}>Daily Scripture, beautifully centered.</h2>
+        <p style={{ margin: '9px 0 0', color: 'rgba(255,255,255,0.8)', fontSize: 13, lineHeight: 1.55 }}>
+          Read the Verse of the Day, switch translations, and prepare the foundation for visual Scripture cards.
         </p>
-      </div>
+      </section>
 
-      {/* Save Toast Notification */}
       {saveMessage && (
         <div
           style={{
             background: 'var(--success-bg)',
             border: '1px solid var(--success-border)',
             color: 'var(--success)',
-            borderRadius: 'var(--radius-md)',
-            padding: '10px 14px',
+            borderRadius: 'var(--radius-lg)',
+            padding: '11px 14px',
             fontSize: 12,
-            fontWeight: 600,
-            animation: 'fadeSlideIn 0.2s var(--ease) both',
+            fontWeight: 800,
           }}
         >
           {saveMessage}
         </div>
       )}
 
-      {/* Dynamic VOTD Display Card */}
-      <Card style={{ padding: 20 }} hover>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: 'var(--primary-purple)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Daily Scripture Focus
-          </span>
-          <span
-            style={{
-              fontSize: 11,
-              color: 'var(--primary-purple)',
-              background: 'var(--purple-50)',
-              border: '1px solid var(--purple-200)',
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-full)',
-              fontWeight: 600,
-            }}
-          >
-            {selectedTranslation}
-          </span>
-        </div>
+      <Card style={{ padding: 18 }} hover>
+        <SectionTitle eyebrow="Verse of the Day" right={<Pill color="purple">{selectedTranslation}</Pill>}>
+          Scripture Card
+        </SectionTitle>
 
-        {/* Translation Selector Tabs */}
         <div
           style={{
-            display: 'flex',
-            gap: 4,
-            marginBottom: 18,
-            background: 'var(--slate-100)',
-            borderRadius: 'var(--radius-md)',
-            padding: 4,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: 6,
+            marginBottom: 16,
+            padding: 5,
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--surface-muted)',
           }}
         >
           {TRANSLATIONS.map((code) => {
@@ -142,18 +124,16 @@ export const BibleTab: React.FC = () => {
                 disabled={isSaving}
                 onClick={() => handleTranslationChange(code)}
                 style={{
-                  flex: 1,
-                  background: active ? 'var(--surface)' : 'transparent',
+                  minHeight: 38,
+                  border: 0,
+                  borderRadius: 'var(--radius-md)',
+                  background: active ? '#fff' : 'transparent',
                   color: active ? 'var(--primary-purple)' : 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: 'calc(var(--radius-md) - 4px)',
-                  padding: '8px 4px',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
                   boxShadow: active ? 'var(--shadow-xs)' : 'none',
-                  transition: 'all 0.15s var(--ease)',
-                  opacity: isSaving ? 0.6 : 1,
+                  fontSize: 12,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  opacity: isSaving ? 0.62 : 1,
                 }}
               >
                 {code}
@@ -163,35 +143,42 @@ export const BibleTab: React.FC = () => {
         </div>
 
         {loadingVotd ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
-            <Skeleton height={16} />
-            <Skeleton height={16} width="92%" />
-            <Skeleton height={16} width="70%" />
+          <div style={{ display: 'grid', gap: 9 }}>
+            <Skeleton height={17} />
+            <Skeleton height={17} width="92%" />
+            <Skeleton height={17} width="74%" />
+            <Skeleton height={12} width="45%" style={{ marginTop: 8 }} />
           </div>
         ) : (
-          <>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, background: 'var(--grad-hero)', flexShrink: 0 }} />
-              <p style={{ fontSize: 16, color: 'var(--text-color)', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>
-                &ldquo;{votd?.text}&rdquo;
-              </p>
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 22,
+              background: 'linear-gradient(160deg,#ffffff,#f7f2ff)',
+              border: '1px solid var(--purple-100)',
+            }}
+          >
+            <div className="eyebrow" style={{ marginBottom: 14 }}>{translationNames[selectedTranslation]}</div>
+            <p style={{ margin: 0, color: 'var(--text-color)', fontSize: 18, lineHeight: 1.78, fontWeight: 600 }}>
+              "{votd?.text}"
+            </p>
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <strong style={{ color: 'var(--primary-purple)', fontSize: 14 }}>{votd?.reference}</strong>
+              <Pill color="slate">Visual card ready soon</Pill>
             </div>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderTop: '1px solid var(--slate-100)',
-                paddingTop: 12,
-                marginTop: 16,
-              }}
-            >
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{translationNames[selectedTranslation]}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary-purple)' }}>{votd?.reference}</span>
-            </div>
-          </>
+          </div>
         )}
+      </Card>
+
+      <Card style={{ padding: 18 }}>
+        <SectionTitle eyebrow="Next Layer">Theo Visual Features</SectionTitle>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {['Shareable VOTD graphics', 'Saved verse gallery', 'AOTD companion card', 'Reading-plan progress'].map((item) => (
+            <div key={item} style={{ padding: 12, borderRadius: 'var(--radius-lg)', background: '#fff', border: '1px solid var(--purple-100)', fontSize: 13, fontWeight: 750 }}>
+              {item}
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );

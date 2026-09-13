@@ -6,7 +6,7 @@ import { BibleTab } from './components/tabs/BibleTab';
 import { QuizTab } from './components/tabs/QuizTab';
 import { EventsTab } from './components/tabs/EventsTab';
 import { CommunityTab } from './components/tabs/CommunityTab';
-import { Card } from './components/ui';
+import { Card, Pill } from './components/ui';
 import { RankBadge } from './components/RankBadge';
 import { CommunityTicker } from './components/CommunityTicker';
 import type { TabId } from './types/navigation';
@@ -19,8 +19,9 @@ const App: React.FC = () => {
 
   const isVerified = verification.status === 'verified';
   const profileData = profile.status === 'ok' ? profile.profile : null;
+  const displayName = user?.firstName || profileData?.displayName || 'Member';
+  const initial = displayName[0]?.toUpperCase() || 'Y';
 
-  // Re-trigger the entrance animation whenever the tab changes.
   const handleTabChange = (tab: TabId) => {
     if (tab === activeTab) return;
     setActiveTab(tab);
@@ -30,7 +31,7 @@ const App: React.FC = () => {
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeTab user={user} profile={profile} verified={isVerified} />;
+        return <HomeTab user={user} profile={profile} verified={isVerified} onNavigate={handleTabChange} />;
       case 'bible':
         return <BibleTab />;
       case 'quiz':
@@ -43,246 +44,226 @@ const App: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-color)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Floating / Sticky Live Community Marquee Ticker */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 40, width: '100%' }}>
+    <div className="app-shell">
+      <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
         <CommunityTicker />
       </div>
 
-      <div
-        className="app-enter"
-        style={{
-          padding: '16px 16px 84px 16px',
-          maxWidth: '480px',
-          margin: '0 auto',
-          width: '100%',
-          boxSizing: 'border-box',
-          flex: 1,
-        }}
-      >
-        {/* Top Header */}
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          paddingBottom: '12px',
-          borderBottom: '1px solid var(--slate-200)',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              color: 'var(--primary-purple)',
-              fontSize: 16,
-              fontWeight: 800,
-              margin: 0,
-              letterSpacing: '-0.01em',
-              textTransform: 'uppercase',
-            }}
-          >
-            YOUTHOPIA BIBLE COMMUNITY
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 11, margin: '2px 0 0 0', fontWeight: 500 }}>
-            Sharing God&apos;s Love All The Way
-          </p>
-        </div>
-
-        {/* Member Profile Button (Always Visible) */}
-        <button
-          onClick={() => setShowProfileModal(!showProfileModal)}
+      <div className="app-frame">
+        <header
+          className="glass-panel"
           style={{
-            background: showProfileModal ? 'var(--primary-purple)' : 'var(--surface)',
-            color: showProfileModal ? '#ffffff' : 'var(--text-color)',
-            border: '1px solid var(--slate-200)',
-            borderRadius: 'var(--radius-full)',
-            padding: '5px 12px',
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 6,
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: 11,
-            boxShadow: 'var(--shadow-xs)',
-            transition: 'all 0.15s var(--ease)',
+            gap: 12,
+            marginBottom: 16,
+            padding: '12px 12px 12px 14px',
+            borderRadius: 'var(--radius-xl)',
+            position: 'sticky',
+            top: 36,
+            zIndex: 30,
           }}
         >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              backgroundColor: isVerified ? 'var(--success)' : 'var(--warning)',
-            }}
-          />
-          <span>{profileData ? `Lvl ${profileData.level} • ${profileData.totalXp} XP` : 'Profile'}</span>
-        </button>
-      </header>
-
-      {/* Member Profile Modal Overlay (Always toggleable) */}
-      {showProfileModal && (
-        <Card style={{ padding: 18, marginBottom: 16, animation: 'fadeSlideIn 0.25s var(--ease) both' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--primary-purple)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Member Identity & Profile
-            </span>
-            <button
-              onClick={() => setShowProfileModal(false)}
-              style={{
-                background: 'var(--slate-100)',
-                border: 'none',
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background 0.15s var(--ease)',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--slate-200)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--slate-100)')}
-            >
-              ✕
-            </button>
+          <div style={{ minWidth: 0 }}>
+            <div className="eyebrow" style={{ marginBottom: 3 }}>YouThopiaOS</div>
+            <h1 style={{ margin: 0, color: 'var(--text-color)', fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>
+              Community Dashboard
+            </h1>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 650 }}>
+              Sharing God's Love All The Way
+            </p>
           </div>
 
-          {/* User Info Header */}
-          <div
+          <button
+            aria-label="Open profile"
+            onClick={() => setShowProfileModal(true)}
             style={{
+              flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
-              marginBottom: 14,
-              paddingBottom: 12,
-              borderBottom: '1px solid var(--slate-100)',
+              gap: 8,
+              minHeight: 44,
+              maxWidth: 150,
+              padding: '5px 8px 5px 5px',
+              border: '1px solid rgba(221, 214, 254, 0.8)',
+              borderRadius: 'var(--radius-full)',
+              background: showProfileModal ? 'var(--primary-purple)' : 'rgba(255,255,255,0.92)',
+              color: showProfileModal ? '#fff' : 'var(--text-color)',
+              boxShadow: 'var(--shadow-xs)',
+              cursor: 'pointer',
             }}
           >
             {user?.photoUrl ? (
               <img
                 src={user.photoUrl}
-                alt={user.firstName}
-                width={40}
-                height={40}
+                alt={displayName}
+                width={34}
+                height={34}
                 style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--purple-200)' }}
               />
             ) : (
-              <div
+              <span
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                   borderRadius: '50%',
-                  background: 'var(--grad-hero)',
-                  color: '#fff',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: 16,
+                  background: 'var(--grad-hero)',
+                  color: '#fff',
+                  fontSize: 14,
+                  fontWeight: 900,
                 }}
               >
-                {user?.firstName?.[0]?.toUpperCase() || 'G'}
-              </div>
+                {initial}
+              </span>
             )}
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-color)' }}>
-                {user ? user.firstName : 'Guest Member'}
-              </div>
-              {user?.username && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>@{user.username}</div>}
-              {profileData?.rankTitle && (
-                <div style={{ marginTop: 5 }}>
-                  <RankBadge
-                    title={profileData.rankTitle}
-                    emoji={profileData.rankEmoji}
-                    color={profileData.rankBadgeColor}
-                    size="sm"
-                  />
+            <span style={{ minWidth: 0, textAlign: 'left' }}>
+              <span style={{ display: 'block', fontSize: 11, fontWeight: 850, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profileData ? `Level ${profileData.level}` : 'Profile'}
+              </span>
+              <span style={{ display: 'block', color: showProfileModal ? 'rgba(255,255,255,0.76)' : 'var(--text-muted)', fontSize: 10, fontWeight: 750 }}>
+                {profileData ? `${profileData.totalXp.toLocaleString()} XP` : isVerified ? 'Verified' : 'Open'}
+              </span>
+            </span>
+          </button>
+        </header>
+
+        {showProfileModal && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1200,
+              background: 'rgba(23, 17, 37, 0.34)',
+              padding: 14,
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+            }}
+            onClick={() => setShowProfileModal(false)}
+          >
+            <Card
+              style={{
+                width: '100%',
+                maxWidth: 500,
+                padding: 18,
+                borderRadius: '26px 26px 20px 20px',
+                animation: 'fadeSlideIn 0.25s var(--ease) both',
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 18 }}>
+                <div>
+                  <div className="eyebrow">Member Passport</div>
+                  <h2 style={{ margin: '3px 0 0', fontSize: 22, lineHeight: 1.15 }}>{displayName}</h2>
+                  {user?.username && <div style={{ marginTop: 3, color: 'var(--text-secondary)', fontSize: 13 }}>@{user.username}</div>}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Level & XP Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div
-              style={{ background: 'var(--surface-soft)', padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--slate-100)' }}
-            >
-              <div style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Level Rank</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary-purple)', marginTop: 2 }}>
-                Level {profileData ? profileData.level : 1}
+                <button
+                  aria-label="Close profile"
+                  onClick={() => setShowProfileModal(false)}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    border: '1px solid var(--slate-200)',
+                    background: '#fff',
+                    color: 'var(--text-secondary)',
+                    fontSize: 18,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  x
+                </button>
               </div>
-            </div>
-            <div
-              style={{ background: 'var(--surface-soft)', padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--slate-100)' }}
-            >
-              <div style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Earned</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-color)', marginTop: 2 }}>
-                {profileData ? `${profileData.totalXp} XP` : '0 XP'}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                {user?.photoUrl ? (
+                  <img
+                    src={user.photoUrl}
+                    alt={displayName}
+                    width={58}
+                    height={58}
+                    style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--purple-200)' }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 58,
+                      height: 58,
+                      borderRadius: '50%',
+                      background: 'var(--grad-hero)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: 22,
+                      boxShadow: 'var(--shadow-purple)',
+                    }}
+                  >
+                    {initial}
+                  </div>
+                )}
+                <div style={{ minWidth: 0 }}>
+                  {profileData?.rankTitle && (
+                    <RankBadge title={profileData.rankTitle} emoji={profileData.rankEmoji} color={profileData.rankBadgeColor} size="md" />
+                  )}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                    <Pill color={isVerified ? 'success' : 'warning'}>{isVerified ? 'Server verified' : 'Identity pending'}</Pill>
+                    <Pill color="purple">Trust {profileData?.trustScore ?? 100}/100</Pill>
+                  </div>
+                </div>
               </div>
-            </div>
+
+              <div className="metric-grid" style={{ marginBottom: 16 }}>
+                <div className="metric-tile">
+                  <div className="metric-label">Level</div>
+                  <div className="metric-value">{profileData?.level ?? 1}</div>
+                </div>
+                <div className="metric-tile">
+                  <div className="metric-label">XP</div>
+                  <div className="metric-value">{(profileData?.totalXp ?? 0).toLocaleString()}</div>
+                </div>
+                <div className="metric-tile">
+                  <div className="metric-label">Accuracy</div>
+                  <div className="metric-value">{profileData?.accuracyPct ?? 100}%</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gap: 9, color: 'var(--text-secondary)', fontSize: 13 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span>Community tier</span>
+                  <strong style={{ color: 'var(--text-color)', textTransform: 'capitalize' }}>{profileData?.engagementLevel ?? 'Active Member'}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span>Quizzes played</span>
+                  <strong style={{ color: 'var(--text-color)' }}>{profileData?.quizzesPlayed ?? 0}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span>Telegram launch</span>
+                  <strong style={{ color: isInsideTelegram ? 'var(--success)' : 'var(--warning)' }}>
+                    {isInsideTelegram ? 'Connected' : 'Dev mode'}
+                  </strong>
+                </div>
+              </div>
+            </Card>
           </div>
+        )}
 
-          {/* Status Meta */}
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-              <span>Identity Verification:</span>
-              <span style={{ fontWeight: 600, color: 'var(--success)' }}>
-                {isVerified ? 'Verified Server-Side' : 'Member Identity Active'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <span>Community Tier:</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-color)', textTransform: 'capitalize' }}>
-                {profileData ? profileData.engagementLevel : 'Active Member'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <span>Pete Security Shield:</span>
-              <span style={{ fontWeight: 700, color: 'var(--success)' }}>
-                Trust Score: {profileData?.trustScore ?? 100} / 100 &bull; Safe
-              </span>
-            </div>
-          </div>
-        </Card>
-      )}
+        <main key={tabKey} className="tab-enter">
+          {renderActiveTab()}
+        </main>
 
-      {/* Main Active Tab Content */}
-      <main key={tabKey} className="tab-enter">
-        {renderActiveTab()}
-      </main>
-
-      {/* Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-
-      {/* Footer Meta */}
-      <footer style={{ textAlign: 'center', marginTop: 28 }}>
-        <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
-          {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram (Dev Mode)'}
-        </p>
-        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)', marginTop: 6 }}>
-          Powered by YouThopia Bible Community
-        </p>
-      </footer>
+        <footer style={{ textAlign: 'center', marginTop: 26, color: 'var(--text-muted)', fontSize: 11, fontWeight: 650 }}>
+          {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram Dev Mode'}
+        </footer>
       </div>
+
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 };

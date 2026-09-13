@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { ProfileState } from '../../hooks/useTelegram';
 import { fetchLeaderboard, type LeaderboardItem } from '../../services/api';
-import { Card, Skeleton, SectionTitle, Pill } from '../ui';
+import { Card, Skeleton, SectionTitle, Pill, ProgressBar } from '../ui';
 import { RankBadge } from '../RankBadge';
 
 interface QuizTabProps {
@@ -39,53 +39,51 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
       title: 'Bible Challenge',
       subtitle: 'Multiple Choice Trivia',
       description: 'Test your foundational Bible knowledge across classic multiple choice questions.',
+      tag: 'Classic',
     },
     {
       id: 'completion',
       title: 'Verse Completion',
       subtitle: 'Fill-in-the-Blank',
       description: 'Identify and fill in missing keywords in sacred Scripture passages.',
+      tag: 'Memory',
     },
     {
       id: 'scramble',
       title: 'Verse Scramble',
       subtitle: 'Word Ordering',
       description: 'Unscramble shuffled Scripture words into their correct biblical sequence.',
+      tag: 'Puzzle',
     },
     {
       id: 'race',
       title: 'Trivia Race',
       subtitle: 'Rapid Timed Competition',
       description: 'Compete against the clock in a fast-paced Bible speed challenge.',
+      tag: 'Speed',
     },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Header */}
-      <div>
-        <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-color)', letterSpacing: '-0.02em' }}>
-          Quiz & Gamification Hub
-        </h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-          Powered by Lusy Bot &bull; 4 Interactive Quiz Modes & YP Rewards
-        </p>
-      </div>
-
-      {/* User Rank & XP Progress Card */}
-      <div
+    <div className="section-stack">
+      {/* Lusy Gaming Hero Banner */}
+      <section
         style={{
-          background: 'var(--grad-quiz)',
-          borderRadius: 'var(--radius-xl)',
+          borderRadius: 28,
           padding: 20,
           color: '#ffffff',
-          boxShadow: '0 10px 28px rgba(76, 29, 149, 0.3)',
+          background: 'var(--grad-quiz)',
+          boxShadow: 'var(--shadow-purple)',
         }}
       >
+        <Pill color="deep" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.26)', marginBottom: 12 }}>
+          Lusy Gaming Hub
+        </Pill>
+        
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 11, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Your Rank Status</div>
-            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 3 }}>Your Rank Status</div>
+            <div style={{ fontSize: 24, fontWeight: 900, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span>Level {p ? p.level : 1}</span>
               {p?.rankTitle && (
                 <RankBadge
@@ -98,25 +96,17 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Earned</div>
-            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}>{p ? `${p.totalXp.toLocaleString()} XP` : '0 XP'}</div>
+            <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 3 }}>Total XP</div>
+            <div style={{ fontSize: 22, fontWeight: 900, marginTop: 2 }}>{p ? `${p.totalXp.toLocaleString()} XP` : '0 XP'}</div>
           </div>
         </div>
 
         {/* XP Progress Bar */}
         <div style={{ marginTop: 18 }}>
-          <div style={{ width: '100%', height: 10, background: 'rgba(255,255,255,0.2)', borderRadius: 5, overflow: 'hidden' }}>
-            <div
-              style={{
-                width: p ? `${Math.min(100, (p.totalXp % 500) / 5)}%` : '15%',
-                height: '100%',
-                background: 'linear-gradient(90deg,#e9d5ff,#ffffff)',
-                borderRadius: 5,
-                transition: 'width 0.9s var(--ease)',
-              }}
-            />
+          <ProgressBar value={p ? p.totalXp % 500 : 75} max={500} tone="purple" />
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 8 }}>
+            {p ? `${500 - (p.totalXp % 500)} XP to Level ${p.level + 1}` : 'Play quizzes with Lusy to earn XP'}
           </div>
-          <div style={{ fontSize: 11, opacity: 0.85, marginTop: 8 }}>Earn XP toward the next level</div>
         </div>
 
         {/* Live Quiz Stats */}
@@ -131,15 +121,15 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
           }}
         >
           <div>
-            <div style={{ fontSize: 11, opacity: 0.85 }}>Quizzes Completed</div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{p?.quizzesPlayed ?? 0} Played</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>Quizzes Completed</div>
+            <div style={{ fontSize: 16, fontWeight: 850, marginTop: 2 }}>{p?.quizzesPlayed ?? 0} Played</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, opacity: 0.85 }}>Quiz Accuracy</div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{p?.accuracyPct ?? 100}%</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>Quiz Accuracy</div>
+            <div style={{ fontSize: 16, fontWeight: 850, marginTop: 2 }}>{p?.accuracyPct ?? 100}%</div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Live Community Leaderboard Section */}
       <Card style={{ padding: 18 }} hover>
@@ -210,14 +200,30 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
 
       {/* 4 Lusy Quiz Modes */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <SectionTitle>Available Quiz Modes (4)</SectionTitle>
+        <SectionTitle eyebrow="Game Arena" right={<Pill color="purple">4 Modes</Pill>}>
+          Available Quiz Modes
+        </SectionTitle>
 
         {quizModes.map((quiz) => (
-          <Card key={quiz.id} hover style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-color)' }}>{quiz.title}</div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--primary-purple)', marginTop: 1 }}>{quiz.subtitle}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{quiz.description}</div>
+          <Card key={quiz.id} hover style={{ padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-color)' }}>{quiz.title}</span>
+                  <Pill color="neutral">{quiz.tag}</Pill>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)', marginBottom: 4 }}>{quiz.subtitle}</div>
+                <div className="muted-copy" style={{ fontSize: 12 }}>{quiz.description}</div>
+              </div>
+              <a
+                href="https://t.me/iamlusybot?start=playquiz"
+                target="_blank"
+                rel="noreferrer"
+                className="ghost-button"
+                style={{ textDecoration: 'none', height: 34, minHeight: 34, fontSize: 12, padding: '0 14px', flexShrink: 0 }}
+              >
+                Play →
+              </a>
             </div>
           </Card>
         ))}
