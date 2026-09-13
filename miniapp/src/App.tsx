@@ -258,8 +258,13 @@ const App: React.FC = () => {
           {renderActiveTab()}
         </main>
 
-        <footer style={{ textAlign: 'center', marginTop: 26, color: 'var(--text-muted)', fontSize: 11, fontWeight: 650 }}>
-          {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram Dev Mode'}
+        <footer style={{ textAlign: 'center', marginTop: 28, paddingBottom: 16 }}>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontWeight: 600 }}>
+            {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram (Dev Mode)'}
+          </p>
+          <p style={{ fontSize: 12, fontWeight: 750, color: 'var(--primary-purple)', margin: '6px 0 0 0', letterSpacing: '0.01em' }}>
+            Powered by YouThopia Bible Community
+          </p>
         </footer>
       </div>
 
