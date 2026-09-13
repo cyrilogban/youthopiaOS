@@ -66,7 +66,7 @@ const App: React.FC = () => {
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <div className="eyebrow" style={{ marginBottom: 3 }}>YouThopiaOS</div>
+            <div className="eyebrow" style={{ marginBottom: 3 }}>YOUTHOPIA BIBLE COMMUNITY</div>
             <h1 style={{ margin: 0, color: 'var(--text-color)', fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>
               Community Dashboard
             </h1>
