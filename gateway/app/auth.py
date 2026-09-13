@@ -35,6 +35,18 @@ def require_telegram_user(authorization: str | None = Header(default=None)) -> T
 
     signer = verify_init_data(raw_init_data, BOT_TOKENS)
     if signer is None:
-        logging.warning("initData signature check soft-fallback for user %s", user.id)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Telegram initData signature",
+            headers=_UNAUTHORIZED,
+        )
+
+    if not is_fresh(raw_init_data):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Stale Telegram initData (auth_date expired)",
+            headers=_UNAUTHORIZED,
+        )
 
     return user
+
