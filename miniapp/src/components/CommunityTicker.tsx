@@ -22,11 +22,11 @@ export const CommunityTicker: React.FC = () => {
   }, []);
 
   const items = [
-    { icon: '👥', label: `${stats.totalMembers.toLocaleString()} Active Members` },
-    { icon: '🏰', label: `${stats.activeGroups.toLocaleString()} Active Groups` },
-    { icon: '🏆', label: `${stats.quizzesPlayed.toLocaleString()} Quizzes Played` },
-    { icon: '✨', label: "Sharing God's Love All The Way" },
-    { icon: '📖', label: 'YouThopia Bible Community' },
+    { label: `${stats.totalMembers.toLocaleString()} Active Members` },
+    { label: `${stats.activeGroups.toLocaleString()} Active Groups` },
+    { label: `${stats.quizzesPlayed.toLocaleString()} Quizzes Played` },
+    { label: "Sharing God's Love All The Way" },
+    { label: 'YouThopia Bible Community' },
   ];
 
   return (
@@ -34,10 +34,10 @@ export const CommunityTicker: React.FC = () => {
       style={{
         width: '100%',
         overflow: 'hidden',
-        background: 'linear-gradient(90deg, rgba(245, 239, 255, 0.95) 0%, rgba(238, 230, 254, 0.95) 100%)',
-        backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid rgba(216, 180, 254, 0.4)',
-        padding: '6px 0',
+        background: 'linear-gradient(90deg, rgba(250, 248, 255, 0.92) 0%, rgba(243, 238, 255, 0.92) 100%)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(221, 214, 254, 0.5)',
+        padding: '7px 0',
         position: 'relative',
         userSelect: 'none',
         display: 'flex',
@@ -58,55 +58,58 @@ export const CommunityTicker: React.FC = () => {
           align-items: center;
           white-space: nowrap;
           width: max-content;
-          animation: communityTickerLoop 28s linear infinite;
+          animation: communityTickerLoop 32s linear infinite;
         }
         .community-ticker-track:hover,
         .community-ticker-track:active {
           animation-play-state: paused;
         }
+        .ticker-capsule {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 4px 12px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.85);
+          border: 1px solid rgba(221, 214, 254, 0.75);
+          box-shadow: 0 1px 3px rgba(109, 40, 217, 0.06);
+          font-size: 11px;
+          font-weight: 750;
+          color: var(--primary-purple);
+          letter-spacing: 0.01em;
+          transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .ticker-capsule:hover {
+          background: #ffffff;
+          transform: translateY(-1px);
+        }
+        .ticker-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: var(--primary-purple);
+          opacity: 0.75;
+          flex-shrink: 0;
+        }
       `}</style>
 
       <div className="community-ticker-track">
         {/* Track 1 */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 20, paddingRight: 20 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, paddingRight: 12 }}>
           {items.map((item, idx) => (
-            <span
-              key={`track1-${idx}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#581c87',
-                letterSpacing: '0.01em',
-              }}
-            >
-              <span>{item.icon}</span>
+            <span key={`track1-${idx}`} className="ticker-capsule">
+              <span className="ticker-dot" />
               <span>{item.label}</span>
-              <span style={{ color: '#c084fc', marginLeft: 12, opacity: 0.8 }}>•</span>
             </span>
           ))}
         </div>
 
         {/* Track 2 (Seamless Infinite Duplicate) */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 20, paddingRight: 20 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, paddingRight: 12 }}>
           {items.map((item, idx) => (
-            <span
-              key={`track2-${idx}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#581c87',
-                letterSpacing: '0.01em',
-              }}
-            >
-              <span>{item.icon}</span>
+            <span key={`track2-${idx}`} className="ticker-capsule">
+              <span className="ticker-dot" />
               <span>{item.label}</span>
-              <span style={{ color: '#c084fc', marginLeft: 12, opacity: 0.8 }}>•</span>
             </span>
           ))}
         </div>
