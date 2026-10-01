@@ -19,6 +19,9 @@ const App: React.FC = () => {
 
   const isVerified = verification.status === 'verified';
   const profileData = profile.status === 'ok' ? profile.profile : null;
+  const userXp = profileData?.totalXp ?? 0;
+  const computedLevel = Math.max(1, Math.floor(Math.max(userXp, 0) / 100) + 1);
+  const userLevel = profileData?.level && profileData.level > 1 ? profileData.level : (profileData ? computedLevel : 1);
   const displayName = user?.firstName || profileData?.displayName || 'Member';
   const initial = displayName[0]?.toUpperCase() || 'Y';
 
@@ -122,7 +125,7 @@ const App: React.FC = () => {
             )}
             <span style={{ minWidth: 0, textAlign: 'left' }}>
               <span style={{ display: 'block', fontSize: 11, fontWeight: 850, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {profileData ? `Level ${profileData.level}` : 'Profile'}
+                {profileData ? `Level ${userLevel}` : 'Profile'}
               </span>
               <span style={{ display: 'block', color: showProfileModal ? 'rgba(255,255,255,0.76)' : 'var(--text-muted)', fontSize: 10, fontWeight: 750 }}>
                 {profileData ? `${profileData.totalXp.toLocaleString()} XP` : isVerified ? 'Verified' : 'Open'}
@@ -222,7 +225,7 @@ const App: React.FC = () => {
               <div className="metric-grid" style={{ marginBottom: 16 }}>
                 <div className="metric-tile">
                   <div className="metric-label">Level</div>
-                  <div className="metric-value">{profileData?.level ?? 1}</div>
+                  <div className="metric-value">{userLevel}</div>
                 </div>
                 <div className="metric-tile">
                   <div className="metric-label">XP</div>

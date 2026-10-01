@@ -34,8 +34,10 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified, onNav
 
   const firstName = user?.firstName?.split(' ')[0] || 'Friend';
   const xp = profileData?.totalXp ?? 0;
-  const level = profileData?.level ?? 1;
-  const nextLevelProgress = Math.min(100, xp % 500 === 0 && xp > 0 ? 100 : (xp % 500) / 5);
+  const computedLevel = Math.max(1, Math.floor(Math.max(xp, 0) / 100) + 1);
+  const level = profileData?.level && profileData.level > 1 ? profileData.level : computedLevel;
+  const nextLevelProgress = xp % 100;
+  const xpToNextLevel = 100 - nextLevelProgress;
 
   return (
     <div className="section-stack">
@@ -81,9 +83,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified, onNav
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <ProgressBar value={nextLevelProgress} />
+            <ProgressBar value={nextLevelProgress} max={100} tone="purple" />
             <div style={{ marginTop: 8, color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: 700 }}>
-              {Math.round(nextLevelProgress)}% toward your next level
+              {Math.round(nextLevelProgress)}% toward Level {level + 1} ({xpToNextLevel} XP needed)
             </div>
           </div>
         </div>

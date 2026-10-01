@@ -165,10 +165,13 @@ def render_shared_profile_card(
     [Bot-Specific Stats Below]
     """
     from shared.services.rank_service import RankService
+    from shared.services.xp_service import calculate_level
 
     display_name = user_data.get("display_name") or telegram_first_name or "YouTopian"
-    level = user_data.get("level", 1)
     xp = user_data.get("total_xp", 0)
+    level = user_data.get("level") or calculate_level(xp)
+    if level == 1 and xp > 0:
+        level = calculate_level(xp)
     trust = user_data.get("trust_score", 100)
     manual_rank = user_data.get("manual_rank_id")
     rank = RankService.resolve_rank(xp, manual_rank)

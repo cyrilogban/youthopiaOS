@@ -16,6 +16,11 @@ const MEDALS: Record<number, { bg: string; color: string; label: string }> = {
 
 export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
   const p = profile.status === 'ok' ? profile.profile : null;
+  const userXp = p?.totalXp ?? 0;
+  const computedLevel = Math.max(1, Math.floor(Math.max(userXp, 0) / 100) + 1);
+  const userLevel = p?.level && p.level > 1 ? p.level : (p ? computedLevel : 1);
+  const xpIntoLevel = userXp % 100;
+  const xpNeeded = 100 - xpIntoLevel;
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(true);
 
@@ -84,7 +89,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
           <div>
             <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 3 }}>Your Rank Status</div>
             <div style={{ fontSize: 24, fontWeight: 900, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span>Level {p ? p.level : 1}</span>
+              <span>Level {userLevel}</span>
               {p?.rankTitle && (
                 <RankBadge
                   title={p.rankTitle}
@@ -97,15 +102,15 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 3 }}>Total XP</div>
-            <div style={{ fontSize: 22, fontWeight: 900, marginTop: 2 }}>{p ? `${p.totalXp.toLocaleString()} XP` : '0 XP'}</div>
+            <div style={{ fontSize: 22, fontWeight: 900, marginTop: 2 }}>{p ? `${userXp.toLocaleString()} XP` : '0 XP'}</div>
           </div>
         </div>
 
         {/* XP Progress Bar */}
         <div style={{ marginTop: 18 }}>
-          <ProgressBar value={p ? p.totalXp % 500 : 75} max={500} tone="purple" />
+          <ProgressBar value={p ? xpIntoLevel : 75} max={100} tone="purple" />
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 8 }}>
-            {p ? `${500 - (p.totalXp % 500)} XP to Level ${p.level + 1}` : 'Play quizzes with Lusy to earn XP'}
+            {p ? `${xpNeeded} XP to Level ${userLevel + 1} (${xpIntoLevel}% completed)` : 'Play quizzes with Lusy to earn XP'}
           </div>
         </div>
 

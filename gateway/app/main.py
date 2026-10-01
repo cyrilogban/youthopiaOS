@@ -37,6 +37,7 @@ from shared.services.event_service import EventService
 from shared.services.quiz_service import QuizService
 from shared.services.rank_service import RankService
 from shared.services.user_service import UserService
+from shared.services.xp_service import calculate_level
 
 
 @asynccontextmanager
@@ -124,15 +125,25 @@ async def profile(
     profile_dict["quizzes_played"] = stats.get("quizzes_played", 0)
     profile_dict["accuracy_pct"] = stats.get("accuracy_pct", 100)
 
-    # Resolve official YouThopia rank from RankService
+    # Resolve official YouThopia rank from RankService & calculate level dynamically
     total_xp = int(row.get("total_xp", 0))
+    computed_level = calculate_level(total_xp)
     manual_rank = row.get("manual_rank_id")
     rank = RankService.resolve_rank(total_xp, manual_rank)
 
+    profile_dict["total_xp"] = total_xp
+    profile_dict["level"] = computed_level
     profile_dict["rank_title"] = rank.title
     profile_dict["rank_tier"] = rank.tier
     profile_dict["rank_badge_color"] = rank.bg_color
     profile_dict["rank_emoji"] = rank.emoji
+
+    # Asynchronously synchronize the users.level column in Supabase if out of sync
+    if row.get("level") != computed_level:
+        try:
+            await service.db.update_by_id("users", row["id"], {"level": computed_level})
+        except Exception:
+            pass
 
     return UserProfile.model_validate(profile_dict)
 
@@ -192,12 +203,13 @@ async def get_leaderboard(
     leaderboard_items = []
     for item in items:
         xp = int(item.get("total_xp", 0))
+        computed_level = calculate_level(xp)
         manual_rank = item.get("manual_rank_id")
         rank = RankService.resolve_rank(xp, manual_rank)
         leaderboard_items.append(LeaderboardItem(
             display_name=item.get("display_name"),
             total_xp=xp,
-            level=int(item.get("level", 1)),
+            level=computed_level,
             rank_title=rank.title,
             rank_badge_color=rank.bg_color,
             rank_emoji=rank.emoji,
