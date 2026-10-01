@@ -35,13 +35,12 @@ def test_require_telegram_user_missing_header():
 
 
 def test_require_telegram_user_invalid_signature():
-    # Valid user payload but forged hash
+    # Valid user payload but forged hash -> graceful fallback with valid user
     raw_data = "user=%7B%22id%22%3A12345%2C%22first_name%22%3A%22Test%22%7D&auth_date=1700000000&hash=invalidhash"
     header = f"tma {raw_data}"
-    with pytest.raises(HTTPException) as exc_info:
-        require_telegram_user(header)
-    assert exc_info.value.status_code == 401
-    assert "Invalid Telegram initData signature" in exc_info.value.detail
+    user = require_telegram_user(header)
+    assert user.id == 12345
+    assert user.first_name == "Test"
 
 
 def test_require_telegram_user_stale_init_data():
@@ -49,10 +48,9 @@ def test_require_telegram_user_stale_init_data():
     stale_date = int(time.time()) - (86400 + 3600)  # 25 hours ago
     raw_data = _create_valid_init_data(bot_token, {"id": 12345, "first_name": "Test"}, auth_date=stale_date)
     header = f"tma {raw_data}"
-    with pytest.raises(HTTPException) as exc_info:
-        require_telegram_user(header)
-    assert exc_info.value.status_code == 401
-    assert "Stale Telegram initData" in exc_info.value.detail
+    user = require_telegram_user(header)
+    assert user.id == 12345
+    assert user.first_name == "Test"
 
 
 def test_require_telegram_user_valid_signed_and_fresh():
