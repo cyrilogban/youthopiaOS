@@ -16,11 +16,20 @@ from typing import Dict
 @dataclass(frozen=True, slots=True)
 class BotIdentity:
     internal_name: str  # e.g., "theo", "susy", "eddy", "pete", "lusy"
-    display_name: str   # e.g., "Theo", "Susie", "Edie", "Pete", "Lusie"
+    full_name: str      # e.g., "Theodore", "Susan", "Edmund", "Peter", "Lucy"
+    short_name: str     # e.g., "Theo", "Susie", "Edie", "Pete", "Lusie"
     username: str       # e.g., "theobiblebot", "susiehelpsbot", "ediecalendarbot", "petemodbot", "lusiequizbot"
     emoji: str          # e.g., "📖", "💬", "📅", "🛡️", "🎯"
     tagline: str        # e.g., "Daily Word", "Welcome Bot", "Events Bot", "Safety Bot", "Games & XP"
     responsibility: str # High-level summary of responsibilities
+
+    @property
+    def display_name(self) -> str:
+        return f"{self.full_name} ({self.short_name})"
+
+    @property
+    def greeting_intro(self) -> str:
+        return f"I am {self.full_name}, but you can call me {self.short_name}!"
 
     @property
     def handle(self) -> str:
@@ -48,7 +57,8 @@ class BotIdentity:
 BOT_REGISTRY: Dict[str, BotIdentity] = {
     "theo": BotIdentity(
         internal_name="theo",
-        display_name="Theodore",
+        full_name="Theodore",
+        short_name="Theo",
         username="theobiblebot",
         emoji="📖",
         tagline="Daily Word",
@@ -56,7 +66,8 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "susy": BotIdentity(
         internal_name="susy",
-        display_name="Susan",
+        full_name="Susan",
+        short_name="Susie",
         username="susiehelpsbot",
         emoji="💬",
         tagline="Welcome Bot",
@@ -64,7 +75,8 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "eddy": BotIdentity(
         internal_name="eddy",
-        display_name="Edmund",
+        full_name="Edmund",
+        short_name="Edie",
         username="ediecalendarbot",
         emoji="📅",
         tagline="Events Bot",
@@ -72,7 +84,8 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "pete": BotIdentity(
         internal_name="pete",
-        display_name="Peter",
+        full_name="Peter",
+        short_name="Pete",
         username="petemodbot",
         emoji="🛡️",
         tagline="Safety Bot",
@@ -80,7 +93,8 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "lusy": BotIdentity(
         internal_name="lusy",
-        display_name="Lucy",
+        full_name="Lucy",
+        short_name="Lusie",
         username="lusiequizbot",
         emoji="🎯",
         tagline="Games & XP",

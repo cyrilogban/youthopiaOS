@@ -134,14 +134,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
             # Differentiated Welcome Card based on Admin vs Member status
             if new_status == "administrator":
                 welcome_text = (
-                    f"<b>SUSAN IS HERE 💬</b>\n\n"
-                    f"<blockquote>I am Susan — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>SUSAN (SUSIE) IS HERE 💬</b>\n\n"
+                    f"<blockquote>I am <b>Susan</b>, but you can call me <b>Susie</b>! I am your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community connected and welcomed across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>COMMUNITY QUICK START</b>\n"
                     f"<blockquote>• Tap <b>💬 Meet Susan in DM</b> below to start your community tour.\n"
                     f"• <b>Hostess Welcome:</b> <code>ENABLED</code>\n"
@@ -151,16 +151,16 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 markup = build_susy_group_welcome_keyboard()
             else:
                 welcome_text = (
-                    f"<b>SUSAN IS HERE 💬</b>\n\n"
-                    f"<blockquote>I am Susan — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>SUSAN (SUSIE) IS HERE 💬</b>\n\n"
+                    f"<blockquote>I am <b>Susan</b>, but you can call me <b>Susie</b>! I am your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community connected and welcomed across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                    f"<blockquote>To help manage member welcomes smoothly, please grant Susan <b>Admin Rights</b>!</blockquote>"
+                    f"<blockquote>To help manage member welcomes smoothly, please grant Susan (Susie) <b>Admin Rights</b>!</blockquote>"
                 )
                 markup = build_susy_member_welcome_keyboard()
 
@@ -375,13 +375,13 @@ def build_susy_router(description: str, music_service=None) -> Router:
         if user.get("engagement_level") == "new":
             welcome_text = (
                 f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 💜</b>\n\n"
-                f"<blockquote>I am Susan — your community hostess here in the YouThopia ecosystem.\n\n"
+                f"<blockquote>I am <b>Susan</b>, but you can call me <b>Susie</b>! I am your community hostess here in the YouThopia ecosystem.\n\n"
                 f"We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it! Here is our 5-bot ecosystem ready for you:\n"
-                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
             )
             await services.users.set_engagement_level(user["id"], "active")

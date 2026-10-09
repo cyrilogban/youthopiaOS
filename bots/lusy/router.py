@@ -156,13 +156,13 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         else:
             welcome_text = (
                 f"<b>Welcome to Scripture Mastery, {first_name}! 🎯</b>\n\n"
-                "<blockquote>I am Lucy — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
+                "<blockquote>I am Lucy, but you can call me Lusie — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
                 "Here in our community, mastering God's Word is an exciting journey we share together! Test your knowledge, earn <b>YouTopian Points (YP)</b>, and climb our global leaderboard synced across all 5 YouThopiaOS pillar bots:\n"
-                "• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                "• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                "• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                "• 📅 <b>Edmund:</b> Events & Reminders\n"
-                "• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                "• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                "• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                "• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                "• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                "• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                 "<b>SELECT A QUIZ MODE BELOW:</b>"
             )
 
@@ -212,13 +212,13 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
                 welcome_card = (
                     "<b>LUCY IS HERE</b>\n\n"
-                    "<blockquote>I am Lucy — your Scripture Mastery & Quiz Engine in <b>YouThopiaOS</b>.\n\n"
+                    "<blockquote>I am Lucy, but you can call me Lusie — your Scripture Mastery & Quiz Engine in <b>YouThopiaOS</b>.\n\n"
                     "Every quiz answered here earns <b>YouTopian Points (YP)</b>, advancing your global rank across our entire 5-bot ecosystem:\n"
-                    "• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                    "• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                    "• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                    "• 📅 <b>Edmund:</b> Events & Reminders\n"
-                    "• 💬 <b>Susan:</b> Welcome & Onboarding"
+                    "• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                    "• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                    "• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                    "• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                    "• 💬 <b>Susan (Susie):</b> Welcome & Onboarding"
                     f"{admin_note}</blockquote>\n\n"
                     "<b>GROUP QUICK START</b>\n"
                     "<blockquote>• <b>/playquiz</b> — Launch an instant Bible Quiz round.\n"

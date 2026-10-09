@@ -609,13 +609,13 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
         if new_status == "administrator":
             welcome_text = (
                 f"<b>PETER IS HERE 🛡️</b>\n\n"
-                f"<blockquote>I am Peter — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
+                f"<blockquote>I am Peter (High King Peter), but you can call me Pete — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
                 f"I protect our digital sanctuary across our 5-bot ecosystem:\n"
-                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SECURITY QUICK START</b>\n"
                 f"<blockquote>• <b>Captcha Gatekeeper:</b> <code>ENABLED</code> (Auto-verifies new members).\n"
                 f"• <b>Spam & Link Shield:</b> <code>ACTIVE</code> (Blocks profanity & links).\n"
@@ -626,13 +626,13 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
         else:
             welcome_text = (
                 f"<b>PETER IS HERE 🛡️</b>\n\n"
-                f"<blockquote>I am Peter — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
+                f"<blockquote>I am Peter (High King Peter), but you can call me Pete — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
                 f"I protect our digital sanctuary across our 5-bot ecosystem:\n"
-                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
                 f"<blockquote>To filter spam and execute captcha mutes smoothly, please grant Peter <b>Admin Rights</b>!</blockquote>"
             )
@@ -815,13 +815,13 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
     if user.get("engagement_level") == "new":
         welcome_text = (
             f"<b>Welcome to YouThopia Security, {first_name}! 🛡️</b>\n\n"
-            f"<blockquote>I am Peter (High King Peter) — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
+            f"<blockquote>I am Peter (High King Peter), but you can call me Pete — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
             f"I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure across all 5 pillar bots:\n"
-            f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-            f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-            f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-            f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-            f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+            f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+            f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+            f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+            f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+            f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
             f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
         )
         await services.users.set_engagement_level(user["id"], "active")

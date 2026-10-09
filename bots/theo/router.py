@@ -209,13 +209,13 @@ def build_theo_router(description: str) -> Router:
         if user.get("engagement_level") == "new":
             welcome_text = (
                 f"<b>Welcome to Daily Scripture, {first_name}! 📖</b>\n\n"
-                f"<blockquote>I am Theodore — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                f"<blockquote>I am <b>Theodore</b>, but you can call me <b>Theo</b>! I am your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
                 f"Here in our community, we stay anchored in God's Word every day! Every YouTopian has access to daily devotionals and instant verse lookups across all 5 YouThopiaOS pillar bots:\n"
-                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SEARCH OR EXPLORE BELOW:</b>"
             )
             await services.users.set_engagement_level(user["id"], "active")
@@ -408,14 +408,14 @@ def build_theo_router(description: str) -> Router:
             # Differentiated Welcome Card based on Admin vs Member status
             if new_status == "administrator":
                 welcome_text = (
-                    f"<b>THEODORE IS HERE 📖</b>\n\n"
-                    f"<blockquote>I am Theodore — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>THEODORE (THEO) IS HERE 📖</b>\n\n"
+                    f"<blockquote>I am <b>Theodore</b>, but you can call me <b>Theo</b>! I am your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>GROUP QUICK START</b>\n"
                     f"<blockquote>• Type any Bible reference in chat (e.g. <code>John 3:16</code>).\n"
                     f"• <b>Daily Verse:</b> <code>ENABLED</code> (Delivered daily at 6:00 AM).\n"
@@ -425,16 +425,16 @@ def build_theo_router(description: str) -> Router:
                 markup = build_theo_group_welcome_keyboard()
             else:
                 welcome_text = (
-                    f"<b>THEODORE IS HERE 📖</b>\n\n"
-                    f"<blockquote>I am Theodore — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>THEODORE (THEO) IS HERE 📖</b>\n\n"
+                    f"<blockquote>I am <b>Theodore</b>, but you can call me <b>Theo</b>! I am your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                    f"<blockquote>To send daily 6 AM devotional broadcasts smoothly, please grant Theodore <b>Admin Rights</b>!</blockquote>"
+                    f"<blockquote>To send daily 6 AM devotional broadcasts smoothly, please grant Theodore (Theo) <b>Admin Rights</b>!</blockquote>"
                 )
                 markup = build_theo_member_welcome_keyboard()
 
