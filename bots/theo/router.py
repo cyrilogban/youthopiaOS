@@ -173,7 +173,7 @@ def build_theo_router(description: str) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamtheobot?start=dashboard")],
+                [InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/theobiblebot?start=dashboard")],
                 [InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture")],
             ])
             try:
@@ -322,7 +322,7 @@ def build_theo_router(description: str) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="📖 Open Theo Guide in DM", url="https://t.me/iamtheobot?start=help")],
+                [InlineKeyboardButton(text="📖 Open Theo Guide in DM", url="https://t.me/theobiblebot?start=help")],
                 [InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture")],
             ])
             try:
@@ -346,7 +346,7 @@ def build_theo_router(description: str) -> Router:
     async def send_theo_help(message: Message) -> None:
         help_text = (
             "<b>📖 Theo | Daily Word Help Guide</b>\n"
-            "<blockquote>I am Theo (@iamtheobot), your devotional companion in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<blockquote>I am Theo (@theobiblebot), your devotional companion in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Theo Features & Commands</b>\n"
             "• 🔍 <b>Search Scripture:</b> Type any reference in chat (e.g. John 3:16).\n"
             "• 🔖 <b>Saved Verses:</b> View your saved bookmarks.\n"
@@ -490,7 +490,7 @@ def build_theo_router(description: str) -> Router:
 
         await callback.answer()
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iamtheobot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
+            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/theobiblebot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
         ])
         try:
             sent_msg = await callback.message.answer(

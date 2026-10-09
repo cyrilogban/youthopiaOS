@@ -129,13 +129,13 @@ export const EventsTab: React.FC = () => {
                     </p>
                     <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
                       <a
-                        href="https://t.me/iamedyybot?start=calendar"
+                        href="https://t.me/ediecalendarbot?start=calendar"
                         target="_blank"
                         rel="noreferrer"
                         className="ghost-button"
                         style={{ textDecoration: 'none', height: 32, minHeight: 32, fontSize: 11, padding: '0 12px' }}
                       >
-                        RSVP with Eddy →
+                        RSVP with Edie →
                       </a>
                     </div>
                   </div>
@@ -146,7 +146,7 @@ export const EventsTab: React.FC = () => {
         ) : (
           <Card style={{ padding: 18 }}>
             <div className="muted-copy">
-              No upcoming events scheduled right now. Check back soon or message @iamedyybot to register your birthday!
+              No upcoming events scheduled right now. Check back soon or message @ediecalendarbot to register your birthday!
             </div>
           </Card>
         )}

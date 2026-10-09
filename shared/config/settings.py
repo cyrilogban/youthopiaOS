@@ -9,8 +9,9 @@ class Settings:
     THEO_BOT_TOKEN: str = os.getenv("THEO_BOT_TOKEN", "")
     LUSY_BOT_TOKEN: str = os.getenv("LUSY_BOT_TOKEN", "")
     PETE_BOT_TOKEN: str = os.getenv("PETE_BOT_TOKEN", "")
+    EDIE_BOT_TOKEN: str = os.getenv("EDIE_BOT_TOKEN", "")
     ED_BOT_TOKEN: str = os.getenv("ED_BOT_TOKEN", "")
-    EDDY_BOT_TOKEN: str = os.getenv("EDDY_BOT_TOKEN", os.getenv("ED_BOT_TOKEN", ""))
+    EDDY_BOT_TOKEN: str = os.getenv("EDIE_BOT_TOKEN", os.getenv("EDDY_BOT_TOKEN", os.getenv("ED_BOT_TOKEN", "")))
     SUSY_BOT_TOKEN: str = os.getenv("SUSY_BOT_TOKEN", "")
 
     # Supabase (Primary Database)

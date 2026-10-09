@@ -216,7 +216,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         await callback.answer()
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iamsusiebot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
+            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/susiehelpsbot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
         ])
         try:
             sent_msg = await callback.message.answer(
@@ -263,7 +263,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
             "Tap the button below to launch the YouThopiaOS Mini App and unlock your YouTopian profile!</blockquote>"
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app")]
+            [InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app")]
         ])
 
         try:
@@ -349,8 +349,8 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="💬 Meet Susy in DM", url="https://t.me/iamsusiebot?start=welcome")],
-                [InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/iamsusiebot?start=tour")],
+                [InlineKeyboardButton(text="💬 Meet Susie in DM", url="https://t.me/susiehelpsbot?start=welcome")],
+                [InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/susiehelpsbot?start=tour")],
             ])
             try:
                 sent_msg = await message.answer(
@@ -602,12 +602,12 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="💬 Open Susy Guide in DM", url="https://t.me/iamsusiebot?start=help")],
+                [InlineKeyboardButton(text="💬 Open Susie Guide in DM", url="https://t.me/susiehelpsbot?start=help")],
                 [InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start")],
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>💬 <b>Susy Community Hostess Guide</b>\n"
+                    "<blockquote>💬 <b>Susie Community Hostess Guide</b>\n"
                     "Tap below to view full onboarding features and community guidelines in DM.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -620,12 +620,12 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         first_name = event.from_user.first_name or "Friend"
         help_text = (
-            f"<b>🎵 Susy | Welcome Bot Help Guide, {first_name}!</b>\n"
-            "<blockquote>I am Susy (@iamsusiebot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
-            "<b>Susy Features & Commands</b>\n"
+            f"<b>🎵 Susie | Welcome Bot Help Guide, {first_name}!</b>\n"
+            "<blockquote>I am Susie (@susiehelpsbot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Susie Features & Commands</b>\n"
             "• 💬 <b>Explore the Community:</b> Interactive 3-step tour for new YouTopians (+50 Trust Points).\n"
             "• 🤝 <b>Hospitality & Guidance:</b> Here to answer questions and show you around.\n"
-            "• <b>/start:</b> Open Susy welcome dashboard.\n"
+            "• <b>/start:</b> Open Susie welcome dashboard.\n"
             "• <b>/profile:</b> View your YouTopian profile card.\n"
             "• <b>/help:</b> Show this guidance message.</blockquote>\n\n"
             f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
@@ -651,7 +651,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
     def _get_dm_music_controls_keyboard(is_saved: bool = False) -> InlineKeyboardMarkup:
         save_text = "💜 Saved in Playlist" if is_saved else "💜 Save to Favorites"
-        share_url = "https://t.me/share/url?url=https%3A%2F%2Ft.me%2Fiamsusiebot&text=Listen%20to%20worship%20music%20with%20Susy%20on%20Telegram%20%F0%9F%8E%B6"
+        share_url = "https://t.me/share/url?url=https%3A%2F%2Ft.me%2Fsusiehelpsbot&text=Listen%20to%20worship%20music%20with%20Susie%20on%20Telegram%20%F0%9F%8E%B6"
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
@@ -674,7 +674,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 ],
                 [
                     InlineKeyboardButton(text="➕ Request Another", callback_data="susy_group_request"),
-                    InlineKeyboardButton(text="💬 Open Susy DM ↗️", url="https://t.me/iamsusiebot")
+                    InlineKeyboardButton(text="💬 Open Susie DM ↗️", url="https://t.me/susiehelpsbot")
                 ],
                 [
                     InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
@@ -724,7 +724,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await callback.answer(
                     f"🎉 Saved to Favorites! 💜\n\n"
                     f"\"{track_title}\" has been saved to your personal playlist.\n\n"
-                    f"Open a private chat with Susy (@iamsusiebot) to view your saved songs!",
+                    f"Open a private chat with Susie (@susiehelpsbot) to view your saved songs!",
                     show_alert=True
                 )
         except Exception as e:
@@ -734,7 +734,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     async def handle_group_playlist(callback: CallbackQuery) -> None:
         await callback.answer(
             "📜 Your Saved Playlist:\n\n"
-            "Open a private chat with Susy (@iamsusiebot) and type /playlist to view and play your saved songs!",
+            "Open a private chat with Susie (@susiehelpsbot) and type /playlist to view and play your saved songs!",
             show_alert=True
         )
 

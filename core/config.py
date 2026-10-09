@@ -46,9 +46,10 @@ def load_config() -> AppConfig:
     for bot_name in BOT_NAMES:
         env_prefix = bot_name.upper()
         if bot_name == "eddy":
-            token = os.getenv("EDDY_BOT_TOKEN") or os.getenv("ED_BOT_TOKEN", "")
+            token = os.getenv("EDIE_BOT_TOKEN") or os.getenv("EDDY_BOT_TOKEN") or os.getenv("ED_BOT_TOKEN", "")
         else:
             token = os.getenv(f"{env_prefix}_BOT_TOKEN", "")
+        token = token.strip()
         enabled = _env_bool(f"{env_prefix}_BOT_ENABLED", True)
         bots[bot_name] = BotConfig(name=bot_name, token=token, enabled=enabled)
 

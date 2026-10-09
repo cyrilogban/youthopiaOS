@@ -47,7 +47,7 @@ def build_pete_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
                 InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
@@ -67,7 +67,7 @@ def build_pete_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Pete to Admin", callback_data="pete_prompt_admin"),
@@ -88,7 +88,7 @@ def build_pete_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="pete_menu_directory"),
-                InlineKeyboardButton(text="➕ Re-invite Pete", url="https://t.me/iampetebot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Pete", url="https://t.me/petemodbot?startgroup=true"),
             ]
         ]
     )
@@ -114,14 +114,14 @@ def build_pete_captcha_inline_keyboard(chat_id_str: str) -> InlineKeyboardMarkup
 def build_pete_post_captcha_group_keyboard() -> InlineKeyboardMarkup:
     """
     Post-Captcha Group Announcement Inline Keyboard:
-    [ 👋 Meet Susy in DM ]
+    [ 👋 Meet Susie in DM ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="👋 Meet Susy in DM",
-                    url="https://t.me/iamsusiebot?start=onboarding"
+                    text="👋 Meet Susie in DM",
+                    url="https://t.me/susiehelpsbot?start=onboarding"
                 )
             ]
         ]

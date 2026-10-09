@@ -73,16 +73,16 @@ def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     Group welcome notice inline keyboard (Admin):
     [ Open App ]
-    [ 💬 Meet Susy ]  [ 🌐 Community ]
+    [ 💬 Meet Susie ]  [ 🌐 Community ]
     [ 🌐 Explore Ecosystem ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
-                InlineKeyboardButton(text="💬 Meet Susy", url="https://t.me/iamsusiebot?start=welcome"),
+                InlineKeyboardButton(text="💬 Meet Susie", url="https://t.me/susiehelpsbot?start=welcome"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),
             ],
             [
@@ -96,19 +96,19 @@ def build_susy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     Group welcome notice inline keyboard (Regular Member):
     [ Open App ]
-    [ ⚡ Promote Susy to Admin ]
-    [ 💬 Meet Susy ]  [ 🌐 Community ]
+    [ ⚡ Promote Susie to Admin ]
+    [ 💬 Meet Susie ]  [ 🌐 Community ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
-                InlineKeyboardButton(text="⚡ Promote Susy to Admin", callback_data="susy_prompt_admin"),
+                InlineKeyboardButton(text="⚡ Promote Susie to Admin", callback_data="susy_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="💬 Meet Susy", url="https://t.me/iamsusiebot?start=welcome"),
+                InlineKeyboardButton(text="💬 Meet Susie", url="https://t.me/susiehelpsbot?start=welcome"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="susy_community_links"),
             ]
         ]
@@ -123,7 +123,7 @@ def build_susy_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="susy_menu_directory"),
-                InlineKeyboardButton(text="➕ Re-invite Susy", url="https://t.me/iamsusiebot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Susie", url="https://t.me/susiehelpsbot?startgroup=true"),
             ]
         ]
     )

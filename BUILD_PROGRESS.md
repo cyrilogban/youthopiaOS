@@ -1,7 +1,7 @@
 # YouThopiaOS Mini App — Build Progress & Engineering Journal
 
 > **Living document.** Updated after each build phase so the entire team has a crystal-clear understanding of every design decision, architectural shift, turning point, and technical breakthrough.
-> **Last updated:** 2026-08-29
+> **Last updated:** 2026-09-13
 
 ---
 
@@ -13,11 +13,11 @@ The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running insi
 - **Slogan:** `Sharing God's Love All The Way`
 - **Core Architecture:** 3-Tier Decoupled Architecture (`React Mini App` ↔ `FastAPI Gateway` ↔ `Supabase Postgres DB`).
 - **The 5 Specialized Telegram Assistants:**
-  1. 📖 **Theo Bot (`@iamtheobot`)**: Daily Verses (VOTD), Scripture Search & Multi-Translation (KJV, ASV, WEB, BBE).
-  2. 🎮 **Lusy Bot (`@iamlusybot`)**: Bible Trivia, 4 Quiz Modes, XP Progression & Global Leaderboard.
-  3. 🛡️ **Pete Bot (`@iampetebot`)**: Community Shield, Captcha Guard, Trust Score (100/100) & Member Verification.
-  4. 📅 **Eddy Bot (`@iamedyybot`)**: Community Schedule, Weekly Gatherings, Birthdays & Calendar RSVP.
-  5. 💬 **Susy Bot (`@iamsusiebot`)**: Community Hostess, Newcomer Tour, Topic Directory & FAQs.
+  1. 📖 **Theo Bot (`@theobiblebot`)**: Daily Verses (VOTD), Scripture Search & Multi-Translation (KJV, ASV, WEB, BBE).
+  2. 🎮 **Lusie Bot (`@lusiequizbot`)**: Bible Trivia, 4 Quiz Modes, XP Progression & Global Leaderboard.
+  3. 🛡️ **Pete Bot (`@petemodbot`)**: Community Shield, Captcha Guard, Trust Score (100/100) & Member Verification.
+  4. 📅 **Edie Bot (`@ediecalendarbot`)**: Community Schedule, Weekly Gatherings, Birthdays & Calendar RSVP.
+  5. 💬 **Susie Bot (`@susiehelpsbot`)**: Community Hostess, Newcomer Tour, Topic Directory & FAQs.
 
 ---
 
@@ -27,7 +27,7 @@ The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running insi
 ┌───────────────────────────────────────────────────────────────────────────────────┐
 │ TELEGRAM ECOSYSTEM (Mobile / Desktop)                                             │
 │                                                                                   │
-│  [ @iamtheobot ]  [ @iamlusybot ]  [ @iampetebot ]  [ @iamedyybot ]  [ @iamsusiebot ] │
+│  [ @theobiblebot ] [ @lusiequizbot ] [ @petemodbot ] [ @ediecalendarbot ] [ @susiehelpsbot ] │
 │         │                │                │               │               │       │
 │         └────────────────┴───────┬────────┴───────────────┴───────────────┘       │
 │                                  │                                                │
@@ -133,11 +133,21 @@ The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running insi
 
 ---
 
+### Module 11: Gateway Security Hardening & Strict HMAC Auth Enforcement ✅
+- **Vulnerability Audit:** Audited `gateway/app/auth.py` and identified that HMAC-SHA256 signature verification failures were logged as warnings (soft-fallback) instead of returning HTTP 401 Unauthorized, and timestamp freshness (`is_fresh`) was imported but unenforced.
+- **Strict 401 Enforcement:**
+  - Updated `require_telegram_user` in `gateway/app/auth.py` to raise `HTTPException(401)` on invalid signatures (`signer is None`).
+  - Added timestamp freshness validation via `is_fresh(raw_init_data)`, raising `HTTPException(401)` on stale payloads older than 24 hours.
+  - Preserved `dev-mock-hash` developer header flag for local test environments.
+- **Automated Test Suite:** Created `tests/test_gateway_auth.py` covering missing headers, invalid signatures, stale timestamps, valid HMAC signatures, and dev mock bypass (100% passing).
+
+---
+
 ## 4. Current Status & Verification Matrix
 
 | Feature / Subsystem | Status | Verification Summary |
 |---|---|---|
-| **FastAPI Gateway Auth** | ✅ Verified | HMAC-SHA256 multi-bot token verification + anti-replay check. |
+| **FastAPI Gateway Auth** | ✅ Verified | Strict HMAC-SHA256 multi-bot signature verification + anti-replay check (returns 401 on failure). |
 | **Supabase Profile Sync** | ✅ Verified | Live user `1701349791` queries resolve Level 9 (855 XP). |
 | **Frontend Vector UI** | ✅ Verified | 5 tabs with pure inline SVGs, 0 emojis, clean purple/slate theme. |
 | **Inline App Launchers** | ✅ Verified | Attached to `/start`, `/app`, group cards, and verse lookups. |
@@ -148,5 +158,5 @@ The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running insi
 
 ## 5. Next Steps for Community Launch
 
-1. **BotFather Menu Buttons:** Set `/setmenubutton` for all 5 bots (`@iamtheobot`, `@iamlusybot`, `@iampetebot`, `@iamedyybot`, `@iamsusiebot`) to `https://youthopiaos.onrender.com` (`Open App`).
+1. **BotFather Menu Buttons:** Set `/setmenubutton` for all 5 bots (`@theobiblebot`, `@lusiequizbot`, `@petemodbot`, `@ediecalendarbot`, `@susiehelpsbot`) to `https://youthopiaos.onrender.com` (`Open App`).
 2. **Community Group Hub Pinning:** Use the `/pinapp` command in the main YouThopia group to pin the official community card to the top header for instant member access.

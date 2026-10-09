@@ -237,11 +237,11 @@ def build_eddy_router(description: str) -> Router:
 
         await callback.answer()
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iamedyybot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
+            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/ediecalendarbot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
         ])
         try:
             sent_msg = await callback.message.answer(
-                "<blockquote>📅 <b>Eddy Administrator Setup</b>\n\n"
+                "<blockquote>📅 <b>Edie Administrator Setup</b>\n\n"
                 "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
                 parse_mode="HTML",
                 reply_markup=markup
@@ -282,10 +282,10 @@ def build_eddy_router(description: str) -> Router:
         if admin_id:
             try:
                 farewell_text = (
-                    f"<b>Eddy Departs {group_title} 📅</b>\n\n"
-                    f"<blockquote>Eddy has left <b>{group_title}</b> as requested.\n"
+                    f"<b>Edie Departs {group_title} 📅</b>\n\n"
+                    f"<blockquote>Edie has left <b>{group_title}</b> as requested.\n"
                     f"Event reminders and birthday broadcasts have been paused for this group. "
-                    f"You can re-invite Eddy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    f"You can re-invite Edie anytime or explore our other 4 community bots below! 💜</blockquote>"
                 )
                 await bot.send_message(
                     chat_id=admin_id,
@@ -294,13 +294,13 @@ def build_eddy_router(description: str) -> Router:
                     reply_markup=build_eddy_farewell_keyboard()
                 )
             except Exception as e:
-                logger.warning(f"Could not send Eddy leave DM to admin {admin_id}: {e}")
+                logger.warning(f"Could not send Edie leave DM to admin {admin_id}: {e}")
 
         # Leave group cleanly
         try:
             await bot.leave_chat(chat_id)
         except Exception as e:
-            logger.warning(f"Eddy failed to leave chat {chat_id}: {e}")
+            logger.warning(f"Edie failed to leave chat {chat_id}: {e}")
 
     # -------------------------------------------------------------------------
     # COMMAND: /start
@@ -314,8 +314,8 @@ def build_eddy_router(description: str) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="📅 View Calendar in DM", url="https://t.me/iamedyybot?start=calendar")],
-                [InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/iamedyybot?start=events")],
+                [InlineKeyboardButton(text="📅 View Calendar in DM", url="https://t.me/ediecalendarbot?start=calendar")],
+                [InlineKeyboardButton(text="🎫 My RSVPs", url="https://t.me/ediecalendarbot?start=events")],
             ])
             try:
                 sent_msg = await message.answer(
@@ -470,12 +470,12 @@ def build_eddy_router(description: str) -> Router:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="📅 Open Eddy Guide in DM", url="https://t.me/iamedyybot?start=help"),
+                    InlineKeyboardButton(text="📅 Open Edie Guide in DM", url="https://t.me/ediecalendarbot?start=help"),
                 ]
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📅 <b>Eddy Events Help Guide</b>\n"
+                    "<blockquote>📅 <b>Edie Events Help Guide</b>\n"
                     "Tap below to view full features and calendar options in DM.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -488,8 +488,8 @@ def build_eddy_router(description: str) -> Router:
 
     async def send_eddy_help(message: Message) -> None:
         help_text = (
-            "<b>📅 Ed | Events Bot Help Guide</b>\n"
-            "<blockquote>I am Ed (@iamedyybot), your event scheduler and community manager in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>📅 Edie | Events Bot Help Guide</b>\n"
+            "<blockquote>I am Edie (@ediecalendarbot), your event scheduler and community manager in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Ed Features & Commands</b>\n"
             "• 📅 <b>View Calendar:</b> Check this week's official community events.\n"
             "• 🎫 <b>My Events:</b> View events you have RSVP'd for.\n"
@@ -760,16 +760,16 @@ def build_eddy_router(description: str) -> Router:
             
         first_name = message.from_user.first_name or "Friend"
         help_text = (
-            f"<b>Ed's Help Guide, {first_name}!</b>\n"
-            "<blockquote>I'm Ed (@iamedyybot). I am your community manager. I make sure you never miss an event or a Bible study!</blockquote>\n\n"
+            f"<b>Edie's Help Guide, {first_name}!</b>\n"
+            "<blockquote>I'm Edie (@ediecalendarbot). I am your community manager. I make sure you never miss an event or a Bible study!</blockquote>\n\n"
             "<b>Meet the YouThopia Bot Family</b>\n"
-            "<blockquote><b>Theo</b> - <a href=\"https://t.me/iamtheobot\">@iamtheobot</a>\n"
+            "<blockquote><b>Theo</b> - <a href=\"https://t.me/theobiblebot\">@theobiblebot</a>\n"
             "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
-            "<b>Lusy</b> - <a href=\"https://t.me/iamlusybot\">@iamlusybot</a>\n"
+            "<b>Lusie</b> - <a href=\"https://t.me/lusiequizbot\">@lusiequizbot</a>\n"
             "Games, YP, and fun! Earn points and grow your rank.\n\n"
-            "<b>Pete</b> - <a href=\"https://t.me/iampetebot\">@iampetebot</a>\n"
+            "<b>Pete</b> - <a href=\"https://t.me/petemodbot\">@petemodbot</a>\n"
             "Security and moderation. Keeping our community safe.\n\n"
-            "<b>Susy</b> - <a href=\"https://t.me/iamsusiebot\">@iamsusiebot</a>\n"
+            "<b>Susie</b> - <a href=\"https://t.me/susiehelpsbot\">@susiehelpsbot</a>\n"
             "Your onboarding specialist and guide to the community!</blockquote>\n\n"
             "Sharing God's Love All The Way 💜"
         )

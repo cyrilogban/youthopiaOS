@@ -62,7 +62,7 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
@@ -82,7 +82,7 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Theo to Admin", callback_data="theo_prompt_admin"),
@@ -103,7 +103,7 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="theo_community_links"),
-                InlineKeyboardButton(text="➕ Re-invite Theo", url="https://t.me/iamtheobot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Theo", url="https://t.me/theobiblebot?startgroup=true"),
             ],
         ]
     )
@@ -113,7 +113,7 @@ def build_verse_actions_keyboard(
     category: str,
     reference: str,
     is_group: bool = False,
-    bot_username: str = "iamtheobot",
+    bot_username: str = "theobiblebot",
     trans: str = "kjv"
 ) -> InlineKeyboardMarkup:
     """Builds the mobile-optimized inline action keyboard for verse cards:
@@ -158,7 +158,7 @@ def build_verse_compare_drawer(
     reference: str,
     active_trans: str = "kjv",
     is_group: bool = False,
-    bot_username: str = "iamtheobot"
+    bot_username: str = "theobiblebot"
 ) -> InlineKeyboardMarkup:
     """Builds the interactive translation drawer keyboard for verse cards:
     Row 1: [ ● KJV ] [ ASV ] [ WEB ] [ BBE ]

@@ -103,7 +103,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/iamlusybot?start=dashboard")],
+                [InlineKeyboardButton(text="🚀 Open Private Dashboard", url="https://t.me/lusiequizbot?start=dashboard")],
                 [InlineKeyboardButton(text="🎯 Play Group Quiz", callback_data="lusy_menu_play")],
             ])
             try:
@@ -255,10 +255,10 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                         "Thank you for having me! All player <b>YouTopian Points (YP)</b> earned by your members remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
                         "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
                         "<blockquote>You can still explore or invite our sister bots anytime:\n"
-                        "• 📖 <b>Theo (@iamtheobot):</b> Daily Scripture & Devotionals\n"
-                        "• 🛡️ <b>Pete (@iampetebot):</b> Security & Group Moderation\n"
-                        "• 📅 <b>Eddy (@iamedyybot):</b> Events & Reminders\n"
-                        "• 💬 <b>Susy (@iamsusiebot):</b> Welcome & Onboarding</blockquote>\n\n"
+                        "• 📖 <b>Theo (@theobiblebot):</b> Daily Scripture & Devotionals\n"
+                        "• 🛡️ <b>Pete (@petemodbot):</b> Security & Group Moderation\n"
+                        "• 📅 <b>Edie (@ediecalendarbot):</b> Events & Reminders\n"
+                        "• 💬 <b>Susie (@susiehelpsbot):</b> Welcome & Onboarding</blockquote>\n\n"
                         "<i>God Bless You & See You Soon! 💜</i>"
                     )
                     markup = build_lusy_farewell_keyboard()
@@ -311,10 +311,10 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                     "Thank you for having me! All player <b>YouTopian Points (YP)</b> earned by your members remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
                     "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
                     "<blockquote>You can still explore or invite our sister bots anytime:\n"
-                    "• 📖 <b>Theo (@iamtheobot):</b> Daily Scripture & Devotionals\n"
-                    "• 🛡️ <b>Pete (@iampetebot):</b> Security & Group Moderation\n"
-                    "• 📅 <b>Eddy (@iamedyybot):</b> Events & Reminders\n"
-                    "• 💬 <b>Susy (@iamsusiebot):</b> Welcome & Onboarding</blockquote>\n\n"
+                    "• 📖 <b>Theo (@theobiblebot):</b> Daily Scripture & Devotionals\n"
+                    "• 🛡️ <b>Pete (@petemodbot):</b> Security & Group Moderation\n"
+                    "• 📅 <b>Edie (@ediecalendarbot):</b> Events & Reminders\n"
+                    "• 💬 <b>Susie (@susiehelpsbot):</b> Welcome & Onboarding</blockquote>\n\n"
                     "<i>God Bless You & See You Soon! 💜</i>"
                 )
                 await bot.send_message(message.from_user.id, dm_farewell_text, parse_mode="HTML", reply_markup=markup)
@@ -426,7 +426,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="📖 Open Lusy Guide in DM", url="https://t.me/iamlusybot?start=help")]
+                [InlineKeyboardButton(text="📖 Open Lusie Guide in DM", url="https://t.me/lusiequizbot?start=help")]
             ])
             try:
                 sent_msg = await message.answer(
@@ -452,8 +452,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
     async def send_lusy_help(message: Message) -> None:
         help_text = (
-            "<b>🎯 Lusy | Quizzes & XP Help Guide</b>\n"
-            "<blockquote>I am Lusy (@iamlusybot), your quiz master in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>🎯 Lusie | Quizzes & XP Help Guide</b>\n"
+            "<blockquote>I am Lusie (@lusiequizbot), your quiz master in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Lusy Features & Commands</b>\n"
             "• 🎯 <b>Play Quizzes:</b> Test your scripture knowledge with quizzes & challenges.\n"
             "• 🏆 <b>Leaderboard:</b> View the top 10 YouTopians globally.\n"
@@ -506,7 +506,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         await callback.answer()
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iamlusybot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
+            [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/lusiequizbot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
         ])
         sent_msg = await callback.message.answer(
             "<blockquote>🎯 <b>Lusy Administrator Setup</b>\n\n"
@@ -632,7 +632,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
             user_first = message.from_user.first_name if message.from_user else "Friend"
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="👤 View Player Profile in DM", url="https://t.me/iamlusybot?start=profile")]
+                [InlineKeyboardButton(text="👤 View Player Profile in DM", url="https://t.me/lusiequizbot?start=profile")]
             ])
             try:
                 sent_msg = await message.answer(
@@ -696,7 +696,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # EDDY TO LUSY HANDOFF LISTENER
     # -------------------------------------------------------------------------
-    @router.message(lambda message: message.text and "Over to you, @iamlusybot!" in message.text)
+    @router.message(lambda message: message.text and "Over to you, @lusiequizbot!" in message.text)
     async def respond_to_eddy(message: Message) -> None:
         markup = build_game_selection_inline_keyboard(is_group=True)
         await message.reply(

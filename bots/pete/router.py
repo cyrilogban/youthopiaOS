@@ -690,7 +690,7 @@ async def handle_pete_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
 
     await callback.answer()
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/iampetebot?startgroup=admin&admin=delete_messages+restrict_members+pin_messages+invite_users")]
+        [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/petemodbot?startgroup=admin&admin=delete_messages+restrict_members+pin_messages+invite_users")]
     ])
     try:
         sent_msg = await callback.message.answer(
@@ -761,7 +761,7 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
             pass
 
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🛡️ Open Security Dashboard", url="https://t.me/iampetebot?start=dashboard")],
+            [InlineKeyboardButton(text="🛡️ Open Security Dashboard", url="https://t.me/petemodbot?start=dashboard")],
             [InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init")],
         ])
         try:
@@ -913,7 +913,7 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
         except Exception:
             pass
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/iampetebot?start=help")],
+            [InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/petemodbot?start=help")],
             [InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init")],
         ])
         try:
@@ -931,7 +931,7 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
     first_name = event.from_user.first_name or "Friend"
     help_text = (
         f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
-        "<blockquote>I am Pete (@iampetebot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
+        "<blockquote>I am Pete (@petemodbot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
         "<b>Pete Features & Commands</b>\n"
         "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
         "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"

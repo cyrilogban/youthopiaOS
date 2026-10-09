@@ -221,7 +221,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
                 <div className="muted-copy" style={{ fontSize: 12 }}>{quiz.description}</div>
               </div>
               <a
-                href="https://t.me/iamlusybot?start=playquiz"
+                href="https://t.me/lusiequizbot?start=playquiz"
                 target="_blank"
                 rel="noreferrer"
                 className="ghost-button"

@@ -36,7 +36,7 @@ def build_game_selection_inline_keyboard(is_group: bool = False) -> InlineKeyboa
     [ 🔀 Verse Scramble ]
     [ ⚡ Trivia Race ]
     """
-    open_app_btn = InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app") if is_group else get_open_app_inline_button()
+    open_app_btn = InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app") if is_group else get_open_app_inline_button()
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [open_app_btn],
@@ -58,7 +58,7 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
@@ -78,10 +78,10 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/iamtheobot/app"),
+                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
-                InlineKeyboardButton(text="⚡ Promote Lusy to Admin", callback_data="lusy_prompt_admin"),
+                InlineKeyboardButton(text="⚡ Promote Lusie to Admin", callback_data="lusy_prompt_admin"),
             ],
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
@@ -99,7 +99,7 @@ def build_lusy_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="lusy_menu_directory"),
-                InlineKeyboardButton(text="➕ Re-invite Lusy", url="https://t.me/iamlusybot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Lusie", url="https://t.me/lusiequizbot?startgroup=true"),
             ],
         ]
     )
