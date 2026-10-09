@@ -47,7 +47,7 @@ export const EventsTab: React.FC = () => {
         }}
       >
         <Pill color="deep" style={{ background: 'rgba(255,255,255,0.18)', borderColor: 'rgba(255,255,255,0.28)', marginBottom: 12 }}>
-          Eddy Calendar Hub
+          Edmund Calendar Hub
         </Pill>
         <h2 style={{ margin: 0, fontSize: 26, lineHeight: 1.08, fontWeight: 950 }}>Fellowship Schedule & Gatherings</h2>
         <p style={{ margin: '9px 0 0', color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 1.55 }}>

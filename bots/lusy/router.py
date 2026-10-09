@@ -53,7 +53,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         asyncio.create_task(start_auto_quiz_scheduler(bot, services))
 
         private_commands = [
-            BotCommand(command="start", description="Meet Lusy"),
+            BotCommand(command="start", description="Meet Lucy"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
@@ -62,7 +62,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         group_commands = [
-            BotCommand(command="start", description="Meet Lusy"),
+            BotCommand(command="start", description="Meet Lucy"),
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="autoquiz", description="Check Auto Quiz status"),
@@ -108,7 +108,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>🎯 <b>Lusy Quiz Engine is active in this group!</b>\n"
+                    "<blockquote>🎯 <b>Lucy Quiz Engine is active in this group!</b>\n"
                     "Type <b>/playquiz</b> to launch a round, or tap below to open your DM Dashboard.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -156,19 +156,19 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         else:
             welcome_text = (
                 f"<b>Welcome to Scripture Mastery, {first_name}! 🎯</b>\n\n"
-                "<blockquote>I am Lusy — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
+                "<blockquote>I am Lucy — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
                 "Here in our community, mastering God's Word is an exciting journey we share together! Test your knowledge, earn <b>YouTopian Points (YP)</b>, and climb our global leaderboard synced across all 5 YouThopiaOS pillar bots:\n"
-                "• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                "• 📅 <b>Eddy:</b> Events & Reminders\n"
-                "• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                "• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                "• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                "• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                "• 📅 <b>Edmund:</b> Events & Reminders\n"
+                "• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                 "<b>SELECT A QUIZ MODE BELOW:</b>"
             )
 
         reply_markup = build_lusy_reply_keyboard()
         inline_markup = build_game_selection_inline_keyboard()
-        await message.answer("🎯 <b>Welcome to Lusy Quiz Dashboard!</b>", parse_mode="HTML", reply_markup=reply_markup)
+        await message.answer("🎯 <b>Welcome to Lucy Quiz Dashboard!</b>", parse_mode="HTML", reply_markup=reply_markup)
         await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
 
     # -------------------------------------------------------------------------
@@ -211,14 +211,14 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 )
 
                 welcome_card = (
-                    "<b>LUSY IS HERE</b>\n\n"
-                    "<blockquote>I am Lusy — your Scripture Mastery & Quiz Engine in <b>YouThopiaOS</b>.\n\n"
+                    "<b>LUCY IS HERE</b>\n\n"
+                    "<blockquote>I am Lucy — your Scripture Mastery & Quiz Engine in <b>YouThopiaOS</b>.\n\n"
                     "Every quiz answered here earns <b>YouTopian Points (YP)</b>, advancing your global rank across our entire 5-bot ecosystem:\n"
-                    "• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    "• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    "• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    "• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    "• 💬 <b>Susy:</b> Welcome & Onboarding"
+                    "• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    "• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    "• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    "• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    "• 💬 <b>Susan:</b> Welcome & Onboarding"
                     f"{admin_note}</blockquote>\n\n"
                     "<b>GROUP QUICK START</b>\n"
                     "<blockquote>• <b>/playquiz</b> — Launch an instant Bible Quiz round.\n"
@@ -250,15 +250,15 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                     admin_name = event.from_user.first_name or "Friend"
                     group_title = event.chat.title or "your group"
                     dm_farewell_text = (
-                        "<b>FAREWELL FROM LUSY</b>\n\n"
-                        f"<blockquote>Hi <b>{admin_name}</b>, Lusy has been removed from <b>{group_title}</b>.\n\n"
+                        "<b>FAREWELL FROM LUCY</b>\n\n"
+                        f"<blockquote>Hi <b>{admin_name}</b>, Lucy has been removed from <b>{group_title}</b>.\n\n"
                         "Thank you for having me! All player <b>YouTopian Points (YP)</b> earned by your members remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
                         "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
                         "<blockquote>You can still explore or invite our sister bots anytime:\n"
-                        "• 📖 <b>Theo (@theobiblebot):</b> Daily Scripture & Devotionals\n"
-                        "• 🛡️ <b>Pete (@petemodbot):</b> Security & Group Moderation\n"
-                        "• 📅 <b>Edie (@ediecalendarbot):</b> Events & Reminders\n"
-                        "• 💬 <b>Susie (@susiehelpsbot):</b> Welcome & Onboarding</blockquote>\n\n"
+                        "• 📖 <b>Theodore (@theobiblebot):</b> Daily Scripture & Devotionals\n"
+                        "• 🛡️ <b>Peter (@petemodbot):</b> Security & Group Moderation\n"
+                        "• 📅 <b>Edmund (@ediecalendarbot):</b> Events & Reminders\n"
+                        "• 💬 <b>Susan (@susiehelpsbot):</b> Welcome & Onboarding</blockquote>\n\n"
                         "<i>God Bless You & See You Soon! 💜</i>"
                     )
                     markup = build_lusy_farewell_keyboard()
@@ -306,15 +306,15 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             try:
                 admin_name = message.from_user.first_name or "Friend"
                 dm_farewell_text = (
-                    "<b>FAREWELL FROM LUSY</b>\n\n"
-                    f"<blockquote>Hi <b>{admin_name}</b>, Lusy has left <b>{group_title}</b> as requested.\n\n"
+                    "<b>FAREWELL FROM LUCY</b>\n\n"
+                    f"<blockquote>Hi <b>{admin_name}</b>, Lucy has left <b>{group_title}</b> as requested.\n\n"
                     "Thank you for having me! All player <b>YouTopian Points (YP)</b> earned by your members remain safely saved in <b>YouThopiaOS</b>.</blockquote>\n\n"
                     "<b>DISCOVER OTHER YOUTHOPIAOS BOTS</b>\n"
                     "<blockquote>You can still explore or invite our sister bots anytime:\n"
-                    "• 📖 <b>Theo (@theobiblebot):</b> Daily Scripture & Devotionals\n"
-                    "• 🛡️ <b>Pete (@petemodbot):</b> Security & Group Moderation\n"
-                    "• 📅 <b>Edie (@ediecalendarbot):</b> Events & Reminders\n"
-                    "• 💬 <b>Susie (@susiehelpsbot):</b> Welcome & Onboarding</blockquote>\n\n"
+                    "• 📖 <b>Theodore (@theobiblebot):</b> Daily Scripture & Devotionals\n"
+                    "• 🛡️ <b>Peter (@petemodbot):</b> Security & Group Moderation\n"
+                    "• 📅 <b>Edmund (@ediecalendarbot):</b> Events & Reminders\n"
+                    "• 💬 <b>Susan (@susiehelpsbot):</b> Welcome & Onboarding</blockquote>\n\n"
                     "<i>God Bless You & See You Soon! 💜</i>"
                 )
                 await bot.send_message(message.from_user.id, dm_farewell_text, parse_mode="HTML", reply_markup=markup)
@@ -426,11 +426,11 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="📖 Open Lusie Guide in DM", url="https://t.me/lusiequizbot?start=help")]
+                [InlineKeyboardButton(text="📖 Open Lucy Guide in DM", url="https://t.me/lusiequizbot?start=help")]
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📖 <b>Looking for Lusy Help?</b> Tap below to view your full guide in private.</blockquote>",
+                    "<blockquote>📖 <b>Looking for Lucy Help?</b> Tap below to view your full guide in private.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
                 )
@@ -452,9 +452,9 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
     async def send_lusy_help(message: Message) -> None:
         help_text = (
-            "<b>🎯 Lusie | Quizzes & XP Help Guide</b>\n"
-            "<blockquote>I am Lusie (@lusiequizbot), your quiz master in YOUTHOPIA BIBLE COMMUNITY.\n\n"
-            "<b>Lusy Features & Commands</b>\n"
+            "<b>🎯 Lucy | Quizzes & XP Help Guide</b>\n"
+            "<blockquote>I am Lucy (@lusiequizbot), your quiz master in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Lucy Features & Commands</b>\n"
             "• 🎯 <b>Play Quizzes:</b> Test your scripture knowledge with quizzes & challenges.\n"
             "• 🏆 <b>Leaderboard:</b> View the top 10 YouTopians globally.\n"
             "• ⭐ <b>My Points:</b> Check your YP balance, level, and accuracy rate.\n"
@@ -509,7 +509,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             [InlineKeyboardButton(text="⚡ Open Admin Permission Sheet", url="https://t.me/lusiequizbot?startgroup=admin&admin=delete_messages+pin_messages+invite_users")]
         ])
         sent_msg = await callback.message.answer(
-            "<blockquote>🎯 <b>Lusy Administrator Setup</b>\n\n"
+            "<blockquote>🎯 <b>Lucy Administrator Setup</b>\n\n"
             "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
             parse_mode="HTML",
             reply_markup=markup

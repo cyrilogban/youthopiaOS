@@ -107,7 +107,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified, onNav
       </div>
 
       <Card style={{ padding: 18 }} hover>
-        <SectionTitle eyebrow="Theo Daily Focus" right={<Pill color="purple">{votd?.translation || 'KJV'}</Pill>}>
+        <SectionTitle eyebrow="Theodore Daily Focus" right={<Pill color="purple">{votd?.translation || 'KJV'}</Pill>}>
           Verse of the Day
         </SectionTitle>
 

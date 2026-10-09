@@ -54,13 +54,13 @@ def get_5bot_quick_access_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📖 Theo", url="https://t.me/theobiblebot?start=profile"),
-                InlineKeyboardButton(text="🎯 Lusie", url="https://t.me/lusiequizbot?start=profile"),
-                InlineKeyboardButton(text="🛡️ Pete", url="https://t.me/petemodbot?start=profile"),
+                InlineKeyboardButton(text="📖 Theodore", url="https://t.me/theobiblebot?start=profile"),
+                InlineKeyboardButton(text="🎯 Lucy", url="https://t.me/lusiequizbot?start=profile"),
+                InlineKeyboardButton(text="🛡️ Peter", url="https://t.me/petemodbot?start=profile"),
             ],
             [
-                InlineKeyboardButton(text="📅 Edie", url="https://t.me/ediecalendarbot?start=profile"),
-                InlineKeyboardButton(text="💬 Susie", url="https://t.me/susiehelpsbot?start=profile"),
+                InlineKeyboardButton(text="📅 Edmund", url="https://t.me/ediecalendarbot?start=profile"),
+                InlineKeyboardButton(text="💬 Susan", url="https://t.me/susiehelpsbot?start=profile"),
             ],
         ]
     )
@@ -123,11 +123,11 @@ def get_community_links_keyboard() -> InlineKeyboardMarkup:
 BOT_FAMILY_DIRECTORY_TEXT = (
     "<b>Meet the YouThopia Bot Family</b>\n"
     "<blockquote>"
-    "📖 <b>Theo</b> | Daily Word - @theobiblebot\n"
-    "🎮 <b>Lusie</b> | Games & XP - @lusiequizbot\n"
-    "🛡️ <b>Pete</b> | Safety Bot - @petemodbot\n"
-    "📅 <b>Edie</b> | Events Bot - @ediecalendarbot\n"
-    "💬 <b>Susie</b> | Welcome Bot - @susiehelpsbot"
+    "📖 <b>Theodore</b> | Daily Word - @theobiblebot\n"
+    "🎮 <b>Lucy</b> | Games & XP - @lusiequizbot\n"
+    "🛡️ <b>Peter</b> | Safety Bot - @petemodbot\n"
+    "📅 <b>Edmund</b> | Events Bot - @ediecalendarbot\n"
+    "💬 <b>Susan</b> | Welcome Bot - @susiehelpsbot"
     "</blockquote>"
 )
 
@@ -224,11 +224,11 @@ async def send_community_exploration_page(message: Message, page: int, edit: boo
     else:  # Page 3
         text = (
             "<b>Meet the Bot Family 🤖 (3/3)</b>\n"
-            "<blockquote><b>Theo</b> (@theobiblebot) - Your daily devotional companion.\n"
-            "<b>Lusie</b> (@lusiequizbot) - Play games and earn YP!\n"
-            "<b>Pete</b> (@petemodbot) - The security guard.\n"
-            "<b>Edie</b> (@ediecalendarbot) - Announcements and events.\n"
-            "<b>Susie</b> (@susiehelpsbot) - Your guide and friend.</blockquote>\n\n"
+            "<blockquote><b>Theodore</b> (@theobiblebot) - Your daily devotional companion.\n"
+            "<b>Lucy</b> (@lusiequizbot) - Play games and earn YP!\n"
+            "<b>Peter</b> (@petemodbot) - The security guard.\n"
+            "<b>Edmund</b> (@ediecalendarbot) - Announcements and events.\n"
+            "<b>Susan</b> (@susiehelpsbot) - Your guide and friend.</blockquote>\n\n"
             "<i>Click Finish to complete your orientation!</i>"
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[

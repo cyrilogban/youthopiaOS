@@ -9,34 +9,34 @@ export const CommunityTab: React.FC = () => {
       name: 'Main Community Group',
       role: 'General Fellowship, Announcements & Support',
       tag: 'Primary Group',
-      bot: 'Susie Bot',
+      bot: 'Susan Bot',
       link: 'https://t.me/youthopiabiblecommunity',
     },
     {
       name: 'Scripture & Devotional Hub',
       role: 'Daily VOTD & Reflection Studies',
-      tag: 'Theo Bot',
+      tag: 'Theodore Bot',
       bot: '@theobiblebot',
       link: 'https://t.me/theobiblebot',
     },
     {
       name: 'Prayer & Intercession Line',
       role: 'Prayer Requests & Midweek Sessions',
-      tag: 'Edie Bot',
+      tag: 'Edmund Bot',
       bot: '@ediecalendarbot',
       link: 'https://t.me/ediecalendarbot',
     },
     {
       name: 'Quiz & Challenge Arena',
       role: 'Daily Bible Trivia & Leaderboards',
-      tag: 'Lusie Bot',
+      tag: 'Lucy Bot',
       bot: '@lusiequizbot',
       link: 'https://t.me/lusiequizbot',
     },
     {
       name: 'Security & Moderation Checkpoint',
       role: 'Captcha Verification & Trust Ratings',
-      tag: 'Pete Bot',
+      tag: 'Peter Bot',
       bot: '@petemodbot',
       link: 'https://t.me/petemodbot',
     },
@@ -69,26 +69,26 @@ export const CommunityTab: React.FC = () => {
     {
       question: 'What is YouThopiaOS?',
       answer:
-        'YouThopiaOS is the underlying software engine powering our 5 specialized Telegram assistants (Theo, Lusy, Pete, Eddy, Susy) and this unified Mini App platform.',
+        'YouThopiaOS is the underlying software engine powering our 5 specialized Telegram assistants (Theodore, Lucy, Peter, Edmund, Susan) and this unified Mini App platform.',
     },
     {
       question: 'How do I earn XP and level up?',
-      answer: 'You earn YouTopian Points (XP) by participating in daily quizzes hosted by Lusy Bot and completing Scripture challenges.',
+      answer: 'You earn YouTopian Points (XP) by participating in daily quizzes hosted by Lucy Bot and completing Scripture challenges.',
     },
     {
       question: 'How does verification work?',
       answer: 'When you open the Mini App inside Telegram, your cryptographic initData signature is verified server-side by our FastAPI gateway.',
     },
     {
-      question: 'What is Pete Bot\'s Trust Score?',
+      question: 'What is Peter Bot\'s Trust Score?',
       answer:
-        'Pete Bot calculates a Trust Score (100/100) for every member based on captcha verification, clean group interactions, and account standing.',
+        'Peter Bot calculates a Trust Score (100/100) for every member based on captcha verification, clean group interactions, and account standing.',
     },
   ];
 
   return (
     <div className="section-stack">
-      {/* Susy Hostess Hero Banner */}
+      {/* Susan Hostess Hero Banner */}
       <div
         style={{
           background: 'linear-gradient(135deg, #701a75 0%, #a21caf 50%, #e879f9 100%)',
@@ -127,19 +127,19 @@ export const CommunityTab: React.FC = () => {
             >
               Hostess & Hospitality Hub
             </span>
-            <span style={{ fontSize: 12, opacity: 0.9 }}>• Susy & Pete</span>
+            <span style={{ fontSize: 12, opacity: 0.9 }}>• Susan & Peter</span>
           </div>
 
           <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px 0', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
             Welcome to YouThopia Family
           </h2>
           <p style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.92, margin: 0 }}>
-            I am Susy, your community hostess and onboarding guide. Explore our fellowship channels, verify your standing with Pete, and find your place in the family!
+            I am Susan, your community hostess and onboarding guide. Explore our fellowship channels, verify your standing with Peter, and find your place in the family!
           </p>
         </div>
       </div>
 
-      {/* Pete Security Checkpoint Card */}
+      {/* Peter Security Checkpoint Card */}
       <Card style={{ padding: 18 }} hover>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -153,13 +153,13 @@ export const CommunityTab: React.FC = () => {
                 letterSpacing: '0.05em',
               }}
             >
-              Pete Security & Trust Checkpoint
+              Peter Security & Trust Checkpoint
             </span>
           </div>
           <Pill color="success">● Account Shielded</Pill>
         </div>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
-          Pete Bot actively protects our fellowship against spam and unauthorized bots. Your account has passed verification with an optimal{' '}
+          Peter Bot actively protects our fellowship against spam and unauthorized bots. Your account has passed verification with an optimal{' '}
           <strong style={{ color: 'var(--success)' }}>100/100 Trust Score</strong>.
         </p>
       </Card>

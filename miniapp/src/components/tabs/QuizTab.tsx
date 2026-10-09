@@ -82,7 +82,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
         }}
       >
         <Pill color="deep" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.26)', marginBottom: 12 }}>
-          Lusy Gaming Hub
+          Lucy Gaming Hub
         </Pill>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

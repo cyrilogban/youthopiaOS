@@ -65,14 +65,14 @@ def build_susy_router(description: str, music_service=None) -> Router:
         from aiogram.types import BotCommandScopeAllChatAdministrators
 
         private_commands = [
-            BotCommand(command="start", description="Meet Susy"),
+            BotCommand(command="start", description="Meet Susan"),
             BotCommand(command="profile", description="View your profile"),
-            BotCommand(command="help", description="Susy Hostess Guide"),
+            BotCommand(command="help", description="Susan Hostess Guide"),
         ]
         
         group_commands = [
-            BotCommand(command="start", description="Meet Susy"),
-            BotCommand(command="help", description="Susy Hostess Guide"),
+            BotCommand(command="start", description="Meet Susan"),
+            BotCommand(command="help", description="Susan Hostess Guide"),
         ]
         
         admin_group_commands = group_commands + [
@@ -121,7 +121,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                         chat_id=chat_id,
                         text=(
                             f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
-                            f"<blockquote>Thank you for promoting Susy in <b>{group_title}</b>! "
+                            f"<blockquote>Thank you for promoting Susan in <b>{group_title}</b>! "
                             f"Community hostess and onboarding features are now fully active. 💜</blockquote>"
                         ),
                         parse_mode="HTML"
@@ -134,16 +134,16 @@ def build_susy_router(description: str, music_service=None) -> Router:
             # Differentiated Welcome Card based on Admin vs Member status
             if new_status == "administrator":
                 welcome_text = (
-                    f"<b>SUSY IS HERE 💬</b>\n\n"
-                    f"<blockquote>I am Susy — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>SUSAN IS HERE 💬</b>\n\n"
+                    f"<blockquote>I am Susan — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community connected and welcomed across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>COMMUNITY QUICK START</b>\n"
-                    f"<blockquote>• Tap <b>💬 Meet Susy in DM</b> below to start your community tour.\n"
+                    f"<blockquote>• Tap <b>💬 Meet Susan in DM</b> below to start your community tour.\n"
                     f"• <b>Hostess Welcome:</b> <code>ENABLED</code>\n"
                     f"• <b>Admins:</b> Manage anytime using <code>/help</code>.</blockquote>\n\n"
                     f"<i>Sharing God's Love All The Way 💜</i>"
@@ -151,16 +151,16 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 markup = build_susy_group_welcome_keyboard()
             else:
                 welcome_text = (
-                    f"<b>SUSY IS HERE 💬</b>\n\n"
-                    f"<blockquote>I am Susy — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>SUSAN IS HERE 💬</b>\n\n"
+                    f"<blockquote>I am Susan — your Community Hostess & Onboarding Guide in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community connected and welcomed across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                    f"<blockquote>To help manage member welcomes smoothly, please grant Susy <b>Admin Rights</b>!</blockquote>"
+                    f"<blockquote>To help manage member welcomes smoothly, please grant Susan <b>Admin Rights</b>!</blockquote>"
                 )
                 markup = build_susy_member_welcome_keyboard()
 
@@ -190,10 +190,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
             if admin_user_id:
                 try:
                     farewell_text = (
-                        f"<b>Susy Departs {group_title} 💬</b>\n\n"
-                        f"<blockquote>Susy has been removed from <b>{group_title}</b>.\n"
+                        f"<b>Susan Departs {group_title} 💬</b>\n\n"
+                        f"<blockquote>Susan has been removed from <b>{group_title}</b>.\n"
                         f"Hostess welcome services have been paused for this group. "
-                        f"You can re-invite Susy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                        f"You can re-invite Susan anytime or explore our other 4 community bots below! 💜</blockquote>"
                     )
                     await bot.send_message(
                         chat_id=admin_user_id,
@@ -220,7 +220,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         ])
         try:
             sent_msg = await callback.message.answer(
-                "<blockquote>💬 <b>Susy Administrator Setup</b>\n\n"
+                "<blockquote>💬 <b>Susan Administrator Setup</b>\n\n"
                 "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
                 parse_mode="HTML",
                 reply_markup=markup
@@ -317,10 +317,10 @@ def build_susy_router(description: str, music_service=None) -> Router:
         if admin_id:
             try:
                 farewell_text = (
-                    f"<b>Susy Departs {group_title} 💬</b>\n\n"
-                    f"<blockquote>Susy has left <b>{group_title}</b> as requested.\n"
+                    f"<b>Susan Departs {group_title} 💬</b>\n\n"
+                    f"<blockquote>Susan has left <b>{group_title}</b> as requested.\n"
                     f"Hostess welcome services have been paused for this group. "
-                    f"You can re-invite Susy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    f"You can re-invite Susan anytime or explore our other 4 community bots below! 💜</blockquote>"
                 )
                 await bot.send_message(
                     chat_id=admin_id,
@@ -349,12 +349,12 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 pass
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="💬 Meet Susie in DM", url="https://t.me/susiehelpsbot?start=welcome")],
+                [InlineKeyboardButton(text="💬 Meet Susan in DM", url="https://t.me/susiehelpsbot?start=welcome")],
                 [InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/susiehelpsbot?start=tour")],
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>💬 <b>Susy Hostess Engine is active in this group!</b>\n"
+                    "<blockquote>💬 <b>Susan Hostess Engine is active in this group!</b>\n"
                     "Tap below to open your DM Dashboard and explore our community.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -375,13 +375,13 @@ def build_susy_router(description: str, music_service=None) -> Router:
         if user.get("engagement_level") == "new":
             welcome_text = (
                 f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 💜</b>\n\n"
-                f"<blockquote>I am Susy — your community hostess here in the YouThopia ecosystem.\n\n"
+                f"<blockquote>I am Susan — your community hostess here in the YouThopia ecosystem.\n\n"
                 f"We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it! Here is our 5-bot ecosystem ready for you:\n"
-                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
             )
             await services.users.set_engagement_level(user["id"], "active")
@@ -397,7 +397,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
         reply_menu = build_susy_reply_keyboard()
         inline_menu = build_susy_start_inline_keyboard()
         
-        await message.answer("💬 <b>Welcome to Susy Hostess Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer("💬 <b>Welcome to Susan Hostess Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
         if SUSY_PHOTO:
             await message.answer_photo(
                 photo=SUSY_PHOTO,
@@ -602,12 +602,12 @@ def build_susy_router(description: str, music_service=None) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="💬 Open Susie Guide in DM", url="https://t.me/susiehelpsbot?start=help")],
+                [InlineKeyboardButton(text="💬 Open Susan Guide in DM", url="https://t.me/susiehelpsbot?start=help")],
                 [InlineKeyboardButton(text="🚀 Take Community Tour", callback_data="onboarding_start")],
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>💬 <b>Susie Community Hostess Guide</b>\n"
+                    "<blockquote>💬 <b>Susan Community Hostess Guide</b>\n"
                     "Tap below to view full onboarding features and community guidelines in DM.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -620,12 +620,12 @@ def build_susy_router(description: str, music_service=None) -> Router:
 
         first_name = event.from_user.first_name or "Friend"
         help_text = (
-            f"<b>🎵 Susie | Welcome Bot Help Guide, {first_name}!</b>\n"
-            "<blockquote>I am Susie (@susiehelpsbot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
-            "<b>Susie Features & Commands</b>\n"
+            f"<b>🎵 Susan | Welcome Bot Help Guide, {first_name}!</b>\n"
+            "<blockquote>I am Susan (@susiehelpsbot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Susan Features & Commands</b>\n"
             "• 💬 <b>Explore the Community:</b> Interactive 3-step tour for new YouTopians (+50 Trust Points).\n"
             "• 🤝 <b>Hospitality & Guidance:</b> Here to answer questions and show you around.\n"
-            "• <b>/start:</b> Open Susie welcome dashboard.\n"
+            "• <b>/start:</b> Open Susan welcome dashboard.\n"
             "• <b>/profile:</b> View your YouTopian profile card.\n"
             "• <b>/help:</b> Show this guidance message.</blockquote>\n\n"
             f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
@@ -674,7 +674,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 ],
                 [
                     InlineKeyboardButton(text="➕ Request Another", callback_data="susy_group_request"),
-                    InlineKeyboardButton(text="💬 Open Susie DM ↗️", url="https://t.me/susiehelpsbot")
+                    InlineKeyboardButton(text="💬 Open Susan DM ↗️", url="https://t.me/susiehelpsbot")
                 ],
                 [
                     InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
@@ -724,7 +724,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
                 await callback.answer(
                     f"🎉 Saved to Favorites! 💜\n\n"
                     f"\"{track_title}\" has been saved to your personal playlist.\n\n"
-                    f"Open a private chat with Susie (@susiehelpsbot) to view your saved songs!",
+                    f"Open a private chat with Susan (@susiehelpsbot) to view your saved songs!",
                     show_alert=True
                 )
         except Exception as e:
@@ -734,7 +734,7 @@ def build_susy_router(description: str, music_service=None) -> Router:
     async def handle_group_playlist(callback: CallbackQuery) -> None:
         await callback.answer(
             "📜 Your Saved Playlist:\n\n"
-            "Open a private chat with Susie (@susiehelpsbot) and type /playlist to view and play your saved songs!",
+            "Open a private chat with Susan (@susiehelpsbot) and type /playlist to view and play your saved songs!",
             show_alert=True
         )
 

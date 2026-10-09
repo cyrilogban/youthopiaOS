@@ -76,12 +76,12 @@ def build_eddy_router(description: str) -> Router:
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
             BotCommand(command="deletebirthday", description="Delete your registered birthday"),
             BotCommand(command="profile", description="View your profile"),
-            BotCommand(command="help", description="Show Ed's instructions"),
+            BotCommand(command="help", description="Show Edmund's instructions"),
         ]
 
         group_commands = [
-            BotCommand(command="start", description="Meet Eddy"),
-            BotCommand(command="help", description="Show Ed's instructions"),
+            BotCommand(command="start", description="Meet Edmund"),
+            BotCommand(command="help", description="Show Edmund's instructions"),
             BotCommand(command="calendar", description="View all upcoming events"),
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
         ]
@@ -142,7 +142,7 @@ def build_eddy_router(description: str) -> Router:
                         chat_id=chat_id,
                         text=(
                             f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
-                            f"<blockquote>Thank you for promoting Eddy in <b>{group_title}</b>! "
+                            f"<blockquote>Thank you for promoting Edmund in <b>{group_title}</b>! "
                             f"Event management, reminders, and birthday celebrations are now fully active. 📅</blockquote>"
                         ),
                         parse_mode="HTML"
@@ -155,14 +155,14 @@ def build_eddy_router(description: str) -> Router:
             # Differentiated Welcome Card based on Admin vs Member status
             if new_status == "administrator":
                 welcome_text = (
-                    f"<b>EDDY IS HERE 📅</b>\n\n"
-                    f"<blockquote>I am Eddy — your Community Event Manager & Calendar Scheduler in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>EDMUND IS HERE 📅</b>\n\n"
+                    f"<blockquote>I am Edmund — your Community Event Manager & Calendar Scheduler in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community active across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>EVENTS QUICK START</b>\n"
                     f"<blockquote>• <b>Weekly Calendar:</b> <code>ACTIVE</code> (Use <code>/calendar</code> anytime).\n"
                     f"• <b>Birthday Shoutouts:</b> <code>ENABLED</code> (Auto-celebrates YouTopians).\n"
@@ -172,16 +172,16 @@ def build_eddy_router(description: str) -> Router:
                 markup = build_eddy_group_welcome_keyboard()
             else:
                 welcome_text = (
-                    f"<b>EDDY IS HERE 📅</b>\n\n"
-                    f"<blockquote>I am Eddy — your Community Event Manager & Calendar Scheduler in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>EDMUND IS HERE 📅</b>\n\n"
+                    f"<blockquote>I am Edmund — your Community Event Manager & Calendar Scheduler in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community active across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                    f"<blockquote>To pin event reminders and schedule announcements smoothly, please grant Eddy <b>Admin Rights</b>!</blockquote>"
+                    f"<blockquote>To pin event reminders and schedule announcements smoothly, please grant Edmund <b>Admin Rights</b>!</blockquote>"
                 )
                 markup = build_eddy_member_welcome_keyboard()
 
@@ -211,10 +211,10 @@ def build_eddy_router(description: str) -> Router:
             if admin_user_id:
                 try:
                     farewell_text = (
-                        f"<b>Eddy Departs {group_title} 📅</b>\n\n"
-                        f"<blockquote>Eddy has been removed from <b>{group_title}</b>.\n"
+                        f"<b>Edmund Departs {group_title} 📅</b>\n\n"
+                        f"<blockquote>Edmund has been removed from <b>{group_title}</b>.\n"
                         f"Event reminders and birthday broadcasts have been paused for this group. "
-                        f"You can re-invite Eddy anytime or explore our other 4 community bots below! 💜</blockquote>"
+                        f"You can re-invite Edmund anytime or explore our other 4 community bots below! 💜</blockquote>"
                     )
                     await bot.send_message(
                         chat_id=admin_user_id,
@@ -241,7 +241,7 @@ def build_eddy_router(description: str) -> Router:
         ])
         try:
             sent_msg = await callback.message.answer(
-                "<blockquote>📅 <b>Edie Administrator Setup</b>\n\n"
+                "<blockquote>📅 <b>Edmund Administrator Setup</b>\n\n"
                 "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
                 parse_mode="HTML",
                 reply_markup=markup
@@ -282,10 +282,10 @@ def build_eddy_router(description: str) -> Router:
         if admin_id:
             try:
                 farewell_text = (
-                    f"<b>Edie Departs {group_title} 📅</b>\n\n"
-                    f"<blockquote>Edie has left <b>{group_title}</b> as requested.\n"
+                    f"<b>Edmund Departs {group_title} 📅</b>\n\n"
+                    f"<blockquote>Edmund has left <b>{group_title}</b> as requested.\n"
                     f"Event reminders and birthday broadcasts have been paused for this group. "
-                    f"You can re-invite Edie anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    f"You can re-invite Edmund anytime or explore our other 4 community bots below! 💜</blockquote>"
                 )
                 await bot.send_message(
                     chat_id=admin_id,
@@ -319,7 +319,7 @@ def build_eddy_router(description: str) -> Router:
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📅 <b>Eddy Events Engine is active in this group!</b>\n"
+                    "<blockquote>📅 <b>Edmund Events Engine is active in this group!</b>\n"
                     "Tap below to open your DM Event Dashboard and view our schedule.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -359,13 +359,13 @@ def build_eddy_router(description: str) -> Router:
         if user.get("engagement_level") == "new":
             welcome_text = (
                 f"<b>Welcome to YouThopia Events, {first_name}! 📅</b>\n\n"
-                f"<blockquote>I am Eddy (Ed) — event scheduler and community manager in <b>YouThopiaOS</b>.\n\n"
+                f"<blockquote>I am Edmund — event scheduler and community manager in <b>YouThopiaOS</b>.\n\n"
                 f"I keep our community active with weekly calendars, live sessions, RSVPs, and birthday celebrations across all 5 pillar bots:\n"
-                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
             )
             await services.users.set_engagement_level(user["id"], "active")
@@ -382,7 +382,7 @@ def build_eddy_router(description: str) -> Router:
         reply_menu = build_eddy_reply_keyboard()
         inline_menu = build_eddy_start_inline_keyboard()
 
-        await message.answer("📅 <b>Welcome to Eddy Events Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer("📅 <b>Welcome to Edmund Events Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
         await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
 
     # -------------------------------------------------------------------------
@@ -470,12 +470,12 @@ def build_eddy_router(description: str) -> Router:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="📅 Open Edie Guide in DM", url="https://t.me/ediecalendarbot?start=help"),
+                    InlineKeyboardButton(text="📅 Open Edmund Guide in DM", url="https://t.me/ediecalendarbot?start=help"),
                 ]
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📅 <b>Edie Events Help Guide</b>\n"
+                    "<blockquote>📅 <b>Edmund Events Help Guide</b>\n"
                     "Tap below to view full features and calendar options in DM.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -488,9 +488,9 @@ def build_eddy_router(description: str) -> Router:
 
     async def send_eddy_help(message: Message) -> None:
         help_text = (
-            "<b>📅 Edie | Events Bot Help Guide</b>\n"
-            "<blockquote>I am Edie (@ediecalendarbot), your event scheduler and community manager in YOUTHOPIA BIBLE COMMUNITY.\n\n"
-            "<b>Ed Features & Commands</b>\n"
+            "<b>📅 Edmund | Events Bot Help Guide</b>\n"
+            "<blockquote>I am Edmund (@ediecalendarbot), your event scheduler and community manager in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Edmund Features & Commands</b>\n"
             "• 📅 <b>View Calendar:</b> Check this week's official community events.\n"
             "• 🎫 <b>My Events:</b> View events you have RSVP'd for.\n"
             "• 🎂 <b>Add Birthday:</b> Register your birthday for community shoutouts.\n"
@@ -760,16 +760,16 @@ def build_eddy_router(description: str) -> Router:
             
         first_name = message.from_user.first_name or "Friend"
         help_text = (
-            f"<b>Edie's Help Guide, {first_name}!</b>\n"
-            "<blockquote>I'm Edie (@ediecalendarbot). I am your community manager. I make sure you never miss an event or a Bible study!</blockquote>\n\n"
+            f"<b>Edmund's Help Guide, {first_name}!</b>\n"
+            "<blockquote>I'm Edmund (@ediecalendarbot). I am your community manager. I make sure you never miss an event or a Bible study!</blockquote>\n\n"
             "<b>Meet the YouThopia Bot Family</b>\n"
-            "<blockquote><b>Theo</b> - <a href=\"https://t.me/theobiblebot\">@theobiblebot</a>\n"
+            "<blockquote><b>Theodore</b> - <a href=\"https://t.me/theobiblebot\">@theobiblebot</a>\n"
             "Your daily Bible companion. Devotionals, verses, and reflection.\n\n"
-            "<b>Lusie</b> - <a href=\"https://t.me/lusiequizbot\">@lusiequizbot</a>\n"
+            "<b>Lucy</b> - <a href=\"https://t.me/lusiequizbot\">@lusiequizbot</a>\n"
             "Games, YP, and fun! Earn points and grow your rank.\n\n"
-            "<b>Pete</b> - <a href=\"https://t.me/petemodbot\">@petemodbot</a>\n"
+            "<b>Peter</b> - <a href=\"https://t.me/petemodbot\">@petemodbot</a>\n"
             "Security and moderation. Keeping our community safe.\n\n"
-            "<b>Susie</b> - <a href=\"https://t.me/susiehelpsbot\">@susiehelpsbot</a>\n"
+            "<b>Susan</b> - <a href=\"https://t.me/susiehelpsbot\">@susiehelpsbot</a>\n"
             "Your onboarding specialist and guide to the community!</blockquote>\n\n"
             "Sharing God's Love All The Way 💜"
         )

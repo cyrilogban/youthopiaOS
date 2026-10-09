@@ -48,7 +48,7 @@ class BotIdentity:
 BOT_REGISTRY: Dict[str, BotIdentity] = {
     "theo": BotIdentity(
         internal_name="theo",
-        display_name="Theo",
+        display_name="Theodore",
         username="theobiblebot",
         emoji="📖",
         tagline="Daily Word",
@@ -56,7 +56,7 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "susy": BotIdentity(
         internal_name="susy",
-        display_name="Susie",
+        display_name="Susan",
         username="susiehelpsbot",
         emoji="💬",
         tagline="Welcome Bot",
@@ -64,7 +64,7 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "eddy": BotIdentity(
         internal_name="eddy",
-        display_name="Edie",
+        display_name="Edmund",
         username="ediecalendarbot",
         emoji="📅",
         tagline="Events Bot",
@@ -72,7 +72,7 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "pete": BotIdentity(
         internal_name="pete",
-        display_name="Pete",
+        display_name="Peter",
         username="petemodbot",
         emoji="🛡️",
         tagline="Safety Bot",
@@ -80,7 +80,7 @@ BOT_REGISTRY: Dict[str, BotIdentity] = {
     ),
     "lusy": BotIdentity(
         internal_name="lusy",
-        display_name="Lusie",
+        display_name="Lucy",
         username="lusiequizbot",
         emoji="🎯",
         tagline="Games & XP",

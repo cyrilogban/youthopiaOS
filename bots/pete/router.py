@@ -595,7 +595,7 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
                     chat_id=chat_id,
                     text=(
                         f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
-                        f"<blockquote>Thank you for promoting Pete in <b>{group_title}</b>! "
+                        f"<blockquote>Thank you for promoting Peter in <b>{group_title}</b>! "
                         f"Automated moderation, captcha verification, and anti-spam shields are now active. 🛡️</blockquote>"
                     ),
                     parse_mode="HTML"
@@ -608,14 +608,14 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
         # Differentiated Welcome Card based on Admin vs Member status
         if new_status == "administrator":
             welcome_text = (
-                f"<b>PETE IS HERE 🛡️</b>\n\n"
-                f"<blockquote>I am Pete — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
+                f"<b>PETER IS HERE 🛡️</b>\n\n"
+                f"<blockquote>I am Peter — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
                 f"I protect our digital sanctuary across our 5-bot ecosystem:\n"
-                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SECURITY QUICK START</b>\n"
                 f"<blockquote>• <b>Captcha Gatekeeper:</b> <code>ENABLED</code> (Auto-verifies new members).\n"
                 f"• <b>Spam & Link Shield:</b> <code>ACTIVE</code> (Blocks profanity & links).\n"
@@ -625,16 +625,16 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
             markup = build_pete_group_welcome_keyboard()
         else:
             welcome_text = (
-                f"<b>PETE IS HERE 🛡️</b>\n\n"
-                f"<blockquote>I am Pete — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
+                f"<b>PETER IS HERE 🛡️</b>\n\n"
+                f"<blockquote>I am Peter — High King of Security & Moderation in <b>YouThopiaOS</b>.\n\n"
                 f"I protect our digital sanctuary across our 5-bot ecosystem:\n"
-                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                f"<blockquote>To filter spam and execute captcha mutes smoothly, please grant Pete <b>Admin Rights</b>!</blockquote>"
+                f"<blockquote>To filter spam and execute captcha mutes smoothly, please grant Peter <b>Admin Rights</b>!</blockquote>"
             )
             markup = build_pete_member_welcome_keyboard()
 
@@ -664,10 +664,10 @@ async def on_pete_group_join(event: ChatMemberUpdated, bot: Bot, services: Servi
         if admin_user_id:
             try:
                 farewell_text = (
-                    f"<b>Pete Departs {group_title} 🛡️</b>\n\n"
-                    f"<blockquote>Pete has been removed from <b>{group_title}</b>.\n"
+                    f"<b>Peter Departs {group_title} 🛡️</b>\n\n"
+                    f"<blockquote>Peter has been removed from <b>{group_title}</b>.\n"
                     f"Automated security and captcha verification have been paused for this group. "
-                    f"You can re-invite Pete anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    f"You can re-invite Peter anytime or explore our other 4 community bots below! 💜</blockquote>"
                 )
                 await bot.send_message(
                     chat_id=admin_user_id,
@@ -694,7 +694,7 @@ async def handle_pete_prompt_admin(callback: CallbackQuery, bot: Bot) -> None:
     ])
     try:
         sent_msg = await callback.message.answer(
-            "<blockquote>🛡️ <b>Pete Administrator Setup</b>\n\n"
+            "<blockquote>🛡️ <b>Peter Administrator Setup</b>\n\n"
             "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
             parse_mode="HTML",
             reply_markup=markup
@@ -732,10 +732,10 @@ async def handle_leave_command(message: Message, bot: Bot, services: ServiceCont
     if admin_id:
         try:
             farewell_text = (
-                f"<b>Pete Departs {group_title} 🛡️</b>\n\n"
-                f"<blockquote>Pete has left <b>{group_title}</b> as requested.\n"
+                f"<b>Peter Departs {group_title} 🛡️</b>\n\n"
+                f"<blockquote>Peter has left <b>{group_title}</b> as requested.\n"
                 f"Automated security and captcha verification have been paused for this group. "
-                f"You can re-invite Pete anytime or explore our other 4 community bots below! 💜</blockquote>"
+                f"You can re-invite Peter anytime or explore our other 4 community bots below! 💜</blockquote>"
             )
             await bot.send_message(
                 chat_id=admin_id,
@@ -766,7 +766,7 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
         ])
         try:
             sent_msg = await message.answer(
-                "<blockquote>🛡️ <b>Pete Security Engine is active in this group!</b>\n"
+                "<blockquote>🛡️ <b>Peter Security Engine is active in this group!</b>\n"
                 "Tap below to open your DM Security Dashboard or submit an appeal.</blockquote>",
                 parse_mode="HTML",
                 reply_markup=markup
@@ -815,13 +815,13 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
     if user.get("engagement_level") == "new":
         welcome_text = (
             f"<b>Welcome to YouThopia Security, {first_name}! 🛡️</b>\n\n"
-            f"<blockquote>I am Pete (High King Peter) — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
+            f"<blockquote>I am Peter (High King Peter) — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
             f"I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure across all 5 pillar bots:\n"
-            f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-            f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-            f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-            f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-            f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+            f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+            f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+            f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+            f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+            f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
             f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
         )
         await services.users.set_engagement_level(user["id"], "active")
@@ -838,7 +838,7 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
     reply_menu = build_pete_reply_keyboard()
     inline_menu = build_pete_start_inline_keyboard()
     
-    await message.answer("🛡️ <b>Welcome to Pete Security Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+    await message.answer("🛡️ <b>Welcome to Peter Security Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
     await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
 
 # -------------------------------------------------------------------------
@@ -913,12 +913,12 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
         except Exception:
             pass
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🛡️ Open Pete Guide in DM", url="https://t.me/petemodbot?start=help")],
+            [InlineKeyboardButton(text="🛡️ Open Peter Guide in DM", url="https://t.me/petemodbot?start=help")],
             [InlineKeyboardButton(text="📝 Submit Appeal", callback_data="appeal_init")],
         ])
         try:
             sent_msg = await message.answer(
-                "<blockquote>🛡️ <b>Pete Security Help Guide</b>\n"
+                "<blockquote>🛡️ <b>Peter Security Help Guide</b>\n"
                 "Tap below to view full features and moderation rules in DM.</blockquote>",
                 parse_mode="HTML",
                 reply_markup=markup
@@ -930,9 +930,9 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
 
     first_name = event.from_user.first_name or "Friend"
     help_text = (
-        f"<b>🛡️ Pete | Safety Bot Help Guide, {first_name}!</b>\n"
-        "<blockquote>I am Pete (@petemodbot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
-        "<b>Pete Features & Commands</b>\n"
+        f"<b>🛡️ Peter | Safety Bot Help Guide, {first_name}!</b>\n"
+        "<blockquote>I am Peter (@petemodbot), the security guard for YOUTHOPIA BIBLE COMMUNITY.\n\n"
+        "<b>Peter Features & Commands</b>\n"
         "• 🛡️ <b>Captcha Verification:</b> Automated new member verification.\n"
         "• 🚫 <b>Spam & Raid Protection:</b> Instant detection of links, floods, and bad words.\n"
         "• 📜 <b>Moderation Record:</b> Transparent warning system.\n"
@@ -1025,7 +1025,7 @@ async def execute_quarantine_decree(bot: Bot, chat_id: int, user_id: int, first_
             f"<b>Welcome to YouThopia Bible Community, {first_name}!</b>\n\n"
             f"<blockquote><b>YouThopia</b> is a vibrant Gen Z Christian community where faith meets real life — "
             f"built to help you grow in God's Word, build genuine friendships, and fellowship together.\n\n"
-            f"To keep our space safe, uplifting, and protected against spam bots, Pete has placed a brief security checkpoint on your account.\n\n"
+            f"To keep our space safe, uplifting, and protected against spam bots, Peter has placed a brief security checkpoint on your account.\n\n"
             f"Tap below to complete a quick 1-tap verification and unlock your chat permissions! 💜</blockquote>"
         )
         
@@ -1307,10 +1307,10 @@ async def on_startup(bot: Bot) -> None:
     ]
     
     user_commands = [
-        BotCommand(command="start", description="Meet Pete"),
+        BotCommand(command="start", description="Meet Peter"),
         BotCommand(command="appeal", description="Submit Appeal"),
         BotCommand(command="profile", description="View your profile"),
-        BotCommand(command="help", description="Pete Safety Guide")
+        BotCommand(command="help", description="Peter Safety Guide")
     ]
     
     # Clear any stale admin chat scope overrides for Pete
@@ -1325,8 +1325,8 @@ async def on_startup(bot: Bot) -> None:
             pass
 
     group_commands = [
-        BotCommand(command="start", description="Meet Pete"),
-        BotCommand(command="help", description="Pete Safety Guide")
+        BotCommand(command="start", description="Meet Peter"),
+        BotCommand(command="help", description="Peter Safety Guide")
     ]
 
     try:

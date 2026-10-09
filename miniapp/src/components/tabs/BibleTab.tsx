@@ -76,7 +76,7 @@ export const BibleTab: React.FC = () => {
         }}
       >
         <Pill color="deep" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.26)', marginBottom: 12 }}>
-          Theo Scripture Hub
+          Theodore Scripture Hub
         </Pill>
         <h2 style={{ margin: 0, fontSize: 26, lineHeight: 1.08, fontWeight: 950 }}>Daily Scripture, beautifully centered.</h2>
         <p style={{ margin: '9px 0 0', color: 'rgba(255,255,255,0.8)', fontSize: 13, lineHeight: 1.55 }}>
@@ -171,7 +171,7 @@ export const BibleTab: React.FC = () => {
       </Card>
 
       <Card style={{ padding: 18 }}>
-        <SectionTitle eyebrow="Next Layer">Theo Visual Features</SectionTitle>
+        <SectionTitle eyebrow="Next Layer">Theodore Visual Features</SectionTitle>
         <div style={{ display: 'grid', gap: 10 }}>
           {['Shareable VOTD graphics', 'Saved verse gallery', 'AOTD companion card', 'Reading-plan progress'].map((item) => (
             <div key={item} style={{ padding: 12, borderRadius: 'var(--radius-lg)', background: '#fff', border: '1px solid var(--purple-100)', fontSize: 13, fontWeight: 750 }}>

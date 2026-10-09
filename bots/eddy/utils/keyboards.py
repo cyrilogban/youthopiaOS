@@ -4,7 +4,7 @@ from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
 
 def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
     """
-    Ed persistent reply keyboard:
+    Edmund persistent reply keyboard:
     Row 1 (Global):        [ 👤 My Profile ]  [ ℹ️ Help ]  [ 🌐 Community ]
     Row 2 (Bot Specific): [ 📅 View Calendar ]  [ 🎫 My Events ]
     Row 3 (Bot Specific): [ 🎂 Add Birthday  ]  [ 🔔 Reminders ]
@@ -23,7 +23,7 @@ def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True,
         persistent=True,
-        input_field_placeholder="Choose an Ed action..."
+        input_field_placeholder="Choose an Edmund action..."
     )
 
 
@@ -76,7 +76,7 @@ def build_eddy_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
-                InlineKeyboardButton(text="⚡ Promote Edie to Admin", callback_data="eddy_prompt_admin"),
+                InlineKeyboardButton(text="⚡ Promote Edmund to Admin", callback_data="eddy_prompt_admin"),
             ],
             [
                 InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
@@ -94,7 +94,7 @@ def build_eddy_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="eddy_menu_directory"),
-                InlineKeyboardButton(text="➕ Re-invite Edie", url="https://t.me/ediecalendarbot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Edmund", url="https://t.me/ediecalendarbot?startgroup=true"),
             ]
         ]
     )

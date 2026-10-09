@@ -79,7 +79,7 @@ def build_theo_router(description: str) -> Router:
         from aiogram.types import BotCommandScopeAllChatAdministrators
 
         private_commands = [
-            BotCommand(command="start", description="Meet Theo"),
+            BotCommand(command="start", description="Meet Theodore"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="translation", description="Change personal translation"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
@@ -89,7 +89,7 @@ def build_theo_router(description: str) -> Router:
             BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
         ]
         group_commands = [
-            BotCommand(command="start", description="Meet Theo"),
+            BotCommand(command="start", description="Meet Theodore"),
             BotCommand(command="help", description="Show help information"),
         ]
         admin_group_commands = group_commands + [
@@ -178,7 +178,7 @@ def build_theo_router(description: str) -> Router:
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📖 <b>Theo Devotional Engine is active in this group!</b>\n"
+                    "<blockquote>📖 <b>Theodore Devotional Engine is active in this group!</b>\n"
                     "Type any Bible reference in chat (e.g. <code>John 3:16</code>), or tap below to open your DM Dashboard.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -209,13 +209,13 @@ def build_theo_router(description: str) -> Router:
         if user.get("engagement_level") == "new":
             welcome_text = (
                 f"<b>Welcome to Daily Scripture, {first_name}! 📖</b>\n\n"
-                f"<blockquote>I am Theo — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                f"<blockquote>I am Theodore — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
                 f"Here in our community, we stay anchored in God's Word every day! Every YouTopian has access to daily devotionals and instant verse lookups across all 5 YouThopiaOS pillar bots:\n"
-                f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                 f"<b>SEARCH OR EXPLORE BELOW:</b>"
             )
             await services.users.set_engagement_level(user["id"], "active")
@@ -231,7 +231,7 @@ def build_theo_router(description: str) -> Router:
         reply_menu = build_theo_reply_keyboard()
         inline_menu = build_theo_welcome_inline_keyboard()
 
-        await message.answer("📖 <b>Welcome to Theo Devotional Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer("📖 <b>Welcome to Theodore Devotional Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
         if THEO_PHOTO:
             await message.answer_photo(
                 photo=THEO_PHOTO,
@@ -322,12 +322,12 @@ def build_theo_router(description: str) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="📖 Open Theo Guide in DM", url="https://t.me/theobiblebot?start=help")],
+                [InlineKeyboardButton(text="📖 Open Theodore Guide in DM", url="https://t.me/theobiblebot?start=help")],
                 [InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture")],
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📖 <b>Theo Devotional Help Guide</b>\n"
+                    "<blockquote>📖 <b>Theodore Devotional Help Guide</b>\n"
                     "Tap below to view full features and community guide in DM.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
@@ -345,9 +345,9 @@ def build_theo_router(description: str) -> Router:
 
     async def send_theo_help(message: Message) -> None:
         help_text = (
-            "<b>📖 Theo | Daily Word Help Guide</b>\n"
-            "<blockquote>I am Theo (@theobiblebot), your devotional companion in YOUTHOPIA BIBLE COMMUNITY.\n\n"
-            "<b>Theo Features & Commands</b>\n"
+            "<b>📖 Theodore | Daily Word Help Guide</b>\n"
+            "<blockquote>I am Theodore (@theobiblebot), your devotional companion in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Theodore Features & Commands</b>\n"
             "• 🔍 <b>Search Scripture:</b> Type any reference in chat (e.g. John 3:16).\n"
             "• 🔖 <b>Saved Verses:</b> View your saved bookmarks.\n"
             "• 🌐 <b>Translation:</b> Switch between KJV, ASV, WEB, and BBE.\n"
@@ -395,7 +395,7 @@ def build_theo_router(description: str) -> Router:
                         chat_id=chat_id,
                         text=(
                             f"⚡ <b>ADMIN RIGHTS GRANTED!</b>\n\n"
-                            f"<blockquote>Thank you for promoting Theo in <b>{group_title}</b>! "
+                            f"<blockquote>Thank you for promoting Theodore in <b>{group_title}</b>! "
                             f"Daily Verses will be delivered clean and automated every morning at 6:00 AM. 📖</blockquote>"
                         ),
                         parse_mode="HTML"
@@ -408,14 +408,14 @@ def build_theo_router(description: str) -> Router:
             # Differentiated Welcome Card based on Admin vs Member status
             if new_status == "administrator":
                 welcome_text = (
-                    f"<b>THEO IS HERE 📖</b>\n\n"
-                    f"<blockquote>I am Theo — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>THEODORE IS HERE 📖</b>\n\n"
+                    f"<blockquote>I am Theodore — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>GROUP QUICK START</b>\n"
                     f"<blockquote>• Type any Bible reference in chat (e.g. <code>John 3:16</code>).\n"
                     f"• <b>Daily Verse:</b> <code>ENABLED</code> (Delivered daily at 6:00 AM).\n"
@@ -425,16 +425,16 @@ def build_theo_router(description: str) -> Router:
                 markup = build_theo_group_welcome_keyboard()
             else:
                 welcome_text = (
-                    f"<b>THEO IS HERE 📖</b>\n\n"
-                    f"<blockquote>I am Theo — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
+                    f"<b>THEODORE IS HERE 📖</b>\n\n"
+                    f"<blockquote>I am Theodore — your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
                     f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theo:</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lusy:</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Pete:</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Eddy:</b> Events & Reminders\n"
-                    f"• 💬 <b>Susy:</b> Welcome & Onboarding</blockquote>\n\n"
+                    f"• 📖 <b>Theodore:</b> Daily Scripture & Devotionals\n"
+                    f"• 🎯 <b>Lucy:</b> Quizzes & YouTopian Points (YP)\n"
+                    f"• 🛡️ <b>Peter:</b> Security & Group Moderation\n"
+                    f"• 📅 <b>Edmund:</b> Events & Reminders\n"
+                    f"• 💬 <b>Susan:</b> Welcome & Onboarding</blockquote>\n\n"
                     f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                    f"<blockquote>To send daily 6 AM devotional broadcasts smoothly, please grant Theo <b>Admin Rights</b>!</blockquote>"
+                    f"<blockquote>To send daily 6 AM devotional broadcasts smoothly, please grant Theodore <b>Admin Rights</b>!</blockquote>"
                 )
                 markup = build_theo_member_welcome_keyboard()
 
@@ -464,10 +464,10 @@ def build_theo_router(description: str) -> Router:
             if admin_user_id:
                 try:
                     farewell_text = (
-                        f"<b>Theo Departs {group_title} 📖</b>\n\n"
-                        f"<blockquote>Theo has been removed from <b>{group_title}</b>.\n"
+                        f"<b>Theodore Departs {group_title} 📖</b>\n\n"
+                        f"<blockquote>Theodore has been removed from <b>{group_title}</b>.\n"
                         f"Daily devotional broadcasts have been paused for this group. "
-                        f"You can re-invite Theo anytime or explore our other 4 community bots below! 💜</blockquote>"
+                        f"You can re-invite Theodore anytime or explore our other 4 community bots below! 💜</blockquote>"
                     )
                     await bot.send_message(
                         chat_id=admin_user_id,
@@ -494,7 +494,7 @@ def build_theo_router(description: str) -> Router:
         ])
         try:
             sent_msg = await callback.message.answer(
-                "<blockquote>📖 <b>Theo Administrator Setup</b>\n\n"
+                "<blockquote>📖 <b>Theodore Administrator Setup</b>\n\n"
                 "Tap below to open Telegram's permission sheet with required rights pre-checked!</blockquote>",
                 parse_mode="HTML",
                 reply_markup=markup
@@ -540,10 +540,10 @@ def build_theo_router(description: str) -> Router:
         if admin_id:
             try:
                 farewell_text = (
-                    f"<b>Theo Departs {group_title} 📖</b>\n\n"
-                    f"<blockquote>Theo has left <b>{group_title}</b> as requested.\n"
+                    f"<b>Theodore Departs {group_title} 📖</b>\n\n"
+                    f"<blockquote>Theodore has left <b>{group_title}</b> as requested.\n"
                     f"Daily devotional broadcasts have been paused for this group. "
-                    f"You can re-invite Theo anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    f"You can re-invite Theodore anytime or explore our other 4 community bots below! 💜</blockquote>"
                 )
                 await bot.send_message(
                     chat_id=admin_id,

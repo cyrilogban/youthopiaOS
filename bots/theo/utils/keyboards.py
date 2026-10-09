@@ -32,7 +32,7 @@ def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True,
         persistent=True,
-        input_field_placeholder="Choose a Theo action..."
+        input_field_placeholder="Choose a Theodore action..."
     )
 
 
@@ -85,7 +85,7 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
-                InlineKeyboardButton(text="⚡ Promote Theo to Admin", callback_data="theo_prompt_admin"),
+                InlineKeyboardButton(text="⚡ Promote Theodore to Admin", callback_data="theo_prompt_admin"),
             ],
             [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
@@ -103,7 +103,7 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="theo_community_links"),
-                InlineKeyboardButton(text="➕ Re-invite Theo", url="https://t.me/theobiblebot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Theodore", url="https://t.me/theobiblebot?startgroup=true"),
             ],
         ]
     )

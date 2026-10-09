@@ -23,7 +23,7 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True,
         persistent=True,
-        input_field_placeholder="Choose a Lusy action..."
+        input_field_placeholder="Choose a Lucy action..."
     )
 
 
@@ -81,7 +81,7 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
             ],
             [
-                InlineKeyboardButton(text="⚡ Promote Lusie to Admin", callback_data="lusy_prompt_admin"),
+                InlineKeyboardButton(text="⚡ Promote Lucy to Admin", callback_data="lusy_prompt_admin"),
             ],
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
@@ -99,7 +99,7 @@ def build_lusy_farewell_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="lusy_menu_directory"),
-                InlineKeyboardButton(text="➕ Re-invite Lusie", url="https://t.me/lusiequizbot?startgroup=true"),
+                InlineKeyboardButton(text="➕ Re-invite Lucy", url="https://t.me/lusiequizbot?startgroup=true"),
             ],
         ]
     )
