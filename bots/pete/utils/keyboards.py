@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
+from shared.config.bot_registry import get_bot_identity
 
 
 def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -54,7 +55,7 @@ def build_pete_group_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
             ],
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="pete_menu_directory"),
+                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("pete").get_start_link("tour")),
             ]
         ]
     )
@@ -75,6 +76,9 @@ def build_pete_member_welcome_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="pete_community_links"),
+            ],
+            [
+                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("pete").get_start_link("tour")),
             ]
         ]
     )
@@ -87,7 +91,7 @@ def build_pete_farewell_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="pete_menu_directory"),
+                InlineKeyboardButton(text="🧭 Community Tour", url=get_bot_identity("pete").get_start_link("tour")),
                 InlineKeyboardButton(text="➕ Re-invite Peter", url="https://t.me/petemodbot?startgroup=true"),
             ]
         ]

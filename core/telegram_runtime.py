@@ -4,12 +4,14 @@ import os
 import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
-from aiogram import BaseMiddleware, Bot, Dispatcher, Router
-from aiogram.filters import Command
+from aiogram import BaseMiddleware, Bot, Dispatcher, F, Router
+from aiogram.filters import Command, CommandObject
+from aiogram.dispatcher.event.bases import SkipHandler
 from aiogram.types import (
     BotCommand,
     Chat,
     ChatMemberUpdated,
+    InlineKeyboardButton,
     Message,
     TelegramObject,
     InlineKeyboardMarkup,
@@ -23,7 +25,10 @@ from core.config import BotConfig
 from core.admin_commands import create_admin_router
 from shared.logging.logger import get_logger
 from shared.services.container import ServiceContainer
-from shared.utils.ui import get_open_app_inline_button
+from shared.utils.ui import (
+    get_open_app_inline_button,
+    send_community_exploration_page,
+)
 
 
 async def delayed_delete_message(bot: Bot, chat_id: int, message_id: int, delay_seconds: int = 0) -> None:
@@ -55,7 +60,7 @@ class SmartGroupCommandCleanerMiddleware(BaseMiddleware):
 
     # Standard persistent reply keyboard button labels across all 5 bots
     REPLY_KEYBOARD_TRIGGERS: set[str] = {
-        "👤 My Profile", "Open App", "ℹ️ Help", "🌐 Community",
+        "👤 My Profile", "🧭 Take Tour", "Open App", "ℹ️ Help", "🌐 Community",
         "🔍 Search Scripture", "🔖 Saved Verses", "🌐 Translation",
         "🎯 Play Quizzes", "🏆 Leaderboard", "🏆 Rankings", "⭐ My Points", "🛑 Quit Quiz",
         "📅 View Calendar", "📅 Calendar", "🎫 My Events", "🎂 Add Birthday", "🔔 Reminders",
@@ -157,9 +162,94 @@ async def register_group_chat(
     return await register_chat(message.chat, services, bot_name)
 
 
+TOUR_HINT_TEXT = (
+    "🧭 <b>The YouThopia Tour</b>\n"
+    "Take the guided tour of our mission, vision, and the five pillars of the "
+    "YouThopia Bible Community — tap below to start it in this chat with me."
+)
+
+
+def attach_global_tour(router: Router, bot_name: str) -> None:
+    """Mounts the unified YouThopia Tour entry points on a bot router.
+
+    Registers once per bot (centrally via build_router or explicitly on Pete's
+    raw router) so every bot serves the identical tour:
+    - /tour command
+    - /start tour deep link (fired before each bot's own /start handler)
+    - the shared "🧭 Take Tour" reply-keyboard button
+    """
+    @router.message(Command("tour"))
+    async def tour_command(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await register_group_chat(message, services, bot_name)
+            await send_community_exploration_page(message, 1)
+            return
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        me = await message.bot.get_me()
+        hint = await message.answer(
+            TOUR_HINT_TEXT,
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🧭 Start the Tour", url=f"https://t.me/{me.username}?start=tour")
+            ]])
+        )
+        asyncio.create_task(
+            delayed_delete_message(message.bot, message.chat.id, hint.message_id, delay_seconds=10)
+        )
+
+    @router.message(Command("start"))
+    async def tour_start_deep_link(
+        message: Message, services: ServiceContainer, command: CommandObject
+    ) -> None:
+        if (command.args or "").strip().lower() != "tour":
+            raise SkipHandler  # Pass every other /start payload to the bot's own handler.
+
+        await register_group_chat(message, services, bot_name)
+        if message.chat.type == "private":
+            await send_community_exploration_page(message, 1)
+            return
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        me = await message.bot.get_me()
+        hint = await message.answer(
+            TOUR_HINT_TEXT,
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🧭 Start the Tour", url=f"https://t.me/{me.username}?start=tour")
+            ]])
+        )
+        asyncio.create_task(
+            delayed_delete_message(message.bot, message.chat.id, hint.message_id, delay_seconds=10)
+        )
+
+    @router.message(F.text == "🧭 Take Tour")
+    async def tour_reply_button(message: Message, services: ServiceContainer) -> None:
+        if message.chat.type == "private":
+            await register_group_chat(message, services, bot_name)
+            await send_community_exploration_page(message, 1)
+            return
+        me = await message.bot.get_me()
+        hint = await message.answer(
+            TOUR_HINT_TEXT,
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🧭 Start the Tour", url=f"https://t.me/{me.username}?start=tour")
+            ]])
+        )
+        asyncio.create_task(
+            delayed_delete_message(message.bot, message.chat.id, hint.message_id, delay_seconds=10)
+        )
+
+
 def build_router(bot_name: str, description: str, *, include_base_commands: bool = True) -> Router:
     router = Router(name=bot_name)
     router.include_router(create_admin_router(bot_name))
+    attach_global_tour(router, bot_name)
 
     if include_base_commands:
         @router.message(Command("start"))

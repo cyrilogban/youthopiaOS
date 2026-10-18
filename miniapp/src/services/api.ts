@@ -270,3 +270,83 @@ export async function fetchCommunityStats(): Promise<CommunityStats> {
     };
   }
 }
+
+// -----------------------------------------------------------------------------
+// The YouThopia Tour — one guided flow shared by the Mini App and all 5 bots.
+// -----------------------------------------------------------------------------
+
+export interface TourBlock {
+  label: string;
+  text: string;
+}
+
+export interface TourBot {
+  emoji: string;
+  name: string;
+  short: string;
+  tagline: string;
+  handle: string;
+  link: string;
+  responsibility: string;
+}
+
+export interface TourSpace {
+  name: string;
+  role: string;
+  link: string;
+}
+
+export interface TourPage {
+  id: number;
+  heading: string;
+  blocks?: TourBlock[];
+  bullets?: string[];
+  bots?: TourBot[];
+  spaces?: TourSpace[];
+  note?: string;
+}
+
+export interface Tour {
+  title: string;
+  slogan: string;
+  pages: TourPage[];
+}
+
+export async function fetchCommunityTour(): Promise<Tour | null> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/community/tour`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      title: data.title,
+      slogan: data.slogan,
+      pages: Array.isArray(data.pages) ? data.pages : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export interface TourCompleteResult {
+  status: 'completed' | 'already_completed' | 'error';
+  xpAwarded: number;
+}
+
+export async function completeCommunityTour(rawInitData: string | null): Promise<TourCompleteResult> {
+  if (!rawInitData) return { status: 'error', xpAwarded: 0 };
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/community/tour/complete`, {
+      method: 'POST',
+      headers: { Authorization: `tma ${rawInitData}` },
+    });
+    if (res.status === 401) return { status: 'error', xpAwarded: 0 };
+    if (!res.ok) return { status: 'error', xpAwarded: 0 };
+    const data = await res.json();
+    return {
+      status: data.status ?? 'error',
+      xpAwarded: data.xp_awarded ?? 0,
+    };
+  } catch {
+    return { status: 'error', xpAwarded: 0 };
+  }
+}

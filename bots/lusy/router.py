@@ -54,6 +54,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         private_commands = [
             BotCommand(command="start", description="Meet Lucy"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
@@ -63,6 +64,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         ]
         group_commands = [
             BotCommand(command="start", description="Meet Lucy"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="autoquiz", description="Check Auto Quiz status"),
@@ -467,16 +469,6 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     @router.callback_query(F.data.startswith("onboarding_"))
     async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         await handle_global_onboarding_callback(callback_query, services)
-
-    @router.callback_query(F.data == "lusy_menu_directory")
-    async def inline_directory_handler(callback: CallbackQuery) -> None:
-        await callback.answer()
-        await callback.message.answer(
-            BOT_FAMILY_DIRECTORY_TEXT,
-            parse_mode="HTML",
-            disable_web_page_preview=True,
-            reply_markup=get_community_links_keyboard(),
-        )
 
     @router.callback_query(F.data == "lusy_prompt_admin")
     async def inline_prompt_admin_handler(callback: CallbackQuery, bot: Bot) -> None:

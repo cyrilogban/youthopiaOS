@@ -11,6 +11,8 @@ from aiogram.types import (
     WebAppInfo,
 )
 from shared.services.container import ServiceContainer
+from shared.config.bot_registry import BOT_REGISTRY
+from shared.content import tour as tour_content
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +140,7 @@ BOT_FAMILY_DIRECTORY_TEXT = (
 
 GLOBAL_REPLY_BUTTONS: List[KeyboardButton] = [
     KeyboardButton(text="👤 My Profile"),
+    KeyboardButton(text="🧭 Take Tour"),
     KeyboardButton(text="ℹ️ Help"),
     KeyboardButton(text="🌐 Community"),
 ]
@@ -195,48 +198,80 @@ def render_shared_profile_card(
 # GLOBAL COMMUNITY EXPLORATION TOUR (Synchronized across all 5 bots)
 # -----------------------------------------------------------------------------
 
-async def send_community_exploration_page(message: Message, page: int, edit: bool = False) -> None:
-    """Renders pages of the unified YouThopia Community Exploration Tour."""
-    if page == 1:
-        text = (
-            "<b>Welcome to YOUTHOPIA! 🤍 (1/3)</b>\n"
-            "<blockquote>We are a cross-platform Gen Z Christian community. This is a space where faith meets real life. "
-            "We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
-            "<i>Click Next to read our community guidelines.</i>"
-        )
-        markup = InlineKeyboardMarkup(inline_keyboard=[
+def _bullets(items: tuple[str, ...]) -> str:
+    return "\n".join(f"✿ {item}" for item in items)
+
+
+def _bot_family_roster() -> str:
+    lines = [
+        f"<b>{identity.emoji} {identity.display_name}</b> — {identity.tagline} <a href=\"{identity.link}\">{identity.handle}</a>\n"
+        f"<i>{identity.responsibility}</i>\n"
+        for identity in BOT_REGISTRY.values()
+    ]
+    return "\n".join(lines)
+
+
+def build_tour_keyboard(page: int) -> InlineKeyboardMarkup:
+    """Navigation keyboard for the unified YouThopia Tour (5 pages)."""
+    total = tour_content.TOUR_TOTAL_PAGES
+    if page <= 1:
+        return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_2")]
         ])
+    if page >= total:
+        return InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="⬅️ Back", callback_data=f"onboarding_{total - 1}"),
+            InlineKeyboardButton(text="✅ Finish Tour", callback_data="onboarding_finish"),
+        ]])
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="⬅️ Back", callback_data=f"onboarding_{page - 1}"),
+        InlineKeyboardButton(text="Next ➡️", callback_data=f"onboarding_{page + 1}"),
+    ]])
+
+
+async def send_community_exploration_page(message: Message, page: int, edit: bool = False) -> None:
+    """Renders pages of the unified YouThopia Community Tour (identical on all 5 bots + Mini App)."""
+    total = tour_content.TOUR_TOTAL_PAGES
+    slogan = f"<b>🧭 The YouThopia Tour ({page}/{total})</b>"
+
+    if page == 1:
+        text = (
+            f"{slogan}\n"
+            "<b>About YouThopia</b>\n"
+            f"<blockquote>{tour_content.ABOUT_TEXT}</blockquote>\n\n"
+            "<b>✝️ Our Vision</b>\n"
+            f"<blockquote><i>{tour_content.VISION_TEXT}</i></blockquote>"
+        )
     elif page == 2:
         text = (
-            "<b>The Core Rules 📜 (2/3)</b>\n"
-            "<blockquote><b>1. Love & Respect:</b> Treat everyone with Christ-like love.\n"
-            "<b>2. No Spam:</b> Keep the chat clean and focused on growth.\n"
-            "<b>3. Guard the Vibe:</b> Keep conversations edifying and uplifting.</blockquote>\n\n"
-            "<i>Click Next to meet the YouThopia Bot Family!</i>"
+            f"{slogan}\n"
+            "<b>📱 Our Mission</b>\n"
+            f"<blockquote>{_bullets(tour_content.MISSION_BULLETS)}</blockquote>"
         )
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_1"),
-                InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_3")
-            ]
-        ])
-    else:  # Page 3
+    elif page == 3:
         text = (
-            "<b>Meet the Bot Family 🤖 (3/3)</b>\n"
-            "<blockquote><b>Theodore (Theo)</b> (@theobiblebot) - Your daily devotional companion.\n"
-            "<b>Lucy (Lusie)</b> (@lusiequizbot) - Play games and earn YP!\n"
-            "<b>Peter (Pete)</b> (@petemodbot) - The security guard.\n"
-            "<b>Edmund (Edie)</b> (@ediecalendarbot) - Announcements and events.\n"
-            "<b>Susan (Susie)</b> (@susiehelpsbot) - Your guide and friend.</blockquote>\n\n"
-            "<i>Click Finish to complete your orientation!</i>"
+            f"{slogan}\n"
+            "<b>✞ Aims &amp; Objectives</b>\n"
+            f"<blockquote>{_bullets(tour_content.AIMS_BULLETS)}</blockquote>"
         )
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="⬅️ Back", callback_data="onboarding_2"),
-                InlineKeyboardButton(text="✅ Finish Exploring", callback_data="onboarding_finish")
-            ]
-        ])
+    elif page == 4:
+        text = (
+            f"{slogan}\n"
+            "<b>🤝 Five Pillars, One Family</b>\n"
+            f"<blockquote>{_bot_family_roster()}</blockquote>\n\n"
+            "<i>Each pillar has its own duty — together we grow, connect, and shine as one family in CHRIST.</i>"
+        )
+    else:  # Page 5
+        text = (
+            f"{slogan}\n"
+            "<b>🌱 Your Journey</b>\n"
+            "<blockquote>Every YouTopian grows through 9 ranks of grace — from <b>🌱 The Seeker</b> to "
+            "<b>👑 YouThopia’s Ambassador</b>. Earn <b>YP</b> by engaging in the community: quizzes, "
+            "devotionals, events, fellowship, and your Trust Score reflects your reliability and integrity.</blockquote>\n\n"
+            "<i>Tap Finish to be marked as oriented, receive a welcome boost, and connect with us below!</i>"
+        )
+
+    markup = build_tour_keyboard(page)
 
     if edit:
         await message.edit_text(text, parse_mode="HTML", reply_markup=markup)
@@ -248,7 +283,12 @@ async def handle_global_onboarding_callback(callback_query: CallbackQuery, servi
     """Handles global onboarding callbacks with synchronized point protection across all 5 bots."""
     action = callback_query.data.split("_")[1]
 
-    if action in ["1", "2", "3"]:
+    if action == "start":
+        # Legacy welcome-card buttons ("🚀 Take Community Tour") open page 1.
+        await send_community_exploration_page(callback_query.message, 1, edit=True)
+        await callback_query.answer()
+        return
+    if action in ["1", "2", "3", "4"]:
         await send_community_exploration_page(callback_query.message, int(action), edit=True)
         await callback_query.answer()
     elif action == "finish":

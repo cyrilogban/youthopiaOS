@@ -61,12 +61,14 @@ def build_susy_router(description: str) -> Router:
 
         private_commands = [
             BotCommand(command="start", description="Meet Susan"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Susan Hostess Guide"),
         ]
         
         group_commands = [
             BotCommand(command="start", description="Meet Susan"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Susan Hostess Guide"),
         ]
         
@@ -358,10 +360,6 @@ def build_susy_router(description: str) -> Router:
             except Exception:
                 pass
             return
-                
-        if message.text and "tour" in message.text:
-            await send_onboarding_page(message, 1)
-            return
 
         await register_group_chat(message, services, "susy")
         user = await services.identity.resolve_telegram_user(message.from_user)
@@ -435,8 +433,6 @@ def build_susy_router(description: str) -> Router:
             return
         await send_community_exploration_page(message, 1)
 
-    async def send_onboarding_page(message: Message, page: int, edit: bool = False) -> None:
-        await send_community_exploration_page(message, page, edit=edit)
     @router.callback_query(F.data.startswith("onboarding_"))
     async def handle_onboarding_callbacks(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         await handle_global_onboarding_callback(callback_query, services)
@@ -568,7 +564,7 @@ def build_susy_router(description: str) -> Router:
             f"<b>🎵 Susan | Welcome Bot Help Guide, {first_name}!</b>\n"
             "<blockquote>I am Susan (@susiehelpsbot), your community hostess and onboarding guide in YOUTHOPIA BIBLE COMMUNITY.\n\n"
             "<b>Susan Features & Commands</b>\n"
-            "• 💬 <b>Explore the Community:</b> Interactive 3-step tour for new YouTopians (+50 Trust Points).\n"
+            "• 💬 <b>Explore the Community:</b> The 5-page guided tour of mission, vision, and our family (+50 Trust Points).\n"
             "• 🤝 <b>Hospitality & Guidance:</b> Here to answer questions and show you around.\n"
             "• <b>/start:</b> Open Susan welcome dashboard.\n"
             "• <b>/profile:</b> View your YouTopian profile card.\n"

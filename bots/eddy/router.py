@@ -69,6 +69,7 @@ def build_eddy_router(description: str) -> Router:
         # Define sidebar commands for DMs per spec
         private_commands = [
             BotCommand(command="start", description="Meet Eddy"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="calendar", description="View this week's event schedule"),
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),
@@ -80,6 +81,7 @@ def build_eddy_router(description: str) -> Router:
 
         group_commands = [
             BotCommand(command="start", description="Meet Edmund"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Show Edmund's instructions"),
             BotCommand(command="calendar", description="View all upcoming events"),
             BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
@@ -591,12 +593,6 @@ def build_eddy_router(description: str) -> Router:
     @router.callback_query(F.data.startswith("onboarding_"))
     async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
         await handle_global_onboarding_callback(callback_query, services)
-
-
-    @router.callback_query(F.data == "eddy_menu_directory")
-    async def handle_eddy_menu_directory(callback: CallbackQuery) -> None:
-        await callback.answer()
-        await send_community_exploration_page(callback.message, 3)
 
     @router.message(Command("calendar"))
     @router.message(F.text == "📅 View Calendar")

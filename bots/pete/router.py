@@ -15,7 +15,7 @@ from aiogram.fsm.state import State, StatesGroup
 import asyncio
 import os
 from shared.services.container import ServiceContainer
-from core.telegram_runtime import register_group_chat, register_chat
+from core.telegram_runtime import register_group_chat, register_chat, attach_global_tour
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
@@ -37,6 +37,7 @@ from bots.pete.utils.keyboards import (
 logger = logging.getLogger(__name__)
 
 router = Router()
+attach_global_tour(router, "pete")
 
 from core.filters import IsAdminFilter
 
@@ -1294,6 +1295,7 @@ async def on_startup(bot: Bot) -> None:
     
     user_commands = [
         BotCommand(command="start", description="Meet Peter"),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
         BotCommand(command="appeal", description="Submit Appeal"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Peter Safety Guide")
@@ -1312,6 +1314,7 @@ async def on_startup(bot: Bot) -> None:
 
     group_commands = [
         BotCommand(command="start", description="Meet Peter"),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
         BotCommand(command="help", description="Peter Safety Guide")
     ]
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTelegram } from './hooks/useTelegram';
 import { BottomNav } from './components/BottomNav';
 import { HomeTab } from './components/tabs/HomeTab';
@@ -8,13 +8,18 @@ import { EventsTab } from './components/tabs/EventsTab';
 import { CommunityTab } from './components/tabs/CommunityTab';
 import { Card, Pill } from './components/ui';
 import { RankBadge } from './components/RankBadge';
+import { TourOverlay, markTourAsSeen } from './components/TourOverlay';
+import { fetchCommunityTour, type Tour } from './services/api';
+import { getRawInitData } from './services/telegram';
 import type { TabId } from './types/navigation';
 
 const App: React.FC = () => {
-  const { user, isInsideTelegram, verification, profile } = useTelegram();
+  const { user, isInsideTelegram, verification, profile, refreshProfile } = useTelegram();
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tabKey, setTabKey] = useState(0);
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const profileData = profile.status === 'ok' ? profile.profile : null;
   const isVerified = verification.status === 'verified';
@@ -23,6 +28,40 @@ const App: React.FC = () => {
   const level = profileData?.level && profileData.level > 1 ? profileData.level : computedLevel;
   const displayName = user?.firstName || profileData?.displayName || 'Member';
   const initial = displayName[0]?.toUpperCase() || 'Y';
+
+  // Load the shared tour copy once (same content the 5 Telegram bots serve).
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCommunityTour().then((loaded) => {
+      if (!cancelled && loaded) setTour(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // First-launch auto-open: only for verified members who never finished
+  // orientation, and only once per device.
+  useEffect(() => {
+    if (profile.status !== 'ok') return;
+    if (profile.profile.engagementLevel === 'onboarded') {
+      markTourAsSeen();
+      return;
+    }
+    let seen = false;
+    try {
+      seen = window.localStorage.getItem('youthopia_tour_seen_v1') === '1';
+    } catch {
+      seen = true;
+    }
+    if (!seen) setTourOpen(true);
+  }, [profile]);
+
+  const openTour = () => setTourOpen(true);
+  const closeTour = () => {
+    markTourAsSeen();
+    setTourOpen(false);
+  };
 
   const handleTabChange = (tab: TabId) => {
     if (tab === activeTab) return;
@@ -41,7 +80,7 @@ const App: React.FC = () => {
       case 'events':
         return <EventsTab />;
       case 'community':
-        return <CommunityTab />;
+        return <CommunityTab onOpenTour={openTour} />;
     }
   };
 
@@ -75,6 +114,16 @@ const App: React.FC = () => {
       </div>
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {tourOpen && (
+        <TourOverlay
+          tour={tour}
+          canEarnXp={isVerified && profileData?.engagementLevel !== 'onboarded'}
+          rawInitData={getRawInitData()}
+          onClose={closeTour}
+          onFinish={() => void refreshProfile()}
+        />
+      )}
 
       {showProfileModal && (
         <div

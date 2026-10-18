@@ -80,6 +80,7 @@ def build_theo_router(description: str) -> Router:
 
         private_commands = [
             BotCommand(command="start", description="Meet Theodore"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="translation", description="Change personal translation"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
@@ -90,6 +91,7 @@ def build_theo_router(description: str) -> Router:
         ]
         group_commands = [
             BotCommand(command="start", description="Meet Theodore"),
+            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Show help information"),
         ]
         admin_group_commands = group_commands + [

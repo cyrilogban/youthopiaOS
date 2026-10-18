@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
+from shared.config.bot_registry import get_bot_identity
 
 
 def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -62,7 +63,7 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🏆 Rankings", callback_data="lusy_menu_leaderboard"),
             ],
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="lusy_menu_directory"),
+                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("lusy").get_start_link("tour")),
             ],
         ]
     )
@@ -84,6 +85,9 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
                 InlineKeyboardButton(text="🏆 Rankings", callback_data="lusy_menu_leaderboard"),
             ],
+            [
+                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("lusy").get_start_link("tour")),
+            ],
         ]
     )
 
@@ -95,7 +99,7 @@ def build_lusy_farewell_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="lusy_menu_directory"),
+                InlineKeyboardButton(text="🧭 Community Tour", url=get_bot_identity("lusy").get_start_link("tour")),
                 InlineKeyboardButton(text="➕ Re-invite Lucy", url="https://t.me/lusiequizbot?startgroup=true"),
             ],
         ]

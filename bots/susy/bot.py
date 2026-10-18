@@ -11,6 +11,7 @@ async def run_bot(config: BotConfig, services: ServiceContainer) -> None:
 
     susy_commands = [
         BotCommand(command="start", description="Meet Susan"),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
         BotCommand(command="help", description="Show Susan hostess & community features"),
     ]
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getRawInitData, getTelegramUser, initTelegram } from '../services/telegram';
 import { fetchProfile, fetchVerifiedUser, type ProfileResult, type VerifyResult } from '../services/api';
 import type { TelegramUser } from '../types/telegram';
@@ -18,6 +18,8 @@ interface UseTelegramResult {
   verification: VerificationState;
   /** The YouThopiaOS profile behind a verified user; 'idle' until verification succeeds. */
   profile: ProfileState;
+  /** Re-runs the /profile call (after XP changes, e.g. finishing the tour). */
+  refreshProfile: () => Promise<void>;
 }
 
 /**
@@ -30,12 +32,14 @@ export function useTelegram(): UseTelegramResult {
   const [isInsideTelegram, setIsInsideTelegram] = useState(false);
   const [verification, setVerification] = useState<VerificationState>({ status: 'loading' });
   const [profile, setProfile] = useState<ProfileState>({ status: 'idle' });
+  const rawInitDataRef = useRef<string | null>(null);
 
   // Empty dependency array -> run once, after the first render (on mount).
   useEffect(() => {
     initTelegram();
     setUser(getTelegramUser());
     const raw = getRawInitData();
+    rawInitDataRef.current = raw;
     setIsInsideTelegram(raw !== null);
 
     // The effect callback must stay synchronous (it may only return a cleanup
@@ -61,5 +65,12 @@ export function useTelegram(): UseTelegramResult {
     };
   }, []);
 
-  return { user, isInsideTelegram, verification, profile };
+  const refreshProfile = useCallback(async () => {
+    const raw = rawInitDataRef.current;
+    if (!raw) return;
+    setProfile({ status: 'loading' });
+    setProfile(await fetchProfile(raw));
+  }, []);
+
+  return { user, isInsideTelegram, verification, profile, refreshProfile };
 }

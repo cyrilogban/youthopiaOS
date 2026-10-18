@@ -52,7 +52,12 @@ const ONBOARDING = [
   { step: '03', title: 'Join a gathering', description: 'RSVP for weekly studies and prayer calls in Gather.' },
 ];
 
-export const CommunityTab: React.FC = () => {
+interface CommunityTabProps {
+  /** Opens the full-screen guided YouThopia Tour overlay (rendered by App). */
+  onOpenTour?: () => void;
+}
+
+export const CommunityTab: React.FC<CommunityTabProps> = ({ onOpenTour }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   return (
@@ -61,6 +66,19 @@ export const CommunityTab: React.FC = () => {
         <span className="quiet-chip">Community guide</span>
         <h1>Your YouThopia Handbook.</h1>
         <p>Find the assistants, manage your settings, and learn how everything fits together.</p>
+      </section>
+
+      <section className="section-group">
+        <SectionTitle eyebrow="Start here" right={<Pill color="purple">5 pages</Pill>}>The YouThopia Tour</SectionTitle>
+        <Card style={{ padding: 16 }}>
+          <p className="muted-copy" style={{ margin: 0 }}>
+            New here? Take the guided tour of our mission, vision, the five pillars, and how your journey ranks up in YP.
+            Finishing it marks you oriented and claims your one-time welcome boost.
+          </p>
+          <button className="primary-button" onClick={onOpenTour} style={{ marginTop: 12, width: '100%' }}>
+            🧭 Take the tour
+          </button>
+        </Card>
       </section>
 
       <section className="section-group">

@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
+from shared.config.bot_registry import get_bot_identity
 
 
 def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -60,7 +61,7 @@ def build_eddy_group_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
             ],
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="eddy_menu_directory"),
+                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("eddy").get_start_link("tour")),
             ]
         ]
     )
@@ -81,6 +82,9 @@ def build_eddy_member_welcome_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text="📅 Calendar", callback_data="eddy_view_calendar"),
                 InlineKeyboardButton(text="🌐 Community", callback_data="eddy_community_links"),
+            ],
+            [
+                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("eddy").get_start_link("tour")),
             ]
         ]
     )
@@ -93,7 +97,7 @@ def build_eddy_farewell_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🌐 Explore Ecosystem", callback_data="eddy_menu_directory"),
+                InlineKeyboardButton(text="🧭 Community Tour", url=get_bot_identity("eddy").get_start_link("tour")),
                 InlineKeyboardButton(text="➕ Re-invite Edmund", url="https://t.me/ediecalendarbot?startgroup=true"),
             ]
         ]

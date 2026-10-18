@@ -34,10 +34,11 @@ from gateway.app.models import (
 from shared.config.settings import settings
 from shared.db.supabase import SupabaseGateway
 from shared.services.event_service import EventService
+from shared.services.moderation_service import ModerationService
 from shared.services.quiz_service import QuizService
 from shared.services.rank_service import RankService
 from shared.services.user_service import UserService
-from shared.services.xp_service import calculate_level
+from shared.services.xp_service import XPService, calculate_level
 
 
 @asynccontextmanager
@@ -103,6 +104,20 @@ def get_event_service() -> EventService:
     """Build the EventService once per process and reuse it."""
     gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
     return EventService(gateway)
+
+
+@lru_cache
+def get_xp_service() -> XPService:
+    """Build the XPService once per process and reuse it."""
+    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
+    return XPService(gateway)
+
+
+@lru_cache
+def get_moderation_service() -> ModerationService:
+    """Build the ModerationService once per process and reuse it."""
+    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
+    return ModerationService(gateway)
 
 
 @app.get("/profile")
@@ -308,6 +323,116 @@ async def get_community_stats(
     except Exception as e:
         print(f"Warning in /api/community/stats: {e}")
         return CommunityStats(total_members=0, active_groups=0, quizzes_played=0)
+
+
+@app.get("/api/community/tour")
+def get_community_tour() -> dict[str, Any]:
+    """The unified YouThopia Tour — the same 5 pages & copy all 5 Telegram bots serve (no auth)."""
+    # Imported lazily so the plain-content modules stay out of the process bootstrap graph.
+    from shared.config.bot_registry import BOT_REGISTRY
+    from shared.content import tour as tour_content
+    from shared.utils.ui import FACEBOOK_LINK, TELEGRAM_GROUP_LINK, WHATSAPP_LINK
+
+    bots = [
+        {
+            "emoji": identity.emoji,
+            "name": identity.full_name,
+            "short": identity.short_name,
+            "tagline": identity.tagline,
+            "handle": identity.handle,
+            "link": identity.link,
+            "responsibility": identity.responsibility,
+        }
+        for identity in BOT_REGISTRY.values()
+    ]
+    pages = [
+        {"id": 1, "heading": "About YouThopia", "blocks": [
+            {"label": "Who we are", "text": tour_content.ABOUT_TEXT},
+            {"label": "Our Vision", "text": tour_content.VISION_TEXT},
+        ]},
+        {"id": 2, "heading": "Our Mission", "bullets": list(tour_content.MISSION_BULLETS)},
+        {"id": 3, "heading": "Our Aims & Objectives", "bullets": list(tour_content.AIMS_BULLETS)},
+        {"id": 4, "heading": "Five Pillars, One Family", "bots": bots, "note": (
+            "Each pillar has its own duty — together we grow, connect, "
+            "and shine as one family in CHRIST."
+        )},
+        {"id": 5, "heading": "Your Journey", "blocks": [{
+            "label": "Grow in grace",
+            "text": (
+                "Every YouTopian grows through 9 ranks of grace — from The Seeker to "
+                "YouThopia's Ambassador. Earn YouTopian Points (YP) by engaging in the "
+                "community: quizzes, devotionals, events, and fellowship — and your "
+                "Trust Score reflects your reliability and integrity."
+            ),
+        }], "spaces": [
+            {"name": "Telegram Community", "role": "Main fellowship group", "link": TELEGRAM_GROUP_LINK},
+            {"name": "WhatsApp Community", "role": "Daily encouragement on WhatsApp", "link": WHATSAPP_LINK},
+            {"name": "Facebook Community", "role": "Fellowship and community updates", "link": FACEBOOK_LINK},
+        ]},
+    ]
+    return {
+        "title": tour_content.TOUR_TITLE,
+        "slogan": tour_content.TOUR_SLOGAN,
+        "pages": pages,
+    }
+
+
+@app.post("/api/community/tour/complete")
+async def complete_community_tour(
+    user: TelegramUser = Depends(require_telegram_user),
+    users: UserService = Depends(get_user_service),
+    xp_svc: XPService = Depends(get_xp_service),
+    moderation: ModerationService = Depends(get_moderation_service),
+) -> dict[str, Any]:
+    """Marks the caller oriented and awards the one-time +50 YP welcome boost.
+
+    Shared-channel idempotency: uses the same `orientation_completed` action and
+    `onboarding_xp_{user_id}` XP idempotency key the Telegram bots use, so the
+    tour's boost can only ever be awarded once per member — finishing it in the
+    Mini App first, and a bot later, resolves to `already_completed` on the bot
+    side (and vice versa).
+    """
+    row = await users.get_or_create_from_telegram({
+        "telegram_id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "username": user.username,
+    })
+    user_id = row["id"]
+
+    already = row.get("engagement_level") == "onboarded"
+    if not already:
+        try:
+            actions = await users.db.find_many(
+                "moderation_actions", {"user_id": user_id, "action_type": "orientation_completed"}
+            )
+            already = bool(actions)
+        except Exception:
+            pass
+
+    if already:
+        return {"status": "already_completed", "xp_awarded": 0}
+
+    try:
+        await users.set_engagement_level(user_id, "onboarded")
+        await moderation.record_action(
+            user_id=user_id,
+            action_type="orientation_completed",
+            reason="Completed the YouThopia community tour in the Mini App.",
+            trust_delta=50,
+        )
+        await xp_svc.award_xp(
+            user_id=user_id,
+            amount=50,
+            bot_name="susy",
+            source="onboarding_tour",
+            idempotency_key=f"onboarding_xp_{user_id}",
+        )
+    except Exception as e:
+        print(f"Warning in /api/community/tour/complete: {e}")
+        return {"status": "error", "xp_awarded": 0}
+
+    return {"status": "completed", "xp_awarded": 50}
 
 
 # Single-service deployment: Mount compiled Mini App frontend at root '/'
