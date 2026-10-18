@@ -29,6 +29,8 @@ setup.bat
 seed_*.py
 *_scratch.py
 check_users_scratch.py
+scripts/broadcast_migration_to_users.py
+scripts/legacy_redirect_bot.py
 
 # Welcome messages
 theo_welcome_messages.md
@@ -36,6 +38,7 @@ theo_welcome_messages.md
 # Workspace files & Agent Customizations
 *.code-workspace
 YOUTHOPOPIAOS_NEXT_EVOLUTION_PRIVATE.md
+MINIAPP_UI_REDESIGN_HANDOFF.md
 .agents/
 
 # Pyrogram Sessions

@@ -79,17 +79,28 @@ export function initTelegram(): void {
 
   // Only in `npm run dev`: pretend we are inside Telegram so we see a user.
   if (import.meta.env.DEV) {
-    mockTelegramEnv({
-      launchParams: {
-        tgWebAppData: MOCK_INIT_DATA,
-        tgWebAppPlatform: 'web',
-        tgWebAppThemeParams: {},
-        tgWebAppVersion: '7.0',
-      },
-    });
+    try {
+      mockTelegramEnv({
+        launchParams: {
+          tgWebAppData: MOCK_INIT_DATA,
+          tgWebAppPlatform: 'web',
+          tgWebAppThemeParams: {},
+          tgWebAppVersion: '7.0',
+        },
+      });
+    } catch {
+      // Mock environment unavailable: continue with a plain browser.
+    }
   }
 
-  init();
+  // Every SDK call is guarded: outside Telegram (or in an older webview) any of
+  // these can throw, and a synchronous throw inside a React effect would
+  // unmount the whole app. Boot must never take the app down.
+  try {
+    init();
+  } catch {
+    // Not launched from Telegram: fine. Launch context stays unavailable.
+  }
 
   try {
     initData.restore();
@@ -98,44 +109,70 @@ export function initTelegram(): void {
   }
 
   // Expand to full height — but only when the SDK reports the action is usable.
-  if (viewport.expand.isAvailable()) {
-    viewport.expand();
+  try {
+    if (viewport.expand.isAvailable()) {
+      viewport.expand();
+    }
+  } catch {
+    // Viewport expansion is optional.
   }
 }
 
 /** The current user as our own type, or null if not launched from Telegram. */
 export function getTelegramUser(): TelegramUser | null {
-  return toTelegramUser(initData.user());
+  try {
+    return toTelegramUser(initData.user());
+  } catch {
+    return toTelegramUser(undefined);
+  }
 }
 
-/** The raw signed initData string — with fallback for Telegram Reply Keyboard webviews. */
+/** Read the raw signed initData string from the official Telegram bridge if present. */
+function readBridgeInitData(): string | null {
+  if (typeof window !== 'undefined') {
+    const windowRaw = (window as any).Telegram?.WebApp?.initData;
+    if (typeof windowRaw === 'string' && windowRaw.trim().length > 0) {
+      return windowRaw;
+    }
+  }
+  return null;
+}
+
+/** Read the raw signed initData string — with fallback for Telegram Reply Keyboard webviews. */
 export function getRawInitData(): string | null {
-  const raw = initData.raw();
+  let raw: string | null = null;
+  try {
+    raw = initData.raw() ?? null;
+  } catch {
+    raw = null;
+  }
   if (raw && raw.trim().length > 0) {
     return raw;
   }
 
   // Fallback 1: Check window.Telegram.WebApp.initData from telegram-web-app.js
-  if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initData) {
-    const windowRaw = (window as any).Telegram.WebApp.initData;
-    if (windowRaw && windowRaw.trim().length > 0) {
-      return windowRaw;
-    }
+  const windowRaw = readBridgeInitData();
+  if (windowRaw) {
+    return windowRaw;
   }
 
   // Fallback 2: Extract from initData.user()
-  const user = initData.user();
-  if (user && user.id) {
-    return new URLSearchParams({
-      user: JSON.stringify({
-        id: user.id,
-        first_name: user.first_name || 'Member',
-        last_name: user.last_name || '',
-        username: user.username || '',
-      }),
-      auth_date: Math.floor(Date.now() / 1000).toString(),
-      hash: 'dev-mock-hash',
-    }).toString();
+  try {
+    const user = initData.user();
+    if (user && user.id) {
+      return new URLSearchParams({
+        user: JSON.stringify({
+          id: user.id,
+          first_name: user.first_name || 'Member',
+          last_name: user.last_name || '',
+          username: user.username || '',
+        }),
+        auth_date: Math.floor(Date.now() / 1000).toString(),
+        hash: 'dev-mock-hash',
+      }).toString();
+    }
+  } catch {
+    // init data unavailable in this launch context.
   }
 
   // Fallback 3: Check window.Telegram.WebApp.initDataUnsafe
