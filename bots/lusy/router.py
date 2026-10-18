@@ -18,6 +18,7 @@ from aiogram.types import (
 )
 
 from core.telegram_runtime import build_router, register_group_chat, register_chat
+from shared.config.bot_registry import meet_description
 from shared.services.container import ServiceContainer
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
@@ -53,8 +54,9 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         asyncio.create_task(start_auto_quiz_scheduler(bot, services))
 
         private_commands = [
-            BotCommand(command="start", description="Meet Lucy"),
+            BotCommand(command="start", description=meet_description("lusy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
+            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
@@ -63,7 +65,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             BotCommand(command="help", description="How to play and earn YP"),
         ]
         group_commands = [
-            BotCommand(command="start", description="Meet Lucy"),
+            BotCommand(command="start", description=meet_description("lusy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="How to play and earn YP"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),

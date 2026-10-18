@@ -6,26 +6,31 @@ from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeChat, Message
 from core.filters import IsGlobalAdminFilter
+from shared.config.bot_registry import meet_description
 from shared.services.container import ServiceContainer
 
 logger = logging.getLogger(__name__)
 
-# Native side menu commands for each bot to merge with admin commands
+
+# Native side menu commands for each bot to merge with admin commands.
+# Kept in sync with each bot's own private-chat menus (registry-driven names).
 BOT_NATIVE_COMMANDS = {
     "theo": [
-        BotCommand(command="start", description="Meet Theo"),
-        BotCommand(command="app", description="Open YouThopia Community Mini App"),
+        BotCommand(command="start", description=meet_description("theo")),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
+        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="help", description="Show help information"),
         BotCommand(command="subscribe", description="Subscribe to daily verses"),
         BotCommand(command="unsubscribe", description="Unsubscribe from daily verses"),
         BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
     ],
     "pete": [
-        BotCommand(command="start", description="Meet Pete"),
-        BotCommand(command="app", description="Open YouThopia Community Mini App"),
+        BotCommand(command="start", description=meet_description("pete")),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
+        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="appeal", description="Submit Appeal"),
         BotCommand(command="profile", description="View your profile"),
-        BotCommand(command="help", description="Pete Safety Guide"),
+        BotCommand(command="help", description="Peter Safety Guide"),
         BotCommand(command="warn", description="Issue a warning"),
         BotCommand(command="mute", description="Revoke typing permissions"),
         BotCommand(command="kick", description="Remove user from group"),
@@ -38,32 +43,34 @@ BOT_NATIVE_COMMANDS = {
         BotCommand(command="endbiblestudy", description="Unlock chat after teaching"),
     ],
     "lusy": [
-        BotCommand(command="start", description="Meet Lusy"),
-        BotCommand(command="app", description="Open YouThopia Community Mini App"),
-        BotCommand(command="games", description="Browse Bible Games"),
-        BotCommand(command="playgame", description="Choose and start a Bible game"),
-        BotCommand(command="quit", description="Quit active game session"),
+        BotCommand(command="start", description=meet_description("lusy")),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
+        BotCommand(command="app", description="Open the YouThopia Mini App"),
+        BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
+        BotCommand(command="quit", description="Quit active quiz session"),
         BotCommand(command="leaderboard", description="View global leaderboard"),
         BotCommand(command="yp", description="Check your current YP and Level"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="How to play and earn YP"),
     ],
     "susy": [
-        BotCommand(command="start", description="Meet Susy"),
-        BotCommand(command="app", description="Open YouThopia Community Mini App"),
+        BotCommand(command="start", description=meet_description("susy")),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
+        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="profile", description="View your profile"),
-        BotCommand(command="help", description="Susy Hostess Guide"),
+        BotCommand(command="help", description="Susan Hostess Guide"),
     ],
     "eddy": [
-        BotCommand(command="start", description="Meet Eddy"),
-        BotCommand(command="app", description="Open YouThopia Community Mini App"),
+        BotCommand(command="start", description=meet_description("eddy")),
+        BotCommand(command="tour", description="Take the YouThopia community tour"),
+        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="calendar", description="View this week's event schedule"),
         BotCommand(command="my_events", description="View events I am attending"),
         BotCommand(command="addbirthday", description="Add your birthday"),
         BotCommand(command="upcomingbirthday", description="View Upcoming Birthdays"),
         BotCommand(command="deletebirthday", description="Delete your registered birthday"),
         BotCommand(command="profile", description="View your profile"),
-        BotCommand(command="help", description="Show Ed's instructions"),
+        BotCommand(command="help", description="Show Edmund's instructions"),
     ],
 }
 

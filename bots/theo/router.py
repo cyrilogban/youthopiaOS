@@ -18,6 +18,7 @@ from aiogram.types import (
 )
 
 from core.telegram_runtime import build_router, register_group_chat, register_chat
+from shared.config.bot_registry import meet_description
 from shared.services.container import ServiceContainer
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
@@ -79,8 +80,9 @@ def build_theo_router(description: str) -> Router:
         from aiogram.types import BotCommandScopeAllChatAdministrators
 
         private_commands = [
-            BotCommand(command="start", description="Meet Theodore"),
+            BotCommand(command="start", description=meet_description("theo")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
+            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="translation", description="Change personal translation"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
@@ -90,7 +92,7 @@ def build_theo_router(description: str) -> Router:
             BotCommand(command="send_votd", description="Send Today's Verse (Admin)"),
         ]
         group_commands = [
-            BotCommand(command="start", description="Meet Theodore"),
+            BotCommand(command="start", description=meet_description("theo")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Show help information"),
         ]

@@ -25,9 +25,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 from core.telegram_runtime import build_router, register_group_chat, register_chat
+from shared.config.bot_registry import meet_description
 from shared.services.container import ServiceContainer
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
+    FACEBOOK_LINK,
+    TELEGRAM_GROUP_LINK,
+    WHATSAPP_LINK,
     get_community_links_keyboard,
     render_shared_profile_card,
     send_community_exploration_page,
@@ -68,8 +72,9 @@ def build_eddy_router(description: str) -> Router:
     async def on_startup(bot: Bot) -> None:
         # Define sidebar commands for DMs per spec
         private_commands = [
-            BotCommand(command="start", description="Meet Eddy"),
+            BotCommand(command="start", description=meet_description("eddy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
+            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="calendar", description="View this week's event schedule"),
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),
@@ -80,7 +85,7 @@ def build_eddy_router(description: str) -> Router:
         ]
 
         group_commands = [
-            BotCommand(command="start", description="Meet Edmund"),
+            BotCommand(command="start", description=meet_description("eddy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Show Edmund's instructions"),
             BotCommand(command="calendar", description="View all upcoming events"),
@@ -837,12 +842,11 @@ def build_eddy_router(description: str) -> Router:
         
         markup = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="Join Facebook", url="https://www.facebook.com/share/g/18wG8aWB6t/"),
-                InlineKeyboardButton(text="Join Telegram", url="https://t.me/youthopiabiblecommunity"),
+                InlineKeyboardButton(text="Join Facebook", url=FACEBOOK_LINK),
+                InlineKeyboardButton(text="Join Telegram", url=TELEGRAM_GROUP_LINK),
             ],
             [
-                InlineKeyboardButton(text="Join WhatsApp", url="https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn"),
-                InlineKeyboardButton(text="Join Threads", callback_data="ignore"),
+                InlineKeyboardButton(text="Join WhatsApp", url=WHATSAPP_LINK),
             ]
         ])
         

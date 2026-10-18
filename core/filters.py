@@ -26,6 +26,7 @@ class IsGlobalAdminFilter(Filter):
         admin_ids_str = os.getenv("ADMIN_OWNER_ID") or os.getenv("ADMIN_IDS") or ""
         admin_ids = [int(x.strip()) for x in admin_ids_str.split(",") if x.strip().isdigit()]
         if not admin_ids:
-            # Fallback for development if not explicitly configured
-            return True
+            # Fail closed: an unset or empty allow-list grants nobody.
+            # (Previously this failed OPEN, letting anyone run admin commands.)
+            return False
         return message.from_user.id in admin_ids

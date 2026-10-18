@@ -21,8 +21,10 @@ from aiogram.types import (
 )
 
 from shared.services.container import ServiceContainer
+from shared.config.bot_registry import DEFAULT_MINI_APP_LINK, get_bot_identity, meet_description
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
+    TELEGRAM_GROUP_LINK,
     get_community_links_keyboard,
     render_shared_profile_card,
     send_community_exploration_page,
@@ -60,14 +62,15 @@ def build_susy_router(description: str) -> Router:
         from aiogram.types import BotCommandScopeAllChatAdministrators
 
         private_commands = [
-            BotCommand(command="start", description="Meet Susan"),
+            BotCommand(command="start", description=meet_description("susy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
+            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Susan Hostess Guide"),
         ]
         
         group_commands = [
-            BotCommand(command="start", description="Meet Susan"),
+            BotCommand(command="start", description=meet_description("susy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Susan Hostess Guide"),
         ]
@@ -260,7 +263,7 @@ def build_susy_router(description: str) -> Router:
             "Tap the button below to launch the YouThopiaOS Mini App and unlock your YouTopian profile!</blockquote>"
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app")]
+            [InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK)]
         ])
 
         try:
@@ -347,7 +350,7 @@ def build_susy_router(description: str) -> Router:
 
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="💬 Meet Susan in DM", url="https://t.me/susiehelpsbot?start=welcome")],
-                [InlineKeyboardButton(text="🚀 Take Community Tour", url="https://t.me/susiehelpsbot?start=tour")],
+                [InlineKeyboardButton(text="🚀 Take Community Tour", url=get_bot_identity("susy").get_start_link("tour"))],
             ])
             try:
                 sent_msg = await message.answer(
@@ -416,7 +419,7 @@ def build_susy_router(description: str) -> Router:
             "If you haven't joined the main group yet, jump in! We can't wait to fellowship with you. 🤍"
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Join the Main Group", url="https://t.me/youthopiabiblecommunity")]
+            [InlineKeyboardButton(text="Join the Main Group", url=TELEGRAM_GROUP_LINK)]
         ])
         
         await message.answer(about_text, parse_mode="HTML", reply_markup=markup)

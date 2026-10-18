@@ -1,7 +1,7 @@
-from aiogram.filters.callback_data import CallbackData
+﻿from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
-from shared.config.bot_registry import get_bot_identity
+from shared.config.bot_registry import get_bot_identity, DEFAULT_MINI_APP_LINK
 
 class VerseAction(CallbackData, prefix="verse", sep="|"):
     action: str  # "save", "compare_menu", "switch_trans", "back"
@@ -16,19 +16,19 @@ class SavedVersesPage(CallbackData, prefix="sv_page"):
 def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
     """
     Theo persistent reply keyboard:
-    Row 1 (Global):        [ 👤 My Profile ]      [ Open App ] [ ℹ️ Help ]  [ 🌐 Community ]
-    Row 2 (Bot Specific): [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
-    Row 3 (Settings):      [ 🌐 Translation ]
+    Row 1 (Global):        [ ðŸ‘¤ My Profile ]      [ Open App ] [ â„¹ï¸ Help ]  [ ðŸŒ Community ]
+    Row 2 (Bot Specific): [ ðŸ” Search Scripture ]  [ ðŸ”– Saved Verses ]
+    Row 3 (Settings):      [ ðŸŒ Translation ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
             GLOBAL_REPLY_BUTTONS,
             [
-                KeyboardButton(text="🔍 Search Scripture"),
-                KeyboardButton(text="🔖 Saved Verses"),
+                KeyboardButton(text="ðŸ” Search Scripture"),
+                KeyboardButton(text="ðŸ”– Saved Verses"),
             ],
             [
-                KeyboardButton(text="🌐 Translation"),
+                KeyboardButton(text="ðŸŒ Translation"),
             ]
         ],
         resize_keyboard=True,
@@ -41,7 +41,7 @@ def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     """
     Theo /start Welcome Card inline keyboard:
     [ Open App ]
-    [ 🔍 Search ]  [ 🌐 Translation ]
+    [ ðŸ” Search ]  [ ðŸŒ Translation ]
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -49,8 +49,8 @@ def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
                 get_open_app_inline_button(),
             ],
             [
-                InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
-                InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
+                InlineKeyboardButton(text="ðŸ” Search", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="ðŸŒ Translation", callback_data="theo_translation_menu"),
             ]
         ]
     )
@@ -63,14 +63,14 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
+                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
             ],
             [
-                InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
-                InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
+                InlineKeyboardButton(text="ðŸ” Search", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="ðŸŒ Translation", callback_data="theo_translation_menu"),
             ],
             [
-                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
+                InlineKeyboardButton(text="ðŸ§­ Start Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
             ],
         ]
     )
@@ -83,17 +83,17 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url="https://t.me/theobiblebot/app"),
+                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
             ],
             [
-                InlineKeyboardButton(text="⚡ Promote Theodore to Admin", callback_data="theo_prompt_admin"),
+                InlineKeyboardButton(text="âš¡ Promote Theodore to Admin", callback_data="theo_prompt_admin"),
             ],
             [
-                InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
-                InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
+                InlineKeyboardButton(text="ðŸ” Search", callback_data="theo_search_scripture"),
+                InlineKeyboardButton(text="ðŸŒ Translation", callback_data="theo_translation_menu"),
             ],
             [
-                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
+                InlineKeyboardButton(text="ðŸ§­ Start Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
             ],
         ]
     )
@@ -106,8 +106,8 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🧭 Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
-                InlineKeyboardButton(text="➕ Re-invite Theodore", url="https://t.me/theobiblebot?startgroup=true"),
+                InlineKeyboardButton(text="ðŸ§­ Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
+                InlineKeyboardButton(text="âž• Re-invite Theodore", url="https://t.me/theobiblebot?startgroup=true"),
             ],
         ]
     )
@@ -165,15 +165,15 @@ def build_verse_compare_drawer(
     bot_username: str = "theobiblebot"
 ) -> InlineKeyboardMarkup:
     """Builds the interactive translation drawer keyboard for verse cards:
-    Row 1: [ ● KJV ] [ ASV ] [ WEB ] [ BBE ]
-    Row 2: [ ◀ Back ] [ Save ]
+    Row 1: [ â— KJV ] [ ASV ] [ WEB ] [ BBE ]
+    Row 2: [ â—€ Back ] [ Save ]
     """
     clean_ref = reference.replace(" ", "_")
     available_trans = ["kjv", "asv", "web", "bbe"]
     trans_buttons = []
 
     for t in available_trans:
-        label = f"● {t.upper()}" if t.lower() == active_trans.lower() else t.upper()
+        label = f"â— {t.upper()}" if t.lower() == active_trans.lower() else t.upper()
         trans_buttons.append(
             InlineKeyboardButton(
                 text=label,
@@ -191,7 +191,7 @@ def build_verse_compare_drawer(
             trans_buttons,
             [
                 InlineKeyboardButton(
-                    text="◀ Back",
+                    text="â—€ Back",
                     callback_data=VerseAction(
                         action="back",
                         category=category,

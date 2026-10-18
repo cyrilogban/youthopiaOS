@@ -15,7 +15,9 @@ from aiogram.fsm.state import State, StatesGroup
 import asyncio
 import os
 from shared.services.container import ServiceContainer
-from core.telegram_runtime import register_group_chat, register_chat, attach_global_tour
+from core.telegram_runtime import register_group_chat, register_chat, attach_global_tour, attach_open_app
+from core.admin_commands import create_admin_router
+from shared.config.bot_registry import meet_description
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     get_community_links_keyboard,
@@ -37,7 +39,11 @@ from bots.pete.utils.keyboards import (
 logger = logging.getLogger(__name__)
 
 router = Router()
+# Parity with the family: shared global-admin commands (/stats, /botstats, /groups,
+# /setrank) + the always-on /app card, registered before Pete's own handlers.
+router.include_router(create_admin_router("pete"))
 attach_global_tour(router, "pete")
+attach_open_app(router)
 
 from core.filters import IsAdminFilter
 
@@ -1294,8 +1300,9 @@ async def on_startup(bot: Bot) -> None:
     ]
     
     user_commands = [
-        BotCommand(command="start", description="Meet Peter"),
+        BotCommand(command="start", description=meet_description("pete")),
         BotCommand(command="tour", description="Take the YouThopia community tour"),
+        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="appeal", description="Submit Appeal"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Peter Safety Guide")
@@ -1313,7 +1320,7 @@ async def on_startup(bot: Bot) -> None:
             pass
 
     group_commands = [
-        BotCommand(command="start", description="Meet Peter"),
+        BotCommand(command="start", description=meet_description("pete")),
         BotCommand(command="tour", description="Take the YouThopia community tour"),
         BotCommand(command="help", description="Peter Safety Guide")
     ]
