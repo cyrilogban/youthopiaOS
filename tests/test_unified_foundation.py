@@ -132,7 +132,9 @@ def test_level_calculation_floor():
 
 
 def test_eddy_token_falls_back_to_ed_env(monkeypatch):
+    monkeypatch.setattr("core.config.load_dotenv", lambda *a, **k: None)
     monkeypatch.setenv("ED_BOT_TOKEN", "token-from-ed")
+    monkeypatch.delenv("EDIE_BOT_TOKEN", raising=False)
     monkeypatch.delenv("EDDY_BOT_TOKEN", raising=False)
 
     config = load_config()

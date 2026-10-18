@@ -7,8 +7,6 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
     ChatMemberUpdated,
 )
 from aiogram.filters import Command, CommandObject, Filter
@@ -469,18 +467,6 @@ async def handle_unauthorized(message: Message) -> None:
 # -----------------------------------------------------------------------------
 # YOUTOPIAN STATUS & APPEALS
 # -----------------------------------------------------------------------------
-
-def pete_menu() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="My profile"),
-                KeyboardButton(text="📝 Submit Appeal")
-            ]
-        ],
-        resize_keyboard=True,
-        input_field_placeholder="Choose an action"
-    )
 
 class AppealState(StatesGroup):
     waiting_for_appeal = State()

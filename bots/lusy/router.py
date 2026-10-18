@@ -365,14 +365,6 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
 
         await send_lusy_profile(message, services)
 
-    @router.callback_query(F.data == "lusy_menu_stats")
-    async def inline_profile_handler(callback: CallbackQuery, services: ServiceContainer) -> None:
-        if callback.message.chat.type != "private":
-            await callback.answer("Please check your points in DM!", show_alert=True)
-            return
-        await callback.answer()
-        await send_lusy_profile(callback.message, services, telegram_user=callback.from_user)
-
     async def send_lusy_profile(
         message: Message, services: ServiceContainer, telegram_user: Any | None = None
     ) -> None:
@@ -441,14 +433,6 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             return
 
         await send_lusy_help(message)
-
-    @router.callback_query(F.data == "lusy_menu_about")
-    async def inline_help_handler(callback: CallbackQuery) -> None:
-        if callback.message.chat.type != "private":
-            await callback.answer("Please view help in DM!", show_alert=True)
-            return
-        await callback.answer()
-        await send_lusy_help(callback.message)
 
     async def send_lusy_help(message: Message) -> None:
         help_text = (

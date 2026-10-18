@@ -40,7 +40,6 @@ from bots.eddy.utils.keyboards import (
     build_eddy_group_welcome_keyboard,
     build_eddy_member_welcome_keyboard,
     build_eddy_farewell_keyboard,
-    build_event_card_inline_keyboard,
 )
 
 

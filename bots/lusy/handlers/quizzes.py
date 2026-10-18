@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, PollAnswer
 from aiogram import Bot
 from shared.services.container import ServiceContainer
+from typing import Any
 import random
 import asyncio
 import datetime
@@ -31,11 +32,6 @@ RECENT_GROUP_QUESTIONS = {}
 
 # In-memory tracking for active speed races: f"{chat_id}_{message_id}" -> state_dict
 ACTIVE_RACES = {}
-
-
-@quiz_router.callback_query(F.data == "lusy_soon")
-async def on_soon(callback: CallbackQuery):
-    await callback.answer("This game mode is coming soon!", show_alert=True)
 
 
 @quiz_router.callback_query(F.data == "lusy_play_quiz")

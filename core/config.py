@@ -23,9 +23,6 @@ class AppConfig:
     mongo_uri: str
     mongo_database: str
     bots: dict[str, BotConfig]
-    api_id: int
-    api_hash: str
-    susy_string_session: str
 
     @property
     def has_supabase(self) -> bool:
@@ -59,7 +56,4 @@ def load_config() -> AppConfig:
         mongo_uri=os.getenv("MONGO_URI", ""),
         mongo_database=os.getenv("MONGO_DATABASE", "youthopiaos"),
         bots=bots,
-        api_id=int(os.getenv("API_ID", "0")),
-        api_hash=os.getenv("API_HASH", "").strip(),
-        susy_string_session=os.getenv("SUSY_STRING_SESSION", "").strip(),
     )

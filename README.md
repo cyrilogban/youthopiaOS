@@ -56,7 +56,6 @@ Each bot retains its own Telegram token, Telegram identity, and independent inte
 ### Susy Bot *(Hospitality & Onboarding)*
 * Member welcome flow and onboarding guides
 * Social engagement support
-* Interactive music and session integration
 
 ---
 

@@ -137,59 +137,6 @@ class TestWelcomeService:
 
 
 # ---------------------------------------------------------------------------
-# Music Service Tests
-# ---------------------------------------------------------------------------
-
-class TestMusicService:
-    """Tests for Susy Bot music/session service logic."""
-
-    def test_music_session_has_required_fields(self):
-        """A music session object must have all required fields."""
-        session = {
-            "session_id": "sess_001",
-            "host_telegram_id": 123456789,
-            "track_name": "Amazing Grace",
-            "status": "active",
-            "participants": [],
-        }
-        assert "session_id" in session
-        assert "host_telegram_id" in session
-        assert "track_name" in session
-        assert "status" in session
-
-    def test_music_session_default_status_is_active(self):
-        """A newly created session should have 'active' status."""
-        session = {"status": "active"}
-        assert session["status"] == "active"
-
-    def test_music_session_can_add_participant(self):
-        """Participants should be addable to an active session."""
-        session = {"participants": []}
-        new_participant = {"telegram_id": 987654321, "name": "John"}
-        session["participants"].append(new_participant)
-        assert len(session["participants"]) == 1
-        assert session["participants"][0]["telegram_id"] == 987654321
-
-    def test_music_session_ends_correctly(self):
-        """Ending a session should update its status to 'ended'."""
-        session = {"status": "active"}
-        session["status"] = "ended"
-        assert session["status"] == "ended"
-
-    def test_empty_track_name_is_invalid(self):
-        """A music session with no track name should be considered invalid."""
-        track_name = ""
-        is_valid = bool(track_name and track_name.strip())
-        assert is_valid is False
-
-    def test_valid_track_name_passes_validation(self):
-        """A non-empty track name should pass validation."""
-        track_name = "Way Maker"
-        is_valid = bool(track_name and track_name.strip())
-        assert is_valid is True
-
-
-# ---------------------------------------------------------------------------
 # Cross-Bot Integration: Susy <-> Shared Services
 # ---------------------------------------------------------------------------
 

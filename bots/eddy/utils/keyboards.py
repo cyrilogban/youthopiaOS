@@ -98,23 +98,3 @@ def build_eddy_farewell_keyboard() -> InlineKeyboardMarkup:
             ]
         ]
     )
-
-
-def build_event_card_inline_keyboard(event_id: str, is_attending: bool = False) -> InlineKeyboardMarkup:
-    """
-    Event Card Inline Keyboard per spec:
-    [ ✅ Attending ]  [ 👥 Attendees ]
-    [ 🔔 Set Reminder ]
-    """
-    attend_text = "✅ Attending" if is_attending else "✅ I'm Attending"
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text=attend_text, callback_data=f"eddy_rsvp_{event_id}"),
-                InlineKeyboardButton(text="👥 Attendees", callback_data=f"eddy_attendees_{event_id}"),
-            ],
-            [
-                InlineKeyboardButton(text="🔔 Set Reminder", callback_data=f"eddy_remind_{event_id}"),
-            ]
-        ]
-    )

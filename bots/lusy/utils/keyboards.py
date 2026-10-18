@@ -48,9 +48,6 @@ def build_game_selection_inline_keyboard(is_group: bool = False) -> InlineKeyboa
     )
 
 
-build_quiz_selection_inline_keyboard = build_game_selection_inline_keyboard
-
-
 def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     """
     Inline keyboard attached to Lusy's group welcome card (Admin).

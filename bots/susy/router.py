@@ -4,8 +4,7 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
-import httpx
+from typing import Any
 from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.types import (
@@ -19,8 +18,6 @@ from aiogram.types import (
     InlineKeyboardButton,
     ReplyKeyboardMarkup,
     KeyboardButton,
-    BufferedInputFile,
-    FSInputFile,
 )
 
 from shared.services.container import ServiceContainer
@@ -35,14 +32,12 @@ from shared.utils.ui import (
 from bots.susy.utils.keyboards import (
     build_susy_reply_keyboard,
     build_susy_start_inline_keyboard,
-    build_onboarding_tour_keyboard,
     build_susy_group_welcome_keyboard,
     build_susy_member_welcome_keyboard,
     build_susy_farewell_keyboard,
 )
 
 from core.telegram_runtime import build_router, register_group_chat, register_chat
-from aiogram.filters import Command, CommandObject
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +52,7 @@ async def self_destruct_message(bot: Bot, chat_id: int, message_id: int, delay_s
         pass
 
 
-def build_susy_router(description: str, music_service=None) -> Router:
+def build_susy_router(description: str) -> Router:
     router = build_router("susy", description, include_base_commands=False)
 
     @router.startup()
@@ -428,56 +423,6 @@ def build_susy_router(description: str, music_service=None) -> Router:
         
         await message.answer(about_text, parse_mode="HTML", reply_markup=markup)
 
-    @router.message(Command("playlist"))
-    @router.message(F.text == "My Playlist")
-    @router.callback_query(F.data == "susy_my_playlist")
-    async def handle_my_playlist(event: Message | CallbackQuery, services: ServiceContainer) -> None:
-        is_cb = isinstance(event, CallbackQuery)
-        message = event.message if is_cb else event
-        user_obj = event.from_user
-
-        empty_txt = (
-            "<b>📜 Your Personal Playlist is Empty!</b>\n\n"
-            "You haven't saved any tracks yet. Play a song and tap <b>💜 Save to Favorites</b> to build your collection!"
-        )
-
-        try:
-            user = await services.identity.resolve_telegram_user(user_obj)
-            user_id = user["id"]
-
-            try:
-                saved_tracks = await services.supabase.find_many("user_favorite_tracks", {"user_id": user_id})
-            except Exception as e:
-                saved_tracks = []
-
-            if not saved_tracks:
-                if is_cb:
-                    await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
-                else:
-                    await message.answer(empty_txt, parse_mode="HTML")
-                return
-
-            list_txt = "<b>📜 Your Saved Playlist 🎶</b>\n\n"
-            for idx, tr in enumerate(saved_tracks, 1):
-                list_txt += f"{idx}. <b>{tr.get('title', 'Unknown Track')}</b>\n"
-
-            list_txt += "\n<i>Type the name of any track to play it instantly!</i>"
-
-            if is_cb:
-                await event.answer()
-            await message.answer(list_txt, parse_mode="HTML")
-        except Exception:
-            if is_cb:
-                await event.answer("Your playlist is currently empty! Play a song to save it. 💜", show_alert=True)
-            else:
-                await message.answer(empty_txt, parse_mode="HTML")
-
-    # --- DM MUSIC QUERY (DISABLED - PRESERVED FOR FUTURE REUSE) ---
-    # @router.message(F.chat.type == "private", F.text & ~F.text.startswith("/"))
-    # async def handle_private_dm_music_query(message: Message) -> None:
-    #     ...
-
-
     # --- ONBOARDING PAGINATION LOGIC ---
     
     # -------------------------------------------------------------------------
@@ -648,119 +593,5 @@ def build_susy_router(description: str, music_service=None) -> Router:
             parse_mode="HTML",
             reply_markup=get_community_links_keyboard()
         )
-
-    def _get_dm_music_controls_keyboard(is_saved: bool = False) -> InlineKeyboardMarkup:
-        save_text = "💜 Saved in Playlist" if is_saved else "💜 Save to Favorites"
-        share_url = "https://t.me/share/url?url=https%3A%2F%2Ft.me%2Fsusiehelpsbot&text=Listen%20to%20worship%20music%20with%20Susie%20on%20Telegram%20%F0%9F%8E%B6"
-        return InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(text=save_text, callback_data="susy_fav_save"),
-                    InlineKeyboardButton(text="📜 My Playlist", callback_data="susy_my_playlist")
-                ],
-                [
-                    InlineKeyboardButton(text="➕ Request Another", callback_data="susy_request_another"),
-                    InlineKeyboardButton(text="👥 Share Track ↗️", url=share_url)
-                ]
-            ]
-        )
-
-    def _get_music_controls_keyboard() -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="💜 Save to Favorites", callback_data="susy_fav_save"),
-                    InlineKeyboardButton(text="📜 My Playlist", callback_data="susy_group_playlist")
-                ],
-                [
-                    InlineKeyboardButton(text="➕ Request Another", callback_data="susy_group_request"),
-                    InlineKeyboardButton(text="💬 Open Susan DM ↗️", url="https://t.me/susiehelpsbot")
-                ],
-                [
-                    InlineKeyboardButton(text="🗑️ Close", callback_data="susy_close_msg")
-                ]
-            ]
-        )
-
-    @router.callback_query(F.data == "susy_fav_save")
-    async def handle_save_favorite(callback: CallbackQuery, services: ServiceContainer) -> None:
-        track_title = "Worship Track"
-        if callback.message and callback.message.caption:
-            for line in callback.message.caption.split("\n"):
-                if "Title:" in line:
-                    track_title = line.replace("Title:", "").replace("<b>", "").replace("</b>", "").strip()
-
-        try:
-            user = await services.identity.resolve_telegram_user(callback.from_user)
-            user_id = user["id"]
-
-            payload = {
-                "user_id": user_id,
-                "title": track_title,
-                "bot_name": "susy"
-            }
-
-            await services.supabase.upsert(
-                "user_favorite_tracks",
-                payload,
-                on_conflict="user_id, title"
-            )
-
-            is_private = callback.message and callback.message.chat.type == "private"
-
-            if is_private:
-                try:
-                    await callback.message.edit_reply_markup(reply_markup=_get_dm_music_controls_keyboard(is_saved=True))
-                except Exception:
-                    pass
-
-                await callback.answer(
-                    f"🎉 Saved to Favorites! 💜\n\n"
-                    f"\"{track_title}\" has been added to your personal playlist.\n\n"
-                    f"Tap '📜 My Playlist' below to view your saved songs!",
-                    show_alert=True
-                )
-            else:
-                await callback.answer(
-                    f"🎉 Saved to Favorites! 💜\n\n"
-                    f"\"{track_title}\" has been saved to your personal playlist.\n\n"
-                    f"Open a private chat with Susan (@susiehelpsbot) to view your saved songs!",
-                    show_alert=True
-                )
-        except Exception as e:
-            await callback.answer(f"🎉 \"{track_title}\" saved to your playlist! 💜", show_alert=True)
-
-    @router.callback_query(F.data == "susy_group_playlist")
-    async def handle_group_playlist(callback: CallbackQuery) -> None:
-        await callback.answer(
-            "📜 Your Saved Playlist:\n\n"
-            "Open a private chat with Susan (@susiehelpsbot) and type /playlist to view and play your saved songs!",
-            show_alert=True
-        )
-
-    @router.callback_query(F.data == "susy_group_request")
-    async def handle_group_request(callback: CallbackQuery) -> None:
-        await callback.answer(
-            "🎶 Request a Song:\n\n"
-            "Type /playsong <song name> right here in this chat to request your next song!",
-            show_alert=True
-        )
-
-    @router.callback_query(F.data == "susy_request_another")
-    async def handle_request_another(callback: CallbackQuery) -> None:
-        await callback.answer("🎧 Type the title or link of your next song right here in this chat!", show_alert=True)
-
-    # --- MUSIC COMMANDS & CALLBACKS (DISABLED - PRESERVED FOR FUTURE REUSE) ---
-    # @router.message(Command("playsong"))
-    # async def handle_play(message: Message, command: CommandObject) -> None:
-    #     ...
-    # @router.message(Command("stop")) ...
-
-    @router.callback_query(F.data == "susy_close_msg")
-    async def handle_close_msg(callback: CallbackQuery) -> None:
-        try:
-            await callback.message.delete()
-        except Exception:
-            await callback.answer("Message closed")
 
     return router
