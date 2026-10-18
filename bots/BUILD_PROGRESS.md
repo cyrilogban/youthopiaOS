@@ -193,6 +193,15 @@ The **YouThopiaOS Bot Family** is the chat-native heart of the **YOUTHOPIA BIBLE
 
 ---
 
+### Module 17: Phase 2 Cross-Bot Consistency & Hardening ✅
+- **Registry-Driven Identity:** New `bot_registry.meet_description()` — every bot menu derives `"Meet <Formal> (<Short>)"` from the registry; `admin_commands.BOT_NATIVE_COMMANDS` synced with the real DM menus (stale Lusy `games`/`playgame` → `playquiz`).
+- **URL Centralization:** All 11 inline `[ Open App ]` buttons now use `DEFAULT_MINI_APP_LINK`; Susan's tour/main-group and Eddy's community links feed from `shared/utils/ui` constants — single source of truth for handles + links.
+- **Always-On `/app`:** The dead `include_base_commands` branch in `build_router` was replaced by `attach_open_app()` — `/app` + `/miniapp` now respond on all 5 bots (Pete attaches explicitly) and `/app` was added to every private menu.
+- **Pete Admin Parity:** Pete's raw router now includes the shared admin router (`/stats`, `/botstats`, `/groups`) — and `/setrank`, which his menu advertised but never handled, is now a live command.
+- **Security — Fail-Closed:** `IsGlobalAdminFilter` flipped: an empty/unset `ADMIN_OWNER_ID`/`ADMIN_IDS` allow-list previously granted **everyone** admin access; it now grants **nobody** (`be672b8`).
+
+---
+
 ## 4. Current Status & Verification Matrix
 
 | Feature / Subsystem | Status | Verification Summary |
