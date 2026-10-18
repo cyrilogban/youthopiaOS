@@ -215,12 +215,12 @@ def render_shared_profile_card(
 # -----------------------------------------------------------------------------
 
 def _bullets(items: tuple[str, ...]) -> str:
-    return "\n".join(f"✿ {item}" for item in items)
+    return "\n".join(f"• {item}" for item in items)
 
 
 def _bot_family_roster() -> str:
     lines = [
-        f"<b>{identity.emoji} {identity.display_name}</b> — {identity.tagline} <a href=\"{identity.link}\">{identity.handle}</a>\n"
+        f"<b>{identity.display_name}</b> — {identity.tagline} <a href=\"{identity.link}\">{identity.handle}</a>\n"
         f"<i>{identity.responsibility}</i>\n"
         for identity in BOT_REGISTRY.values()
     ]
@@ -232,57 +232,57 @@ def build_tour_keyboard(page: int) -> InlineKeyboardMarkup:
     total = tour_content.TOUR_TOTAL_PAGES
     if page <= 1:
         return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Next ➡️", callback_data="onboarding_2")]
+            [InlineKeyboardButton(text="Next", callback_data="onboarding_2")]
         ])
     if page >= total:
         return InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="⬅️ Back", callback_data=f"onboarding_{total - 1}"),
-            InlineKeyboardButton(text="✅ Finish Tour", callback_data="onboarding_finish"),
+            InlineKeyboardButton(text="Back", callback_data=f"onboarding_{total - 1}"),
+            InlineKeyboardButton(text="Finish Tour", callback_data="onboarding_finish"),
         ]])
     return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="⬅️ Back", callback_data=f"onboarding_{page - 1}"),
-        InlineKeyboardButton(text="Next ➡️", callback_data=f"onboarding_{page + 1}"),
+        InlineKeyboardButton(text="Back", callback_data=f"onboarding_{page - 1}"),
+        InlineKeyboardButton(text="Next", callback_data=f"onboarding_{page + 1}"),
     ]])
 
 
 async def send_community_exploration_page(message: Message, page: int, edit: bool = False) -> None:
     """Renders pages of the unified YouThopia Community Tour (identical on all 5 bots + Mini App)."""
     total = tour_content.TOUR_TOTAL_PAGES
-    slogan = f"<b>🧭 The YouThopia Tour ({page}/{total})</b>"
+    slogan = f"<b>The YouThopia Tour ({page}/{total})</b>"
 
     if page == 1:
         text = (
             f"{slogan}\n"
             "<b>About YouThopia</b>\n"
             f"<blockquote>{tour_content.ABOUT_TEXT}</blockquote>\n\n"
-            "<b>✝️ Our Vision</b>\n"
+            "<b>Our Vision</b>\n"
             f"<blockquote><i>{tour_content.VISION_TEXT}</i></blockquote>"
         )
     elif page == 2:
         text = (
             f"{slogan}\n"
-            "<b>📱 Our Mission</b>\n"
+            "<b>Our Mission</b>\n"
             f"<blockquote>{_bullets(tour_content.MISSION_BULLETS)}</blockquote>"
         )
     elif page == 3:
         text = (
             f"{slogan}\n"
-            "<b>✞ Aims &amp; Objectives</b>\n"
+            "<b>Aims &amp; Objectives</b>\n"
             f"<blockquote>{_bullets(tour_content.AIMS_BULLETS)}</blockquote>"
         )
     elif page == 4:
         text = (
             f"{slogan}\n"
-            "<b>🤝 Five Pillars, One Family</b>\n"
+            "<b>Five Pillars, One Family</b>\n"
             f"<blockquote>{_bot_family_roster()}</blockquote>\n\n"
             "<i>Each pillar has its own duty — together we grow, connect, and shine as one family in CHRIST.</i>"
         )
     else:  # Page 5
         text = (
             f"{slogan}\n"
-            "<b>🌱 Your Journey</b>\n"
-            "<blockquote>Every YouTopian grows through 9 ranks of grace — from <b>🌱 The Seeker</b> to "
-            "<b>👑 YouThopia’s Ambassador</b>. Earn <b>YP</b> by engaging in the community: quizzes, "
+            "<b>Your Journey</b>\n"
+            "<blockquote>Every YouTopian grows through 9 ranks of grace — from <b>The Seeker</b> to "
+            "<b>YouThopia’s Ambassador</b>. Earn <b>YP</b> by engaging in the community: quizzes, "
             "devotionals, events, fellowship, and your Trust Score reflects your reliability and integrity.</blockquote>\n\n"
             "<i>Tap Finish to be marked as oriented, receive a welcome boost, and connect with us below!</i>"
         )
@@ -300,13 +300,14 @@ async def handle_global_onboarding_callback(callback_query: CallbackQuery, servi
     action = callback_query.data.split("_")[1]
 
     if action == "start":
-        # Legacy welcome-card buttons ("🚀 Take Community Tour") open page 1.
+        # Legacy welcome-card buttons ("Take Community Tour") open page 1.
         await send_community_exploration_page(callback_query.message, 1, edit=True)
         await callback_query.answer()
         return
-    if action in ["1", "2", "3", "4"]:
+    if action.isdigit() and 1 <= int(action) <= tour_content.TOUR_TOTAL_PAGES:
         await send_community_exploration_page(callback_query.message, int(action), edit=True)
         await callback_query.answer()
+        return
     elif action == "finish":
         user = await services.identity.resolve_telegram_user(callback_query.from_user)
 
@@ -350,17 +351,17 @@ async def handle_global_onboarding_callback(callback_query: CallbackQuery, servi
                 logger.warning(f"Failed to award onboarding XP: {e}")
 
             finish_text = (
-                "<b>Exploration Complete! 🎉</b>\n"
-                "<blockquote>Congratulations! You have advanced to <b>🌾 YouTopian Gathered One</b>!\n"
+                "<b>Exploration Complete!</b>\n"
+                "<blockquote>Congratulations! You have advanced to <b>YouTopian Gathered One</b>!\n"
                 "You have been awarded <b>+50 YP</b> & <b>+50 Trust Points</b> for completing your orientation.</blockquote>\n\n"
-                "Connect with us across all platforms below: 💜"
+                "Connect with us across all platforms below:"
             )
-            await callback_query.answer("🎉 Advanced to YouTopian Gathered One! (+50 YP)")
+            await callback_query.answer("Advanced to YouTopian Gathered One! (+50 YP)")
         else:
             finish_text = (
                 "<b>Exploration Reviewed!</b>\n"
                 "<blockquote>It looks like you've already completed your official exploration! No extra points were granted, but it's great to refresh your memory.</blockquote>\n\n"
-                "Connect with us across all platforms below: 💜"
+                "Connect with us across all platforms below:"
             )
             await callback_query.answer("Exploration Reviewed!")
 

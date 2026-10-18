@@ -47,7 +47,7 @@ class SmartGroupCommandCleanerMiddleware(BaseMiddleware):
     - Moderation & Governance commands (/warn, /mute, /ban, /setrank, /biblestudy, etc.):
       Retained for 3 minutes (180s) so the community sees the disciplinary action,
       then cleanly deleted in the background.
-    - Navigation, Menus, Queries, & Bottom Reply Button clicks (/start, /profile, 🏆 Rankings, etc.):
+    - Navigation, Menus, Queries, & Bottom Reply Button clicks (/start, /profile, Rankings, etc.):
       Deleted immediately (0s) to keep group chat history clean.
     - Private DMs: Untouched (0 deletion) so user command history is preserved.
     """
@@ -164,9 +164,9 @@ async def register_group_chat(
 
 
 TOUR_HINT_TEXT = (
-    "🧭 <b>The YouThopia Tour</b>\n"
+    "<b>The YouThopia Tour</b>\n"
     "Take the guided tour of our mission, vision, and the five pillars of the "
-    "YouThopia Bible Community — tap below to start it in this chat with me."
+    "YouThopia Bible Community - tap below to start it in this chat with me."
 )
 
 
@@ -177,7 +177,7 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
     raw router) so every bot serves the identical tour:
     - /tour command
     - /start tour deep link (fired before each bot's own /start handler)
-    - the shared "🧭 Take Tour" reply-keyboard button
+    - the shared "Take Tour" reply-keyboard button
     """
     @router.message(Command("tour"))
     async def tour_command(message: Message, services: ServiceContainer) -> None:
@@ -194,7 +194,7 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
             TOUR_HINT_TEXT,
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🧭 Start the Tour", url=f"https://t.me/{me.username}?start=tour")
+                InlineKeyboardButton(text="Start the Tour", url=f"https://t.me/{me.username}?start=tour")
             ]])
         )
         asyncio.create_task(
@@ -221,7 +221,7 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
             TOUR_HINT_TEXT,
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🧭 Start the Tour", url=f"https://t.me/{me.username}?start=tour")
+                InlineKeyboardButton(text="Start the Tour", url=f"https://t.me/{me.username}?start=tour")
             ]])
         )
         asyncio.create_task(
@@ -239,7 +239,7 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
             TOUR_HINT_TEXT,
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🧭 Start the Tour", url=f"https://t.me/{me.username}?start=tour")
+                InlineKeyboardButton(text="Start the Tour", url=f"https://t.me/{me.username}?start=tour")
             ]])
         )
         asyncio.create_task(
