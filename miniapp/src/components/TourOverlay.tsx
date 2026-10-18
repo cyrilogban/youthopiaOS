@@ -52,16 +52,23 @@ const renderPage = (page: NonNullable<Tour['pages'][number]>) => (
     {page.bots && (
       <div style={{ display: 'grid', gap: 9 }}>
         {page.bots.map((bot) => (
-          <div key={bot.handle} style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
-            <span style={{ fontSize: 19, lineHeight: 1.25, flexShrink: 0 }}>{bot.emoji}</span>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 750 }}>
-                {bot.name} <span style={{ color: 'var(--text-muted)', fontWeight: 650 }}>({bot.short})</span>
-                <span style={{ marginLeft: 6, color: 'var(--primary-purple)', fontSize: 12, fontWeight: 700 }}>{bot.handle}</span>
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{bot.tagline}</div>
-              <p className="muted-copy" style={{ marginTop: 2, fontSize: 12.5 }}>{bot.responsibility}</p>
+          <div
+            key={bot.handle}
+            style={{
+              display: 'grid',
+              gap: 2,
+              padding: '10px 12px',
+              border: '1px solid var(--slate-200)',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--surface-soft)',
+            }}
+          >
+            <div style={{ fontSize: 13.5, fontWeight: 750 }}>
+              {bot.name} <span style={{ color: 'var(--text-muted)', fontWeight: 650 }}>({bot.short})</span>
+              <span style={{ marginLeft: 6, color: 'var(--primary-purple)', fontSize: 12, fontWeight: 700 }}>{bot.handle}</span>
             </div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{bot.tagline}</div>
+            <p className="muted-copy" style={{ marginTop: 2, fontSize: 12.5 }}>{bot.responsibility}</p>
           </div>
         ))}
       </div>
@@ -185,7 +192,7 @@ export const TourOverlay: React.FC<TourOverlayProps> = ({ tour, canEarnXp, rawIn
           /* ------------------- TOUR PAGES ------------------- */
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <Pill color="purple">🧭 Page {index + 1} of {pages.length}</Pill>
+              <Pill color="purple">Page {index + 1} of {pages.length}</Pill>
               <button
                 onClick={handleDismiss}
                 aria-label="Close tour"
@@ -220,16 +227,16 @@ export const TourOverlay: React.FC<TourOverlayProps> = ({ tour, canEarnXp, rawIn
               <div style={{ display: 'flex', gap: 9 }}>
                 {index > 0 && (
                   <button className="secondary-button" onClick={() => setIndex((i) => i - 1)} disabled={finishing} style={{ flex: 1, minHeight: 42 }}>
-                    ⬅️ Back
+                    Back
                   </button>
                 )}
                 {!isLast ? (
                   <button className="primary-button" onClick={() => setIndex((i) => i + 1)} disabled={finishing} style={{ flex: 1, minHeight: 42 }}>
-                    Next ➡️
+                    Next
                   </button>
                 ) : (
                   <button className="primary-button" onClick={handleFinish} disabled={finishing || finishError} style={{ flex: 1, minHeight: 42 }}>
-                    {finishing ? 'Finishing…' : '✅ Finish Tour'}
+                    {finishing ? 'Finishing…' : 'Finish Tour'}
                   </button>
                 )}
               </div>
