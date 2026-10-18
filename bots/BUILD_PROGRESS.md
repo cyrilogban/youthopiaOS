@@ -1,23 +1,25 @@
-# YouThopiaOS Mini App — Build Progress & Engineering Journal
+# YouThopiaOS Bots — Build Progress & Engineering Journal
 
 > **Living document.** Updated after each build phase so the entire team has a crystal-clear understanding of every design decision, architectural shift, turning point, and technical breakthrough.
+> **Scope:** The 5 standalone Telegram assistants (Theodore/Theo, Lucy/Lusie, Edmund/Edie, Peter/Pete, Susan/Susie), the shared services layer, and the FastAPI gateway.
+> **Mini App progress lives in `miniapp/BUILD_PROGRESS.md`.**
 > **Last updated:** 2026-10-18
 
 ---
 
 ## 1. Executive Summary & Vision
 
-The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running inside Telegram's native webview for the **YOUTHOPIA BIBLE COMMUNITY**.
+The **YouThopiaOS Bot Family** is the chat-native heart of the **YOUTHOPIA BIBLE COMMUNITY** — five standalone Telegram assistants sharing one identity standard, one services layer, and one gateway, that together shepherd members into deeper daily engagement.
 
-- **App Title:** `YOUTHOPIA BIBLE COMMUNITY`
-- **Slogan:** `Sharing God's Love All The Way`
-- **Core Architecture:** 3-Tier Decoupled Architecture (`React Mini App` ↔ `FastAPI Gateway` ↔ `Supabase Postgres DB`).
-- **The 5 Specialized Telegram Assistants:**
-  1. 📖 **Theo Bot (`@theobiblebot`)**: Daily Verses (VOTD), Scripture Search & Multi-Translation (KJV, ASV, WEB, BBE).
-  2. 🎮 **Lusie Bot (`@lusiequizbot`)**: Bible Trivia, 4 Quiz Modes, XP Progression & Global Leaderboard.
-  3. 🛡️ **Pete Bot (`@petemodbot`)**: Community Shield, Captcha Guard, Trust Score (100/100) & Member Verification.
-  4. 📅 **Edie Bot (`@ediecalendarbot`)**: Community Schedule, Weekly Gatherings, Birthdays & Calendar RSVP.
-  5. 💬 **Susie Bot (`@susiehelpsbot`)**: Community Hostess, Newcomer Tour, Topic Directory & FAQs.
+- **Community Slogan:** `Sharing God's Love All The Way`
+- **Core Architecture:** Shared stack (`bots/*` + `shared/services` + `FastAPI Gateway` + `Supabase Postgres DB`).
+- **The 5 Standalone Telegram Assistants (per `shared/config/bot_registry.py`):**
+  1. **Theodore / Theo (`@theobiblebot`)**: Daily Verses (VOTD), Scripture Search & Multi-Translation (KJV, ASV, WEB, BBE).
+  2. **Lucy / Lusie (`@lusiequizbot`)**: Bible Trivia, 4 Quiz Modes, XP Progression & Global Leaderboard.
+  3. **Peter / Pete (`@petemodbot`)**: Community Shield, Captcha Guard, Trust Score (100/100) & Member Verification.
+  4. **Edmund / Edie (`@ediecalendarbot`)**: Community Schedule, Weekly Gatherings, Birthdays & Calendar RSVP.
+  5. **Susan / Susie (`@susiehelpsbot`)**: Community Hostess, Newcomer Tour, Topic Directory & FAQs.
+- **The companion Mini App** (`miniapp/`) is documented separately in `miniapp/BUILD_PROGRESS.md`; bots route members into it via inline `[ Open App ]` launch cards.
 
 ---
 
@@ -141,6 +143,8 @@ The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running insi
   - Preserved `dev-mock-hash` developer header flag for local test environments.
 - **Automated Test Suite:** Created `tests/test_gateway_auth.py` covering missing headers, invalid signatures, stale timestamps, valid HMAC signatures, and dev mock bypass (100% passing).
 
+---
+
 ### Module 12: Community Hierarchy — 4 Tiers, 9 Ranks ✅
 - **The System:** Implemented the 4-tier, 9-rank member hierarchy across all 5 bots and the Mini App:
   - **Entry Level:** YouTopian Seeker → YouTopian Gathered One
@@ -171,49 +175,28 @@ The **YouThopiaOS Mini App** is a unified, visual Telegram Mini App running insi
 
 ---
 
-### Module 15: The Living Devotional Redesign ✅
-- **Brief:** Executed the `MINIAPP_UI_REDESIGN_HANDOFF.md` product brief — evolve from "five bot dashboards in one shell" into **one calm, devotional-first community product**.
-- **Member-Centered Navigation:** The bottom dock now reads **Today / Word / Play / Gather / More**, with the `TabId` structure retained (no routing rewrite).
-- **Today:** Page-level greeting, large editorial Verse-of-the-Day card ("Read in Word" action), growth card (XP, rank badge, progress bar, "Play today's challenge"), and next-moment feature rows.
-- **Word:** Immersive serif Scripture with a segmented translation control (KJV/ASV/WEB/BBE), synced live to gateway settings; saved verses/reading plans slots reserved for the future.
-- **Play:** Featured daily challenge, four game modes framed as playable destinations with XP reward pills and `t.me` deep links, leaderboard demoted to secondary Top-5 context.
-- **Gather:** Calendar-first — next gathering hero card with Edie RSVP deep link, remaining events below, event/birthday management via Edie.
-- **More:** Rebuilt as the community handbook — profile & preferences pointers, Peter security summary, the 5-assistant directory with registry names/handles, 3-step quick start aligned to the new destinations, FAQ accordion, and community group links. No magenta page-block, no emojis.
-- **Brand Alignment:** Shell header now carries the kicker `YOUTHOPIA BIBLE COMMUNITY` and tagline `Sharing God's Love All The Way`.
-- **Retirements:** `CommunityTicker.tsx` removed (orphaned consumer of community stats).
-- **Design Tokens:** Warm off-white canvas, deep purple anchor (`#5f2cab`), editorial cards, quiet chips, feature rows, standardized skeletons and pill system — one dominant platform palette per the brief's color-usage rules.
+### Module 15: The Living Devotional Redesign (Mini App — see miniapp/BUILD_PROGRESS.md)
+- The full Mini App redesign is recorded in `miniapp/BUILD_PROGRESS.md`. Bot-side touchpoints: member ranks, formal assistant names, and deep-link launch surfaces continue to route members into the app from chat.
 
 ---
 
-### Module 16: Resilient Launch & Error Boundary ✅
-- **The Symptom:** The production build showed a blank white screen when opened in a plain browser (no Telegram environment, no dev mock).
-- **Root Cause:** Synchronous throws from `@telegram-apps/sdk` calls (`init()`, `initData` access, `viewport.expand.isAvailable()`) inside React effects unmount the entire React tree.
-- **The Fix (`miniapp/src/services/telegram.ts`):**
-  1. Every SDK boot call is individually wrapped in `try...catch`; launch context simply stays unavailable outside Telegram.
-  2. All `initData`/user reads have the official `window.Telegram.WebApp` bridge as first fallback (reply-keyboard webviews included).
-- **Error Boundary:** Added `miniapp/src/components/ErrorBoundary.tsx` (wired in `main.tsx`) so any future crash renders a recoverable "Reload" card instead of a blank page.
-- **Verification:** `npx tsc --noEmit` and `npm run build` pass with 0 errors; production preview renders correctly outside Telegram.
-
 ---
+
+## 4. Current Status & Verification Matrix
 
 | Feature / Subsystem | Status | Verification Summary |
 |---|---|---|
 | **FastAPI Gateway Auth** | ✅ Verified | Strict HMAC-SHA256 multi-bot signature verification + anti-replay check, with graceful fallback to prevent profile 401 lockouts. |
 | **Supabase Profile Sync** | ✅ Verified | Live XP, level, rank fields, quiz accuracy, and display-name sync on every profile fetch. |
 | **Community Hierarchy** | ✅ Verified | 4-tier / 9-rank system resolved from XP with admin override, rendered in all bots + Mini App. |
-| **Living Devotional UI** | ✅ Verified | Today / Word / Play / Gather / More navigation, editorial VOTD card, More handbook screen. |
-| **Resilient Launch** | ✅ Verified | Defensive SDK boot + error boundary; production preview renders outside Telegram. |
 | **Inline App Launchers** | ✅ Verified | Attached to `/start`, `/app`, group cards, and verse lookups. |
-| **Live Analytics** | ✅ Verified | Admin `/stats` MAU/DAU; `/api/community/stats` endpoint live (member-facing surface pending). |
-| **Production Build** | ✅ Verified | TypeScript 0 errors, Vite bundle compiled, live on Render. |
+| **Live Analytics** | ✅ Verified | Admin `/stats` MAU/DAU; `/api/community/stats` endpoint live for the ecosystem. |
+| **Production Build** | ✅ Verified | Gateway, shared services, and all 5 bots deployed against production Supabase; live on Render. |
 
 ---
 
 ## 5. Next Steps for Community Launch
 
-1. **Real-Device Telegram Test (post-deploy):** Launch the app from a bot's Open App button and confirm the verified profile loads (not "Preview mode") — validates real `initData`, safe-area insets, and viewport expansion inside the webview.
-2. **AOTD (Affirmation of the Day):** Deferred by design — build only after an actual backend content model and endpoint exist.
-3. **Future Stats Surface:** `/api/community/stats` is live but currently has no frontend consumer; fold a compact stats strip into Today or More when desired.
-4. **Scripture Library (Word):** Saved verses gallery, reading-plan progress, and shareable VOTD graphics remain reserved future slots.
-5. **BotFather Menu Buttons:** Set `/setmenubutton` for all 5 bots to `https://youthopiaos.onrender.com` (`Open App`), if not already configured.
-6. **Community Group Hub Pinning:** Use the `/pinapp` command in the main YouThopia group to pin the official community card for instant member access.
+1. **BotFather Menu Buttons:** Set `/setmenubutton` for all 5 bots to `https://youthopiaos.onrender.com` (`Open App`), if not already configured.
+2. **Community Group Hub Pinning:** Use the `/pinapp` command in the main YouThopia group to pin the official community card for instant member access.
+3. **AOTD (Affirmation of the Day):** Deferred by design — build only after an actual backend content model and endpoint exist (shared with the Mini App's future slot).
