@@ -1,238 +1,105 @@
 import React, { useEffect, useState } from 'react';
 import type { ProfileState } from '../../hooks/useTelegram';
 import { fetchLeaderboard, type LeaderboardItem } from '../../services/api';
-import { Card, Skeleton, SectionTitle, Pill, ProgressBar } from '../ui';
+import { Card, Pill, ProgressBar, SectionTitle, Skeleton } from '../ui';
 import { RankBadge } from '../RankBadge';
 
-interface QuizTabProps {
-  profile: ProfileState;
-}
+interface QuizTabProps { profile: ProfileState; }
 
-const MEDALS: Record<number, { bg: string; color: string; label: string }> = {
-  0: { bg: '#fef3c7', color: '#b45309', label: '🥇' },
-  1: { bg: '#f1f5f9', color: '#475569', label: '🥈' },
-  2: { bg: '#fed7aa', color: '#9a3412', label: '🥉' },
-};
+const GAME_MODES = [
+  { title: 'Bible Challenge', description: 'A multiple-choice round to test what you know.', reward: 'Up to 40 XP', path: 'playquiz' },
+  { title: 'Verse Completion', description: 'Finish the verse and train your memory.', reward: 'Up to 50 XP', path: 'versecompletion' },
+  { title: 'Verse Scramble', description: 'Put Scripture back in the right order.', reward: 'Up to 50 XP', path: 'scramble' },
+  { title: 'Trivia Race', description: 'A rapid round when you want a quick challenge.', reward: 'Speed round', path: 'triviarace' },
+];
 
 export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
-  const p = profile.status === 'ok' ? profile.profile : null;
-  const userXp = p?.totalXp ?? 0;
-  const computedLevel = Math.max(1, Math.floor(Math.max(userXp, 0) / 100) + 1);
-  const userLevel = p?.level && p.level > 1 ? p.level : (p ? computedLevel : 1);
-  const xpIntoLevel = userXp % 100;
-  const xpNeeded = 100 - xpIntoLevel;
+  const member = profile.status === 'ok' ? profile.profile : null;
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const xp = member?.totalXp ?? 0;
+  const level = member?.level && member.level > 1 ? member.level : Math.max(1, Math.floor(xp / 100) + 1);
+  const progress = xp % 100;
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const items = await fetchLeaderboard();
+      const members = await fetchLeaderboard();
       if (!cancelled) {
-        setLeaderboard(items);
-        setLoadingLeaderboard(false);
+        setLeaderboard(members);
+        setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
-
-  const quizModes = [
-    {
-      id: 'challenge',
-      title: 'Bible Challenge',
-      subtitle: 'Multiple Choice Trivia',
-      description: 'Test your foundational Bible knowledge across classic multiple choice questions.',
-      tag: 'Classic',
-    },
-    {
-      id: 'completion',
-      title: 'Verse Completion',
-      subtitle: 'Fill-in-the-Blank',
-      description: 'Identify and fill in missing keywords in sacred Scripture passages.',
-      tag: 'Memory',
-    },
-    {
-      id: 'scramble',
-      title: 'Verse Scramble',
-      subtitle: 'Word Ordering',
-      description: 'Unscramble shuffled Scripture words into their correct biblical sequence.',
-      tag: 'Puzzle',
-    },
-    {
-      id: 'race',
-      title: 'Trivia Race',
-      subtitle: 'Rapid Timed Competition',
-      description: 'Compete against the clock in a fast-paced Bible speed challenge.',
-      tag: 'Speed',
-    },
-  ];
 
   return (
     <div className="section-stack">
-      {/* Lusy Gaming Hero Banner */}
-      <section
-        style={{
-          borderRadius: 28,
-          padding: 20,
-          color: '#ffffff',
-          background: 'var(--grad-quiz)',
-          boxShadow: 'var(--shadow-purple)',
-        }}
-      >
-        <Pill color="deep" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.26)', marginBottom: 12 }}>
-          Lucy Gaming Hub
-        </Pill>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 3 }}>Your Rank Status</div>
-            <div style={{ fontSize: 24, fontWeight: 900, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span>Level {userLevel}</span>
-              {p?.rankTitle && (
-                <RankBadge
-                  title={p.rankTitle}
-                  emoji={p.rankEmoji}
-                  color={p.rankBadgeColor}
-                  size="sm"
-                />
-              )}
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div className="eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 3 }}>Total XP</div>
-            <div style={{ fontSize: 22, fontWeight: 900, marginTop: 2 }}>{p ? `${userXp.toLocaleString()} XP` : '0 XP'}</div>
-          </div>
-        </div>
+      <section className="page-heading">
+        <span className="quiet-chip">Lusie's game room</span>
+        <h1>Learn the Word by playing.</h1>
+        <p>Take a small challenge, build your confidence, and earn progress that follows you across YouThopia.</p>
+      </section>
 
-        {/* XP Progress Bar */}
-        <div style={{ marginTop: 18 }}>
-          <ProgressBar value={p ? xpIntoLevel : 75} max={100} tone="purple" />
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 8 }}>
-            {p ? `${xpNeeded} XP to Level ${userLevel + 1} (${xpIntoLevel}% completed)` : 'Play quizzes with Lusy to earn XP'}
-          </div>
-        </div>
-
-        {/* Live Quiz Stats */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 10,
-            marginTop: 16,
-            paddingTop: 16,
-            borderTop: '1px solid rgba(255,255,255,0.15)',
-          }}
-        >
+      <Card style={{ padding: 20, background: 'var(--grad-quiet)', borderColor: 'var(--purple-200)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>Quizzes Completed</div>
-            <div style={{ fontSize: 16, fontWeight: 850, marginTop: 2 }}>{p?.quizzesPlayed ?? 0} Played</div>
+            <div className="eyebrow">Your play status</div>
+            <div style={{ marginTop: 5, fontSize: 28, fontWeight: 800 }}>Level {level}</div>
+            {member?.rankTitle && <div style={{ marginTop: 8 }}><RankBadge title={member.rankTitle} emoji={member.rankEmoji} color={member.rankBadgeColor} size="sm" /></div>}
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>Quiz Accuracy</div>
-            <div style={{ fontSize: 16, fontWeight: 850, marginTop: 2 }}>{p?.accuracyPct ?? 100}%</div>
-          </div>
+          <div style={{ textAlign: 'right' }}><strong style={{ display: 'block', fontSize: 20 }}>{xp.toLocaleString()}</strong><span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>total XP</span></div>
+        </div>
+        <div style={{ marginTop: 18 }}><ProgressBar value={progress} max={100} /></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, color: 'var(--text-secondary)', fontSize: 11 }}><span>{member?.quizzesPlayed ?? 0} quizzes played</span><span>{member?.accuracyPct ?? 100}% accuracy</span></div>
+      </Card>
+
+      <section className="section-group">
+        <SectionTitle eyebrow="Start here" right={<Pill color="purple">Featured</Pill>}>Today's challenge</SectionTitle>
+        <Card style={{ padding: 20, borderColor: 'var(--purple-200)' }}>
+          <div className="eyebrow">Bible Challenge</div>
+          <h2 style={{ margin: '6px 0 0', fontSize: 21 }}>Five questions. One stronger foundation.</h2>
+          <p className="muted-copy" style={{ marginTop: 8 }}>Open Lusie for a focused Bible quiz round and earn XP for every correct answer.</p>
+          <a className="primary-button" href="https://t.me/lusiequizbot?start=playquiz" target="_blank" rel="noreferrer" style={{ marginTop: 16 }}>Start challenge</a>
+        </Card>
+      </section>
+
+      <section className="section-group">
+        <SectionTitle eyebrow="Choose a mode">Play your way</SectionTitle>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {GAME_MODES.map((game) => (
+            <Card key={game.path} style={{ padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ fontSize: 15 }}>{game.title}</strong>
+                  <p className="muted-copy" style={{ marginTop: 4 }}>{game.description}</p>
+                  <Pill color="slate" style={{ marginTop: 10 }}>{game.reward}</Pill>
+                </div>
+                <a className="secondary-button" href={`https://t.me/lusiequizbot?start=${game.path}`} target="_blank" rel="noreferrer" style={{ minHeight: 36, paddingInline: 13 }}>Open</a>
+              </div>
+            </Card>
+          ))}
         </div>
       </section>
 
-      {/* Live Community Leaderboard Section */}
-      <Card style={{ padding: 18 }} hover>
-        <SectionTitle right={<Pill color="purple">Top 10</Pill>}>Global Leaderboard</SectionTitle>
-
-        {loadingLeaderboard ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} height={40} radius={10} />
-            ))}
-          </div>
-        ) : leaderboard.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {leaderboard.map((item, idx) => {
-              const medal = MEDALS[idx];
-              const isTop3 = medal !== undefined;
-
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    background: isTop3 ? medal.bg : 'var(--surface-soft)',
-                    border: '1px solid var(--slate-100)',
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: isTop3 ? medal.color : 'var(--text-muted)',
-                        width: 24,
-                      }}
-                    >
-                      {isTop3 ? medal.label : `#${idx + 1}`}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-color)' }}>
-                      {item.displayName || 'Anonymous Member'}
-                    </span>
-                    {item.rankTitle && (
-                      <RankBadge
-                        title={item.rankTitle}
-                        emoji={item.rankEmoji}
-                        color={item.rankBadgeColor}
-                        size="sm"
-                      />
-                    )}
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)', whiteSpace: 'nowrap' }}>
-                    {item.totalXp.toLocaleString()} XP (Lvl {item.level})
-                  </span>
+      <section className="section-group">
+        <SectionTitle eyebrow="Community" right={<Pill color="slate">Top 10</Pill>}>Leaderboard</SectionTitle>
+        <Card style={{ padding: 10 }}>
+          {loading ? (
+            <div style={{ display: 'grid', gap: 8, padding: 6 }}>{[1, 2, 3].map((item) => <Skeleton key={item} height={46} />)}</div>
+          ) : leaderboard.length ? (
+            <div style={{ display: 'grid', gap: 3 }}>
+              {leaderboard.slice(0, 5).map((item, index) => (
+                <div key={`${item.displayName}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px', borderBottom: index < 4 ? '1px solid var(--slate-100)' : undefined }}>
+                  <strong style={{ width: 24, color: 'var(--primary-purple)', fontSize: 12 }}>#{index + 1}</strong>
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, fontWeight: 700 }}>{item.displayName || 'Community member'}</span>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 700 }}>{item.totalXp.toLocaleString()} XP</span>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            No leaderboard records yet. Play quizzes with Lusy to earn XP!
-          </div>
-        )}
-      </Card>
-
-      {/* 4 Lusy Quiz Modes */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <SectionTitle eyebrow="Game Arena" right={<Pill color="purple">4 Modes</Pill>}>
-          Available Quiz Modes
-        </SectionTitle>
-
-        {quizModes.map((quiz) => (
-          <Card key={quiz.id} hover style={{ padding: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-color)' }}>{quiz.title}</span>
-                  <Pill color="neutral">{quiz.tag}</Pill>
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary-purple)', marginBottom: 4 }}>{quiz.subtitle}</div>
-                <div className="muted-copy" style={{ fontSize: 12 }}>{quiz.description}</div>
-              </div>
-              <a
-                href="https://t.me/lusiequizbot?start=playquiz"
-                target="_blank"
-                rel="noreferrer"
-                className="ghost-button"
-                style={{ textDecoration: 'none', height: 34, minHeight: 34, fontSize: 12, padding: '0 14px', flexShrink: 0 }}
-              >
-                Play →
-              </a>
+              ))}
             </div>
-          </Card>
-        ))}
-      </div>
+          ) : <p className="muted-copy" style={{ padding: 12 }}>The leaderboard will grow as members begin playing.</p>}
+        </Card>
+      </section>
     </div>
   );
 };

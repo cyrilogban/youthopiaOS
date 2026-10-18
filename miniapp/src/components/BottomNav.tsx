@@ -25,7 +25,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
   const tabs: { id: TabId; label: string; path: React.ReactNode }[] = [
     {
       id: 'home',
-      label: 'Home',
+      label: 'Today',
       path: (
         <>
           <rect x="3" y="3" width="7" height="7" rx="2" />
@@ -37,7 +37,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
     },
     {
       id: 'bible',
-      label: 'Bible',
+      label: 'Word',
       path: (
         <>
           <path d="M5 19.5A2.5 2.5 0 0 1 7.5 17H20" />
@@ -48,7 +48,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
     },
     {
       id: 'quiz',
-      label: 'Lusy',
+      label: 'Play',
       path: (
         <>
           <circle cx="12" cy="12" r="9" />
@@ -59,7 +59,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
     },
     {
       id: 'events',
-      label: 'Eddy',
+      label: 'Gather',
       path: (
         <>
           <rect x="3" y="4.5" width="18" height="16" rx="3" />
@@ -71,7 +71,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
     },
     {
       id: 'community',
-      label: 'Hub',
+      label: 'More',
       path: (
         <>
           <path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-6A3.5 3.5 0 0 0 3 18.5V20" />
@@ -89,22 +89,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
       style={{
         position: 'fixed',
         left: '50%',
-        bottom: 12,
+        bottom: 'max(12px, env(safe-area-inset-bottom))',
         transform: 'translateX(-50%)',
         width: 'calc(100% - 24px)',
         maxWidth: 500,
-        minHeight: 70,
+        minHeight: 68,
         display: 'grid',
         gridTemplateColumns: 'repeat(5, 1fr)',
         alignItems: 'center',
         gap: 4,
         padding: 6,
-        borderRadius: 28,
-        background: 'rgba(255,255,255,0.9)',
-        border: '1px solid rgba(221, 214, 254, 0.78)',
-        boxShadow: '0 18px 50px rgba(41, 19, 69, 0.18)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: 20,
+        background: 'rgba(255,255,255,0.96)',
+        border: '1px solid var(--slate-200)',
+        boxShadow: '0 12px 30px rgba(34, 24, 48, 0.14)',
         zIndex: 1000,
       }}
     >
@@ -117,9 +115,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
             onClick={() => onTabChange(id)}
             style={{
               minWidth: 0,
-              minHeight: 58,
+              minHeight: 56,
               border: 0,
-              borderRadius: 22,
+              borderRadius: 16,
               background: active ? 'var(--purple-50)' : 'transparent',
               color: active ? 'var(--primary-purple)' : 'var(--text-muted)',
               display: 'flex',

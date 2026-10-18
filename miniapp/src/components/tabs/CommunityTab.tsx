@@ -1,309 +1,197 @@
 import React, { useState } from 'react';
 import { Card, Pill, SectionTitle } from '../ui';
 
+interface AssistantEntry {
+  formal: string;
+  short: string;
+  handle: string;
+  responsibility: string;
+  link: string;
+}
+
+const ASSISTANTS: AssistantEntry[] = [
+  { formal: 'Theodore', short: 'Theo', handle: '@theobiblebot', responsibility: 'Scripture, devotionals, saved verses, and theological assistance', link: 'https://t.me/theobiblebot' },
+  { formal: 'Lucy', short: 'Lusie', handle: '@lusiequizbot', responsibility: 'Bible quizzes, XP, competitions, and leaderboards', link: 'https://t.me/lusiequizbot' },
+  { formal: 'Edmund', short: 'Edie', handle: '@ediecalendarbot', responsibility: 'Calendar, events, meetings, birthdays, and reminders', link: 'https://t.me/ediecalendarbot' },
+  { formal: 'Peter', short: 'Pete', handle: '@petemodbot', responsibility: 'Moderation, anti-spam, and community safety', link: 'https://t.me/petemodbot' },
+  { formal: 'Susan', short: 'Susie', handle: '@susiehelpsbot', responsibility: 'Onboarding, welcome, and hospitality', link: 'https://t.me/susiehelpsbot' },
+];
+
+const COMMUNITY_SPACES = [
+  { name: 'Main Community Group', role: 'General fellowship, announcements, and support', link: 'https://t.me/youthopiabiblecommunity' },
+];
+
+const FAQS = [
+  {
+    question: 'What is YouThopia Bible Community?',
+    answer: 'YouThopia Bible Community is a digital fellowship of believers dedicated to studying Scripture, deepening faith, playing and learning together, and sharing God\'s love all the way.',
+  },
+  {
+    question: 'What is YouThopiaOS?',
+    answer: 'YouThopiaOS is the software engine powering our five Telegram assistants (Theodore, Lucy, Edmund, Peter, Susan) and this unified Mini App.',
+  },
+  {
+    question: 'How do I earn XP and level up?',
+    answer: 'You earn YouTopian Points by taking quizzes with Lusie and completing Scripture challenges. Your XP follows you across every part of the community.',
+  },
+  {
+    question: 'How does verification work?',
+    answer: 'When you open the Mini App inside Telegram, your signed Telegram identity is verified server-side before your profile is shown.',
+  },
+  {
+    question: 'What is the Trust Score?',
+    answer: 'Peter maintains a Trust Score out of 100 for every member, based on verification, clean interactions, and account standing.',
+  },
+];
+
+const ONBOARDING = [
+  { step: '01', title: 'Set Bible preferences', description: 'Choose your default Scripture translation in Word.' },
+  { step: '02', title: 'Earn community XP', description: 'Take a quiz in Play to build your member rank.' },
+  { step: '03', title: 'Join a gathering', description: 'RSVP for weekly studies and prayer calls in Gather.' },
+];
+
 export const CommunityTab: React.FC = () => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  const directoryChannels = [
-    {
-      name: 'Main Community Group',
-      role: 'General Fellowship, Announcements & Support',
-      tag: 'Primary Group',
-      bot: 'Susan Bot',
-      link: 'https://t.me/youthopiabiblecommunity',
-    },
-    {
-      name: 'Scripture & Devotional Hub',
-      role: 'Daily VOTD & Reflection Studies',
-      tag: 'Theodore Bot',
-      bot: '@theobiblebot',
-      link: 'https://t.me/theobiblebot',
-    },
-    {
-      name: 'Prayer & Intercession Line',
-      role: 'Prayer Requests & Midweek Sessions',
-      tag: 'Edmund Bot',
-      bot: '@ediecalendarbot',
-      link: 'https://t.me/ediecalendarbot',
-    },
-    {
-      name: 'Quiz & Challenge Arena',
-      role: 'Daily Bible Trivia & Leaderboards',
-      tag: 'Lucy Bot',
-      bot: '@lusiequizbot',
-      link: 'https://t.me/lusiequizbot',
-    },
-    {
-      name: 'Security & Moderation Checkpoint',
-      role: 'Captcha Verification & Trust Ratings',
-      tag: 'Peter Bot',
-      bot: '@petemodbot',
-      link: 'https://t.me/petemodbot',
-    },
-  ];
-
-  const onboardingSteps = [
-    {
-      step: '01',
-      title: 'Set Bible Preferences',
-      description: 'Choose your default Scripture translation (KJV, ASV, WEB, BBE) in the Bible tab.',
-    },
-    {
-      step: '02',
-      title: 'Earn Community XP',
-      description: 'Participate in daily quizzes and challenges to build your member rank.',
-    },
-    {
-      step: '03',
-      title: 'Join Community Events',
-      description: 'RSVP for weekly Bible studies and midweek prayer calls in the Events tab.',
-    },
-  ];
-
-  const faqs = [
-    {
-      question: 'What is YouThopia Bible Community?',
-      answer:
-        'YouThopia Bible Community is a vibrant digital fellowship of believers dedicated to studying sacred Scripture, deepening faith, participating in daily interactive quizzes, and sharing God\'s love all the way.',
-    },
-    {
-      question: 'What is YouThopiaOS?',
-      answer:
-        'YouThopiaOS is the underlying software engine powering our 5 specialized Telegram assistants (Theodore, Lucy, Peter, Edmund, Susan) and this unified Mini App platform.',
-    },
-    {
-      question: 'How do I earn XP and level up?',
-      answer: 'You earn YouTopian Points (XP) by participating in daily quizzes hosted by Lucy Bot and completing Scripture challenges.',
-    },
-    {
-      question: 'How does verification work?',
-      answer: 'When you open the Mini App inside Telegram, your cryptographic initData signature is verified server-side by our FastAPI gateway.',
-    },
-    {
-      question: 'What is Peter Bot\'s Trust Score?',
-      answer:
-        'Peter Bot calculates a Trust Score (100/100) for every member based on captcha verification, clean group interactions, and account standing.',
-    },
-  ];
-
   return (
     <div className="section-stack">
-      {/* Susan Hostess Hero Banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #701a75 0%, #a21caf 50%, #e879f9 100%)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '24px 20px',
-          color: '#ffffff',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-lg)',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: -40,
-            right: -30,
-            width: 140,
-            height: 140,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-          }}
-        />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(8px)',
-                padding: '4px 10px',
-                borderRadius: 999,
-              }}
-            >
-              Hostess & Hospitality Hub
-            </span>
-            <span style={{ fontSize: 12, opacity: 0.9 }}>• Susan & Peter</span>
-          </div>
+      <section className="page-heading">
+        <span className="quiet-chip">Community guide</span>
+        <h1>Your YouThopia Handbook.</h1>
+        <p>Find the assistants, manage your settings, and learn how everything fits together.</p>
+      </section>
 
-          <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px 0', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-            Welcome to YouThopia Family
-          </h2>
-          <p style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.92, margin: 0 }}>
-            I am Susan, your community hostess and onboarding guide. Explore our fellowship channels, verify your standing with Peter, and find your place in the family!
+      <section className="section-group">
+        <SectionTitle eyebrow="Manage" right={<Pill color="slate">In app</Pill>}>Your account</SectionTitle>
+        <Card style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <strong style={{ fontSize: 14 }}>Profile</strong>
+              <p className="muted-copy" style={{ marginTop: 4 }}>
+                Open your growth passport from the avatar button at the top to review rank, XP, accuracy, and trust.
+              </p>
+            </div>
+            <div>
+              <strong style={{ fontSize: 14 }}>Preferences</strong>
+              <p className="muted-copy" style={{ marginTop: 4 }}>
+                Your Bible translation lives in Word, and daily devotional delivery follows the same setting.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      <section className="section-group">
+        <SectionTitle eyebrow="Safety" right={<Pill color="success">Shielded</Pill>}>Peter, our guardian</SectionTitle>
+        <Card style={{ padding: 16 }}>
+          <p className="muted-copy" style={{ margin: 0 }}>
+            Peter quietly protects the community from spam and unauthorized bots. Your account passes verification with an optimal{' '}
+            <strong style={{ color: 'var(--success)' }}>100/100 Trust Score</strong> based on clean interactions and good standing.
           </p>
-        </div>
-      </div>
+        </Card>
+      </section>
 
-      {/* Peter Security Checkpoint Card */}
-      <Card style={{ padding: 18 }} hover>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 16 }}>🛡️</span>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--success)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Peter Security & Trust Checkpoint
-            </span>
-          </div>
-          <Pill color="success">● Account Shielded</Pill>
-        </div>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
-          Peter Bot actively protects our fellowship against spam and unauthorized bots. Your account has passed verification with an optimal{' '}
-          <strong style={{ color: 'var(--success)' }}>100/100 Trust Score</strong>.
-        </p>
-      </Card>
-
-      {/* Directory Section */}
-      <div>
-        <SectionTitle right={<Pill color="purple">5 Bots Active</Pill>}>
-          Community Directory & Ecosystem
-        </SectionTitle>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-          {directoryChannels.map((chan, idx) => (
-            <Card
-              key={idx}
-              hover
-              style={{
-                padding: 16,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 12,
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-color)' }}>{chan.name}</span>
-                  <Pill color="purple">{chan.tag}</Pill>
+      <section className="section-group">
+        <SectionTitle eyebrow="Assistants" right={<Pill color="purple">5 active</Pill>}>Meet the team</SectionTitle>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {ASSISTANTS.map((a) => (
+            <Card key={a.handle} hover style={{ padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ fontSize: 14 }}>{a.formal} <span style={{ color: 'var(--text-muted)', fontWeight: 650 }}>({a.short})</span></strong>
+                  <p className="muted-copy" style={{ marginTop: 4 }}>{a.responsibility}</p>
+                  <span style={{ display: 'inline-block', marginTop: 8, color: 'var(--primary-purple)', fontSize: 11, fontWeight: 750 }}>{a.handle}</span>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{chan.role}</div>
+                <a className="secondary-button" href={a.link} target="_blank" rel="noreferrer" style={{ minHeight: 36, paddingInline: 13 }}>Open</a>
               </div>
-              <a
-                href={chan.link}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--primary-purple)',
-                  textDecoration: 'none',
-                  background: 'var(--purple-50)',
-                  border: '1px solid var(--purple-100)',
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                Open →
-              </a>
             </Card>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* 3-Step Onboarding Guide */}
-      <Card style={{ padding: 18 }} hover>
-        <SectionTitle right={<Pill color="purple">3 Steps</Pill>}>
-          New Member Quick-Start
-        </SectionTitle>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 12 }}>
-          {onboardingSteps.map((s) => (
-            <div key={s.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: 'var(--primary-purple)',
-                  background: 'var(--purple-50)',
-                  border: '1px solid var(--purple-100)',
-                  padding: '6px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  flexShrink: 0,
-                }}
-              >
-                {s.step}
-              </span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-color)' }}>{s.title}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.5 }}>
-                  {s.description}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Community FAQ Accordion */}
-      <Card style={{ padding: 18 }} hover>
-        <SectionTitle>Frequently Asked Questions</SectionTitle>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-          {faqs.map((faq, index) => {
-            const isOpen = activeFaq === index;
-            return (
-              <div key={index} style={{ borderBottom: '1px solid var(--slate-100)', paddingBottom: 8 }}>
-                <button
-                  onClick={() => setActiveFaq(isOpen ? null : index)}
+      <section className="section-group">
+        <SectionTitle eyebrow="Learn the flow" right={<Pill color="purple">3 steps</Pill>}>Getting started</SectionTitle>
+        <Card style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {ONBOARDING.map((s) => (
+              <div key={s.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <span
                   style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    background: 'none',
-                    border: 'none',
-                    padding: '8px 0',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--text-color)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: 'var(--primary-purple)',
+                    background: 'var(--purple-50)',
+                    border: '1px solid var(--purple-100)',
+                    padding: '5px 9px',
+                    borderRadius: 'var(--radius-md)',
+                    flexShrink: 0,
                   }}
                 >
-                  <span>{faq.question}</span>
-                  <span
+                  {s.step}
+                </span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>{s.title}</div>
+                  <p className="muted-copy" style={{ marginTop: 2 }}>{s.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </section>
+
+      <section className="section-group">
+        <SectionTitle eyebrow="Questions">Community FAQ</SectionTitle>
+        <Card style={{ padding: 18 }}>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {FAQS.map((faq, index) => {
+              const isOpen = activeFaq === index;
+              return (
+                <div key={index} style={{ borderBottom: index < FAQS.length - 1 ? '1px solid var(--slate-100)' : undefined, paddingBottom: 8 }}>
+                  <button
+                    onClick={() => setActiveFaq(isOpen ? null : index)}
                     style={{
-                      color: isOpen ? 'var(--primary-purple)' : 'var(--text-muted)',
-                      fontSize: 18,
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 0,
+                      padding: '8px 0',
+                      fontSize: 13,
                       fontWeight: 700,
-                      flexShrink: 0,
-                      marginLeft: 12,
-                      transition: 'color 0.15s var(--ease)',
+                      color: 'var(--ink)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
                     }}
                   >
-                    {isOpen ? '−' : '+'}
-                  </span>
-                </button>
-                <div
-                  style={{
-                    maxHeight: isOpen ? 220 : 0,
-                    overflow: 'hidden',
-                    transition: 'max-height 0.25s var(--ease)',
-                  }}
-                >
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '2px 0 6px 0' }}>
-                    {faq.answer}
-                  </p>
+                    <span>{faq.question}</span>
+                    <span style={{ color: isOpen ? 'var(--primary-purple)' : 'var(--text-muted)', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                      {isOpen ? '−' : '+'}
+                    </span>
+                  </button>
+                  <div style={{ maxHeight: isOpen ? 220 : 0, overflow: 'hidden', transition: 'max-height 0.25s var(--ease)' }}>
+                    <p className="muted-copy" style={{ margin: '2px 0 6px 0' }}>{faq.answer}</p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+              );
+            })}
+          </div>
+        </Card>
+      </section>
+
+      <section className="section-group">
+        <SectionTitle eyebrow="Say hello">Community places</SectionTitle>
+        {COMMUNITY_SPACES.map((space) => (
+          <a key={space.name} className="feature-row" href={space.link} target="_blank" rel="noreferrer">
+            <span style={{ minWidth: 0 }}>
+              <strong>{space.name}</strong>
+              <span>{space.role}</span>
+            </span>
+            <span className="feature-row-arrow">→</span>
+          </a>
+        ))}
+      </section>
     </div>
   );
 };

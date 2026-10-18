@@ -8,7 +8,6 @@ import { EventsTab } from './components/tabs/EventsTab';
 import { CommunityTab } from './components/tabs/CommunityTab';
 import { Card, Pill } from './components/ui';
 import { RankBadge } from './components/RankBadge';
-import { CommunityTicker } from './components/CommunityTicker';
 import type { TabId } from './types/navigation';
 
 const App: React.FC = () => {
@@ -17,18 +16,18 @@ const App: React.FC = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tabKey, setTabKey] = useState(0);
 
-  const isVerified = verification.status === 'verified';
   const profileData = profile.status === 'ok' ? profile.profile : null;
-  const userXp = profileData?.totalXp ?? 0;
-  const computedLevel = Math.max(1, Math.floor(Math.max(userXp, 0) / 100) + 1);
-  const userLevel = profileData?.level && profileData.level > 1 ? profileData.level : (profileData ? computedLevel : 1);
+  const isVerified = verification.status === 'verified';
+  const totalXp = profileData?.totalXp ?? 0;
+  const computedLevel = Math.max(1, Math.floor(totalXp / 100) + 1);
+  const level = profileData?.level && profileData.level > 1 ? profileData.level : computedLevel;
   const displayName = user?.firstName || profileData?.displayName || 'Member';
   const initial = displayName[0]?.toUpperCase() || 'Y';
 
   const handleTabChange = (tab: TabId) => {
     if (tab === activeTab) return;
     setActiveTab(tab);
-    setTabKey((k) => k + 1);
+    setTabKey((current) => current + 1);
   };
 
   const renderActiveTab = () => {
@@ -48,230 +47,93 @@ const App: React.FC = () => {
 
   return (
     <div className="app-shell">
-      <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
-        <CommunityTicker />
-      </div>
-
       <div className="app-frame">
-        <header
-          className="glass-panel"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 16,
-            padding: '12px 12px 12px 14px',
-            borderRadius: 'var(--radius-xl)',
-            position: 'sticky',
-            top: 36,
-            zIndex: 30,
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
-            <div className="eyebrow" style={{ marginBottom: 3 }}>YOUTHOPIA BIBLE COMMUNITY</div>
-            <h1 style={{ margin: 0, color: 'var(--text-color)', fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>
-              Community Dashboard
-            </h1>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 650 }}>
-              Sharing God's Love All The Way
-            </p>
+        <header className="app-header">
+          <div>
+            <div className="brand-kicker">YouThopia Bible Community</div>
+            <div className="brand-name">Sharing God's Love All The Way</div>
           </div>
 
-          <button
-            aria-label="Open profile"
-            onClick={() => setShowProfileModal(true)}
-            style={{
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              minHeight: 44,
-              maxWidth: 150,
-              padding: '5px 8px 5px 5px',
-              border: '1px solid rgba(221, 214, 254, 0.8)',
-              borderRadius: 'var(--radius-full)',
-              background: showProfileModal ? 'var(--primary-purple)' : 'rgba(255,255,255,0.92)',
-              color: showProfileModal ? '#fff' : 'var(--text-color)',
-              boxShadow: 'var(--shadow-xs)',
-              cursor: 'pointer',
-            }}
-          >
-            {user?.photoUrl ? (
-              <img
-                src={user.photoUrl}
-                alt={displayName}
-                width={34}
-                height={34}
-                style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--purple-200)' }}
-              />
-            ) : (
-              <span
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: '50%',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'var(--grad-hero)',
-                  color: '#fff',
-                  fontSize: 14,
-                  fontWeight: 900,
-                }}
-              >
-                {initial}
-              </span>
-            )}
-            <span style={{ minWidth: 0, textAlign: 'left' }}>
-              <span style={{ display: 'block', fontSize: 11, fontWeight: 850, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {profileData ? `Level ${userLevel}` : 'Profile'}
-              </span>
-              <span style={{ display: 'block', color: showProfileModal ? 'rgba(255,255,255,0.76)' : 'var(--text-muted)', fontSize: 10, fontWeight: 750 }}>
-                {profileData ? `${profileData.totalXp.toLocaleString()} XP` : isVerified ? 'Verified' : 'Open'}
-              </span>
+          <button className="profile-trigger" onClick={() => setShowProfileModal(true)} aria-label="Open your profile">
+            <span className="profile-avatar">
+              {user?.photoUrl ? <img src={user.photoUrl} alt={displayName} /> : initial}
+            </span>
+            <span className="profile-trigger-copy">
+              <strong>Level {level}</strong>
+              <span>{totalXp.toLocaleString()} XP</span>
             </span>
           </button>
         </header>
-
-        {showProfileModal && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 1200,
-              background: 'rgba(23, 17, 37, 0.34)',
-              padding: 14,
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-            }}
-            onClick={() => setShowProfileModal(false)}
-          >
-            <Card
-              style={{
-                width: '100%',
-                maxWidth: 500,
-                padding: 18,
-                borderRadius: '26px 26px 20px 20px',
-                animation: 'fadeSlideIn 0.25s var(--ease) both',
-              }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 18 }}>
-                <div>
-                  <div className="eyebrow">Member Passport</div>
-                  <h2 style={{ margin: '3px 0 0', fontSize: 22, lineHeight: 1.15 }}>{displayName}</h2>
-                  {user?.username && <div style={{ marginTop: 3, color: 'var(--text-secondary)', fontSize: 13 }}>@{user.username}</div>}
-                </div>
-                <button
-                  aria-label="Close profile"
-                  onClick={() => setShowProfileModal(false)}
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    border: '1px solid var(--slate-200)',
-                    background: '#fff',
-                    color: 'var(--text-secondary)',
-                    fontSize: 18,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  x
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                {user?.photoUrl ? (
-                  <img
-                    src={user.photoUrl}
-                    alt={displayName}
-                    width={58}
-                    height={58}
-                    style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--purple-200)' }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 58,
-                      height: 58,
-                      borderRadius: '50%',
-                      background: 'var(--grad-hero)',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 900,
-                      fontSize: 22,
-                      boxShadow: 'var(--shadow-purple)',
-                    }}
-                  >
-                    {initial}
-                  </div>
-                )}
-                <div style={{ minWidth: 0 }}>
-                  {profileData?.rankTitle && (
-                    <RankBadge title={profileData.rankTitle} emoji={profileData.rankEmoji} color={profileData.rankBadgeColor} size="md" />
-                  )}
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                    <Pill color={isVerified ? 'success' : 'warning'}>{isVerified ? 'Server verified' : 'Identity pending'}</Pill>
-                    <Pill color="purple">Trust {profileData?.trustScore ?? 100}/100</Pill>
-                  </div>
-                </div>
-              </div>
-
-              <div className="metric-grid" style={{ marginBottom: 16 }}>
-                <div className="metric-tile">
-                  <div className="metric-label">Level</div>
-                  <div className="metric-value">{userLevel}</div>
-                </div>
-                <div className="metric-tile">
-                  <div className="metric-label">XP</div>
-                  <div className="metric-value">{(profileData?.totalXp ?? 0).toLocaleString()}</div>
-                </div>
-                <div className="metric-tile">
-                  <div className="metric-label">Accuracy</div>
-                  <div className="metric-value">{profileData?.accuracyPct ?? 100}%</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gap: 9, color: 'var(--text-secondary)', fontSize: 13 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <span>Community tier</span>
-                  <strong style={{ color: 'var(--text-color)', textTransform: 'capitalize' }}>{profileData?.engagementLevel ?? 'Active Member'}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <span>Quizzes played</span>
-                  <strong style={{ color: 'var(--text-color)' }}>{profileData?.quizzesPlayed ?? 0}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <span>Telegram launch</span>
-                  <strong style={{ color: isInsideTelegram ? 'var(--success)' : 'var(--warning)' }}>
-                    {isInsideTelegram ? 'Connected' : 'Dev mode'}
-                  </strong>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
 
         <main key={tabKey} className="tab-enter">
           {renderActiveTab()}
         </main>
 
-        <footer style={{ textAlign: 'center', marginTop: 28, paddingBottom: 16 }}>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontWeight: 600 }}>
-            {isInsideTelegram ? 'Connected through Telegram' : 'Running outside Telegram (Dev Mode)'}
-          </p>
-          <p style={{ fontSize: 12, fontWeight: 750, color: 'var(--primary-purple)', margin: '6px 0 0 0', letterSpacing: '0.01em' }}>
-            Powered by YouThopia Bible Community
-          </p>
+        <footer style={{ marginTop: 28, color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
+          {isInsideTelegram ? 'Connected through Telegram' : 'Preview mode'}
         </footer>
       </div>
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {showProfileModal && (
+        <div
+          onClick={() => setShowProfileModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'flex-end',
+            padding: 12,
+            background: 'rgba(31, 23, 43, 0.36)',
+          }}
+        >
+          <Card
+            onClick={(event) => event.stopPropagation()}
+            style={{ width: '100%', maxWidth: 496, margin: '0 auto', padding: 20, borderRadius: '24px 24px 18px 18px' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+              <div>
+                <div className="eyebrow">Growth passport</div>
+                <h2 style={{ margin: '4px 0 0', fontSize: 24 }}>{displayName}</h2>
+                {user?.username && <p className="muted-copy" style={{ marginTop: 3 }}>@{user.username}</p>}
+              </div>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                aria-label="Close profile"
+                style={{ width: 36, height: 36, border: '1px solid var(--slate-200)', borderRadius: '50%', background: '#fff', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              >
+                Close
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 20 }}>
+              <span className="profile-avatar" style={{ width: 58, height: 58, fontSize: 20 }}>
+                {user?.photoUrl ? <img src={user.photoUrl} alt={displayName} /> : initial}
+              </span>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {profileData?.rankTitle && <RankBadge title={profileData.rankTitle} emoji={profileData.rankEmoji} color={profileData.rankBadgeColor} size="md" />}
+                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+                  <Pill color={isVerified ? 'success' : 'warning'}>{isVerified ? 'Verified member' : 'Identity pending'}</Pill>
+                  <Pill color="purple">Trust {profileData?.trustScore ?? 100}</Pill>
+                </div>
+              </div>
+            </div>
+
+            <div className="metric-grid" style={{ marginTop: 20 }}>
+              <div className="metric-tile"><div className="metric-label">Level</div><div className="metric-value">{level}</div></div>
+              <div className="metric-tile"><div className="metric-label">XP</div><div className="metric-value">{totalXp.toLocaleString()}</div></div>
+              <div className="metric-tile"><div className="metric-label">Accuracy</div><div className="metric-value">{profileData?.accuracyPct ?? 100}%</div></div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 10, marginTop: 20, color: 'var(--text-secondary)', fontSize: 13 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span>Community tier</span><strong style={{ color: 'var(--ink)', textTransform: 'capitalize' }}>{profileData?.engagementLevel ?? 'Member'}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span>Quizzes played</span><strong style={{ color: 'var(--ink)' }}>{profileData?.quizzesPlayed ?? 0}</strong></div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
