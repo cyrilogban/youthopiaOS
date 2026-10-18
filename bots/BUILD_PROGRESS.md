@@ -180,6 +180,17 @@ The **YouThopiaOS Bot Family** is the chat-native heart of the **YOUTHOPIA BIBLE
 
 ---
 
+### Module 16: The Unified YouThopia Tour — One Tour, All 5 Bots ✅
+- **Brief:** Replace the fragmented 3-page onboarding and the dead "Explore Ecosystem" buttons with **one guided 5-page community tour** — identical copy and buttons on Theodore, Lucy, Peter, Edmund, Susan — sourced from the official Mission & Vision statement.
+- **Single Source of Copy:** New `shared/content/tour.py` (About, Vision, 5 Mission bullets, 5 Aims & Objectives) — every renderer (bots, Mini App, gateway) reads from it.
+- **The 5 Pages:** 1) About YouThopia + Our Vision · 2) Our Mission · 3) Aims & Objectives · 4) Five Pillars, One Family (roster auto-derived from `BOT_REGISTRY` so handles/names self-heal) · 5) Your Journey (9-rank ladder, YP, Trust Score) + connect links + finish award.
+- **Centrally Mounted Entry Points (`core/telegram_runtime.py`):** New `attach_global_tour()` inside `build_router()` registers `/tour`, the `/start tour` deep-link intercept (fires ahead of each bot's own `/start` via registration order + `SkipHandler`), and the shared `🧭 Take Tour` reply-keyboard button. Pete bypasses `build_router`, so he attaches it explicitly on his raw router.
+- **Buttons Everywhere:** `GLOBAL_REPLY_BUTTONS` gained `🧭 Take Tour` (Row 1 of all 5 persistent keyboards); every bot's welcome/farewell/member cards gained `🧭 Start Community Tour` deep links (`BotIdentity.get_start_link("tour")`) replacing the dead `*_menu_directory`/"Explore Ecosystem" callbacks; orphan `eddy_menu_directory`/`lusy_menu_directory`/`build_onboarding_tour_keyboard` handlers removed; Susan's legacy `'tour' in message.text` branch and her 3-page keyboard deleted; `onboarding_start` legacy buttons in already-posted messages resurrect to page 1 (null-safety fix in `handle_global_onboarding_callback`).
+- **Command Menus:** `/tour` (`"Take the YouThopia community tour"`) added to every bot's private, group, admin, and default-scope menus.
+- **Group UX:** `/tour`, `/start tour`, and the tour reply button in groups post a self-destructing (10s) hint card deep-linking into the bot's DM.
+- **Award Semantics (unchanged & shared):** finishing awards +50 YP (`onboarding_xp_{user_id}` idempotency key, `orientation_completed` action) — the same keys the Mini App now uses via `POST /api/community/tour/complete`, making the tour's boost once-per-member across the entire ecosystem.
+- **Verification:** all 5 bot routers import cleanly; 5 pages render; tour deep-link URLs resolve per-bot; suite 29/29 (`4748aad`).
+
 ---
 
 ## 4. Current Status & Verification Matrix
@@ -191,6 +202,7 @@ The **YouThopiaOS Bot Family** is the chat-native heart of the **YOUTHOPIA BIBLE
 | **Community Hierarchy** | ✅ Verified | 4-tier / 9-rank system resolved from XP with admin override, rendered in all bots + Mini App. |
 | **Inline App Launchers** | ✅ Verified | Attached to `/start`, `/app`, group cards, and verse lookups. |
 | **Live Analytics** | ✅ Verified | Admin `/stats` MAU/DAU; `/api/community/stats` endpoint live for the ecosystem. |
+| **Unified Community Tour** | ✅ Verified | `/tour` + `/start tour` + `🧭 Take Tour` mounted centrally on all 5 bots; identical 5-page copy from `shared/content/tour.py`; shared cross-channel +50 YP award. |
 | **Production Build** | ✅ Verified | Gateway, shared services, and all 5 bots deployed against production Supabase; live on Render. |
 
 ---
