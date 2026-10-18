@@ -18,7 +18,9 @@ const ASSISTANTS: AssistantEntry[] = [
 ];
 
 const COMMUNITY_SPACES = [
-  { name: 'Main Community Group', role: 'General fellowship, announcements, and support', link: 'https://t.me/youthopiabiblecommunity' },
+  { name: 'Telegram Community', role: 'Main fellowship group — general fellowship, announcements, and support', link: 'https://t.me/youthopiabiblecommunity' },
+  { name: 'WhatsApp Community', role: 'Daily encouragement and conversation on WhatsApp', link: 'https://chat.whatsapp.com/HXZsnWjwizoHBojS2VwbHn' },
+  { name: 'Facebook Community', role: 'Fellowship and community updates on Facebook', link: 'https://www.facebook.com/share/g/18wG8aWB6t/' },
 ];
 
 const FAQS = [
