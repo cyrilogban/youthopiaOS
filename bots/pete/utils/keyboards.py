@@ -13,7 +13,7 @@ def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
         keyboard=[
             GLOBAL_REPLY_BUTTONS,
             [
-                KeyboardButton(text="📝 Submit Appeal")
+                KeyboardButton(text="Submit Appeal")
             ]
         ],
         resize_keyboard=True,

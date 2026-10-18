@@ -61,11 +61,11 @@ class SmartGroupCommandCleanerMiddleware(BaseMiddleware):
 
     # Standard persistent reply keyboard button labels across all 5 bots
     REPLY_KEYBOARD_TRIGGERS: set[str] = {
-        "👤 My Profile", "🧭 Take Tour", "Open App", "ℹ️ Help", "🌐 Community",
-        "🔍 Search Scripture", "🔖 Saved Verses", "🌐 Translation",
-        "🎯 Play Quizzes", "🏆 Leaderboard", "🏆 Rankings", "⭐ My Points", "🛑 Quit Quiz",
-        "📅 View Calendar", "📅 Calendar", "🎫 My Events", "🎂 Add Birthday", "🔔 Reminders",
-        "📝 Submit Appeal", "📝 Appeal",
+        "My Profile", "Take Tour", "Open App", "Help", "Community",
+        "Search Scripture", "Saved Verses", "Translation",
+        "Play Quizzes", "Leaderboard", "🏆 Rankings", "My Points", "Quit Quiz",
+        "View Calendar", "📅 Calendar", "My Events", "Add Birthday", "Reminders",
+        "Submit Appeal", "📝 Appeal",
     }
 
     async def __call__(
@@ -228,7 +228,7 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
             delayed_delete_message(message.bot, message.chat.id, hint.message_id, delay_seconds=10)
         )
 
-    @router.message(F.text == "🧭 Take Tour")
+    @router.message(F.text == "Take Tour")
     async def tour_reply_button(message: Message, services: ServiceContainer) -> None:
         if message.chat.type == "private":
             await register_group_chat(message, services, bot_name)

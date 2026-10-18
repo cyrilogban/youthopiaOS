@@ -24,11 +24,11 @@ def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
         keyboard=[
             GLOBAL_REPLY_BUTTONS,
             [
-                KeyboardButton(text="🔍 Search Scripture"),
-                KeyboardButton(text="🔖 Saved Verses"),
+                KeyboardButton(text="Search Scripture"),
+                KeyboardButton(text="Saved Verses"),
             ],
             [
-                KeyboardButton(text="🌐 Translation"),
+                KeyboardButton(text="Translation"),
             ]
         ],
         resize_keyboard=True,

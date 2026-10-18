@@ -255,7 +255,7 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
     # -------------------------------------------------------------------------
-    @router.message(F.text == "👤 My Profile")
+    @router.message(F.text == "My Profile")
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
@@ -318,7 +318,7 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
-    @router.message(F.text == "ℹ️ Help")
+    @router.message(F.text == "Help")
     @router.message(Command("help"))
     async def help_handler(message: Message, bot: Bot) -> None:
         if message.chat.type != "private":
@@ -568,8 +568,8 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 3: 🌐 Community
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🌐 Community")
-    @router.message(F.text == "🌐 Community Links")
+    @router.message(F.text == "Community")
+    @router.message(F.text == "Community Links")
     async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
@@ -591,7 +591,7 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON: 🔍 Search Scripture
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🔍 Search Scripture")
+    @router.message(F.text == "Search Scripture")
     @router.callback_query(F.data == "theo_search_scripture")
     async def search_scripture_handler(event: Message | CallbackQuery) -> None:
         is_callback = isinstance(event, CallbackQuery)
@@ -616,7 +616,7 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 3: 🔖 Saved Verses
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🔖 Saved Verses")
+    @router.message(F.text == "Saved Verses")
     async def saved_verses_handler(message: Message, services: ServiceContainer) -> None:
         if message.chat.type != "private":
             return
@@ -703,7 +703,7 @@ def build_theo_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # ROW 3 SETTINGS BUTTON: 🌐 Translation / /translation
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🌐 Translation")
+    @router.message(F.text == "Translation")
     @router.callback_query(F.data == "theo_translation_menu")
     async def translation_menu_handler(event: Message | CallbackQuery) -> None:
         is_callback = isinstance(event, CallbackQuery)

@@ -461,7 +461,7 @@ def build_eddy_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
     # -------------------------------------------------------------------------
-    @router.message(F.text == "👤 My Profile")
+    @router.message(F.text == "My Profile")
     @router.message(Command("profile"))
     @router.callback_query(F.data == "eddy_profile")
     async def profile_handler(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
@@ -533,7 +533,7 @@ def build_eddy_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
-    @router.message(F.text == "ℹ️ Help")
+    @router.message(F.text == "Help")
     @router.message(Command("help"))
     async def help_handler(message: Message, bot: Bot) -> None:
         if message.chat.type != "private":
@@ -584,8 +584,8 @@ def build_eddy_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 3: 🌐 Community
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🌐 Community")
-    @router.message(F.text == "🌐 Community Links")
+    @router.message(F.text == "Community")
+    @router.message(F.text == "Community Links")
     async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
@@ -601,7 +601,7 @@ def build_eddy_router(description: str) -> Router:
         await handle_global_onboarding_callback(callback_query, services)
 
     @router.message(Command("calendar"))
-    @router.message(F.text == "📅 View Calendar")
+    @router.message(F.text == "View Calendar")
     @router.callback_query(F.data == "eddy_view_calendar")
     async def on_view_calendar(event: Message | CallbackQuery, services: ServiceContainer):
         is_callback = isinstance(event, CallbackQuery)
@@ -633,7 +633,7 @@ def build_eddy_router(description: str) -> Router:
                 pass
 
 
-    @router.message(F.text == "🔔 Reminders")
+    @router.message(F.text == "Reminders")
     async def on_reminders(message: Message, services: ServiceContainer):
         if message.chat.type != "private":
             return
@@ -780,7 +780,7 @@ def build_eddy_router(description: str) -> Router:
             await callback.answer("An error occurred while saving your RSVP.", show_alert=True)
 
     @router.message(Command("my_events", "myevents"))
-    @router.message(F.text == "🎫 My Events")
+    @router.message(F.text == "My Events")
     async def on_my_events(message: Message, services: ServiceContainer):
         if message.chat.type != "private":
             return
@@ -968,14 +968,14 @@ def build_eddy_router(description: str) -> Router:
                 try:
                     await bot.send_message(chat_id=main_group_id, text=announcement, parse_mode="HTML", reply_markup=markup)
                     await message.answer("Broadcast sent successfully to the Main Group! 🚀", reply_markup=ReplyKeyboardMarkup(
-                        keyboard=[[KeyboardButton(text="📅 View Calendar"), KeyboardButton(text="🎫 My Events")], [KeyboardButton(text="🔔 Reminders"), KeyboardButton(text="About Community")]],
+                        keyboard=[[KeyboardButton(text="View Calendar"), KeyboardButton(text="My Events")], [KeyboardButton(text="Reminders"), KeyboardButton(text="About Community")]],
                         resize_keyboard=True, persistent=True
                     ))
                 except Exception as e:
                     await message.answer(f"Failed to broadcast: {e}")
         else:
             await message.answer("Okay, event saved silently! 🤫", reply_markup=ReplyKeyboardMarkup(
-                        keyboard=[[KeyboardButton(text="📅 View Calendar"), KeyboardButton(text="🎫 My Events")], [KeyboardButton(text="🔔 Reminders"), KeyboardButton(text="About Community")]],
+                        keyboard=[[KeyboardButton(text="View Calendar"), KeyboardButton(text="My Events")], [KeyboardButton(text="Reminders"), KeyboardButton(text="About Community")]],
                         resize_keyboard=True, persistent=True
                     ))
             
@@ -986,7 +986,7 @@ def build_eddy_router(description: str) -> Router:
     # ------------------------------------------------------------------
 
     @router.message(Command("addbirthday"))
-    @router.message(F.text == "🎂 Add Birthday")
+    @router.message(F.text == "Add Birthday")
     async def start_add_birthday(message: Message, state: FSMContext):
         if message.chat.type != "private":
             return
@@ -1102,8 +1102,8 @@ def build_eddy_router(description: str) -> Router:
             # Return their normal keyboard
             reply_markup = ReplyKeyboardMarkup(
                 keyboard=[
-                    [KeyboardButton(text="📅 View Calendar"), KeyboardButton(text="🎫 My Events")],
-                    [KeyboardButton(text="🎂 Add Birthday"), KeyboardButton(text="🔔 Reminders")],
+                    [KeyboardButton(text="View Calendar"), KeyboardButton(text="My Events")],
+                    [KeyboardButton(text="Add Birthday"), KeyboardButton(text="Reminders")],
                     [KeyboardButton(text="About Community")]
                 ],
                 resize_keyboard=True,

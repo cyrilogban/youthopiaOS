@@ -1008,7 +1008,7 @@ async def on_scramble_command(message: Message, services: ServiceContainer):
 @quiz_router.message(Command("endquiz"))
 @quiz_router.message(Command("stopgame"))
 @quiz_router.message(Command("endgame"))
-@quiz_router.message(F.text.in_({"🛑 Quit Quiz", "🛑 Quit Game"}))
+@quiz_router.message(F.text.in_({"Quit Quiz", "Quit Game"}))
 async def cmd_quit_game(message: Message, bot: Bot):
     await execute_quit_game(message.chat.id, message.from_user, bot, message=message)
 

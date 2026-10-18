@@ -14,12 +14,12 @@ def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
         keyboard=[
             GLOBAL_REPLY_BUTTONS,
             [
-                KeyboardButton(text="🎯 Play Quizzes"),
-                KeyboardButton(text="🏆 Leaderboard"),
-                KeyboardButton(text="⭐ My Points"),
+                KeyboardButton(text="Play Quizzes"),
+                KeyboardButton(text="Leaderboard"),
+                KeyboardButton(text="My Points"),
             ],
             [
-                KeyboardButton(text="🛑 Quit Quiz"),
+                KeyboardButton(text="Quit Quiz"),
             ]
         ],
         resize_keyboard=True,

@@ -490,7 +490,7 @@ async def handle_appeal_init(callback_query: CallbackQuery, state: FSMContext) -
     await callback_query.answer()
 
 @router.message(Command("appeal"))
-@router.message(F.text == "📝 Submit Appeal")
+@router.message(F.text == "Submit Appeal")
 async def handle_submit_appeal_menu(message: Message, state: FSMContext) -> None:
     if message.chat.type != "private":
         return
@@ -838,7 +838,7 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
 # -------------------------------------------------------------------------
 # PROFILE & HELP HANDLERS
 # -------------------------------------------------------------------------
-@router.message(F.text == "👤 My Profile")
+@router.message(F.text == "My Profile")
 @router.message(Command("profile"))
 @router.callback_query(F.data == "pete_profile")
 async def handle_pete_profile(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
@@ -891,7 +891,7 @@ async def send_pete_profile(
     else:
         await message.answer(card_text, parse_mode="HTML", reply_markup=build_pete_reply_keyboard())
 
-@router.message(F.text == "ℹ️ Help")
+@router.message(F.text == "Help")
 @router.message(Command("help"))
 @router.callback_query(F.data == "pete_help")
 async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
@@ -946,8 +946,8 @@ async def handle_pete_help(event: Message | CallbackQuery, bot: Bot) -> None:
         reply_markup=get_community_links_keyboard(),
     )
 
-@router.message(F.text == "🌐 Community")
-@router.message(F.text == "🌐 Community Links")
+@router.message(F.text == "Community")
+@router.message(F.text == "Community Links")
 async def community_handler(message: Message) -> None:
     if message.chat.type != "private":
         return

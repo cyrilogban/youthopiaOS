@@ -337,7 +337,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
     # -------------------------------------------------------------------------
-    @router.message(F.text == "👤 My Profile")
+    @router.message(F.text == "My Profile")
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
@@ -413,7 +413,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
-    @router.message(F.text == "ℹ️ Help")
+    @router.message(F.text == "Help")
     @router.message(Command("help"))
     async def help_handler(message: Message, bot: Bot) -> None:
         if message.chat.type != "private":
@@ -462,8 +462,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 3: 🌐 Community
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🌐 Community")
-    @router.message(F.text == "🌐 Community Links")
+    @router.message(F.text == "Community")
+    @router.message(F.text == "Community Links")
     async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
@@ -499,7 +499,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 1: 🎯 Play Quizzes / /playquiz
     # -------------------------------------------------------------------------
-    @router.message(F.text.in_({"🎯 Play Quizzes", "🎮 Play Games"}))
+    @router.message(F.text.in_({"Play Quizzes", "Play Games"}))
     @router.message(Command("playquiz", "playgame"))
     @router.callback_query(F.data == "lusy_menu_play")
     async def play_games_handler(event: Message | CallbackQuery) -> None:
@@ -521,7 +521,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 2: 🏆 Leaderboard / /leaderboard
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🏆 Leaderboard")
+    @router.message(F.text == "Leaderboard")
     @router.message(Command("leaderboard"))
     async def leaderboard_handler(message: Message, services: ServiceContainer) -> None:
         await send_lusy_leaderboard(message, services)
@@ -599,7 +599,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON 3: ⭐ My Points / /yp / /xp
     # -------------------------------------------------------------------------
-    @router.message(F.text == "⭐ My Points")
+    @router.message(F.text == "My Points")
     @router.message(Command("yp"))
     @router.message(Command("xp"))
     async def my_points_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:

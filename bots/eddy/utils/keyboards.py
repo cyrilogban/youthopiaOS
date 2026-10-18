@@ -14,12 +14,12 @@ def build_eddy_reply_keyboard() -> ReplyKeyboardMarkup:
         keyboard=[
             GLOBAL_REPLY_BUTTONS,
             [
-                KeyboardButton(text="📅 View Calendar"),
-                KeyboardButton(text="🎫 My Events"),
+                KeyboardButton(text="View Calendar"),
+                KeyboardButton(text="My Events"),
             ],
             [
-                KeyboardButton(text="🎂 Add Birthday"),
-                KeyboardButton(text="🔔 Reminders"),
+                KeyboardButton(text="Add Birthday"),
+                KeyboardButton(text="Reminders"),
             ],
         ],
         resize_keyboard=True,

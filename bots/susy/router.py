@@ -410,28 +410,13 @@ def build_susy_router(description: str) -> Router:
                 reply_markup=inline_menu
             )
 
-    @router.message(F.text == "Community")
-    async def on_about_community(message: Message):
-        if message.chat.type != "private": return
-        
-        about_text = (
-            "<b>About YouThopia Bible Community 🌍</b>\n"
-            "<blockquote>We are a cross-platform Gen Z Christian community. This is a space where faith meets real life. We grow together, share God's Word, and support one another on the journey of becoming who God created us to be.</blockquote>\n\n"
-            "If you haven't joined the main group yet, jump in! We can't wait to fellowship with you. 🤍"
-        )
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Join the Main Group", url=TELEGRAM_GROUP_LINK)]
-        ])
-        
-        await message.answer(about_text, parse_mode="HTML", reply_markup=markup)
-
     # --- ONBOARDING PAGINATION LOGIC ---
     
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 3: 🌐 Community
     # -------------------------------------------------------------------------
-    @router.message(F.text == "🌐 Community")
-    @router.message(F.text == "🌐 Community Links")
+    @router.message(F.text == "Community")
+    @router.message(F.text == "Community Links")
     async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
@@ -444,7 +429,7 @@ def build_susy_router(description: str) -> Router:
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile
     # -------------------------------------------------------------------------
-    @router.message(F.text == "👤 My Profile")
+    @router.message(F.text == "My Profile")
     @router.message(Command("profile"))
     @router.callback_query(F.data == "susy_profile")
     async def handle_susy_profile(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:
@@ -531,7 +516,7 @@ def build_susy_router(description: str) -> Router:
     # GLOBAL BUTTON 2: ℹ️ Help / /help
     # -------------------------------------------------------------------------
     @router.message(Command("help"))
-    @router.message(F.text == "ℹ️ Help")
+    @router.message(F.text == "Help")
     @router.message(F.text == "Help")
     @router.callback_query(F.data == "susy_help")
     async def handle_susy_help(event: Message | CallbackQuery, bot: Bot, services: ServiceContainer) -> None:

@@ -155,10 +155,10 @@ BOT_FAMILY_DIRECTORY_TEXT = (
 # -----------------------------------------------------------------------------
 
 GLOBAL_REPLY_BUTTONS: List[KeyboardButton] = [
-    KeyboardButton(text="👤 My Profile"),
-    KeyboardButton(text="🧭 Take Tour"),
-    KeyboardButton(text="ℹ️ Help"),
-    KeyboardButton(text="🌐 Community"),
+    KeyboardButton(text="My Profile"),
+    KeyboardButton(text="Take Tour"),
+    KeyboardButton(text="Help"),
+    KeyboardButton(text="Community"),
 ]
 
 
