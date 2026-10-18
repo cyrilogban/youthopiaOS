@@ -371,40 +371,31 @@ def build_susy_router(description: str) -> Router:
         
         if user.get("engagement_level") == "new":
             welcome_text = (
-                f"<b>Welcome to YOUTHOPIA BIBLE COMMUNITY, {first_name}! 💜</b>\n\n"
-                f"<blockquote>I am <b>Susan</b>, but you can call me <b>Susie</b>! I am your community hostess here in the YouThopia ecosystem.\n\n"
-                f"We are a Gen Z Christian community built to help you grow in your faith, connect with believers, and have fun doing it! Here is our 5-bot ecosystem ready for you:\n"
-                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-                f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+                f"Hello <b>{first_name}</b>, and welcome to YouThopia.\n\n"
+                f"I'm Susie, your hostess. It's my joy to show you around and help you feel at home here.\n\n"
+                f"Tap a button below to begin."
             )
             await services.users.set_engagement_level(user["id"], "active")
         else:
             welcome_text = (
-                f"<b>Welcome back, {first_name}! 💜</b>\n\n"
-                f"<blockquote>✨ <b>Community Status:</b> <code>Active YouTopian 💜</code>\n"
-                f"💬 <b>Community:</b> <code>Connected</code>\n\n"
-                f"I'm always here to help you navigate our ecosystem and stay connected with fellow YouTopians!</blockquote>\n\n"
-                f"<b>WHAT WOULD YOU LIKE TO EXPLORE TODAY?</b>"
+                f"Welcome back, <b>{first_name}</b>. Always lovely to see you.\n\n"
+                f"Where would you like to go today?"
             )
-        
+
         reply_menu = build_susy_reply_keyboard()
         inline_menu = build_susy_start_inline_keyboard()
-        
-        await message.answer("💬 <b>Welcome to Susan Hostess Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=reply_menu)
         if SUSY_PHOTO:
             await message.answer_photo(
                 photo=SUSY_PHOTO,
-                caption=welcome_text,
+                caption="Quick shortcuts below.",
                 parse_mode="HTML",
                 reply_markup=inline_menu
             )
         else:
             await message.answer(
-                welcome_text,
+                "Quick shortcuts below.",
                 parse_mode="HTML",
                 disable_web_page_preview=True,
                 reply_markup=inline_menu

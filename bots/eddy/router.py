@@ -357,58 +357,25 @@ def build_eddy_router(description: str) -> Router:
         await register_group_chat(message, services, "eddy")
         user = await services.identity.resolve_telegram_user(message.from_user)
         first_name = message.from_user.first_name or "Friend"
-        user_id = user["id"]
-
-        # Fetch Birthday
-        birthday_str = "Not set (Use 🎂 Add Birthday)"
-        try:
-            state_rec = await services.supabase.find_one_multi("bot_user_state", {"user_id": user_id, "bot_name": "eddy"})
-            if state_rec and state_rec.get("state"):
-                b_state = state_rec["state"]
-                b_month = b_state.get("birthday_month")
-                b_day = b_state.get("birthday_day")
-                if b_month and b_day:
-                    from calendar import month_name
-                    birthday_str = f"{month_name[int(b_month)]} {b_day}"
-        except Exception:
-            pass
-
-        # Fetch RSVPs
-        rsvp_count = 0
-        try:
-            events = await services.events.get_user_upcoming_events(message.from_user.id)
-            rsvp_count = len(events) if events else 0
-        except Exception:
-            pass
 
         if user.get("engagement_level") == "new":
             welcome_text = (
-                f"<b>Welcome to YouThopia Events, {first_name}! 📅</b>\n\n"
-                f"<blockquote>I am Edmund, but you can call me Edie — event scheduler and community manager in <b>YouThopiaOS</b>.\n\n"
-                f"I keep our community active with weekly calendars, live sessions, RSVPs, and birthday celebrations across all 5 pillar bots:\n"
-                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-                f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+                f"Welcome, <b>{first_name}</b>. I'm Edie, the community planner.\n\n"
+                f"I keep the calendar — gatherings, live sessions, events, and birthdays — so you never miss a thing.\n\n"
+                f"Choose a button below."
             )
             await services.users.set_engagement_level(user["id"], "active")
         else:
             welcome_text = (
-                f"<b>Welcome back, {first_name}! 📅</b>\n\n"
-                f"<blockquote>🎂 <b>Registered Birthday:</b> <code>{birthday_str}</code>\n"
-                f"🎫 <b>Active Event RSVPs:</b> <code>{rsvp_count} event{'s' if rsvp_count != 1 else ''}</code>\n"
-                f"📅 <b>Community Calendar:</b> <code>Updated for this week</code>\n\n"
-                f"Never miss a fellowship, live session, or birthday shoutout!</blockquote>\n\n"
-                f"<b>WHAT WOULD YOU LIKE TO BE REMINDED OF TODAY?</b>"
+                f"Welcome back, <b>{first_name}</b>. The week is mapped out.\n\n"
+                f"See the calendar whenever you need it."
             )
 
         reply_menu = build_eddy_reply_keyboard()
         inline_menu = build_eddy_start_inline_keyboard()
 
-        await message.answer("📅 <b>Welcome to Edmund Events Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
-        await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer("Quick shortcuts below.", parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
 
     # -------------------------------------------------------------------------
     # DEEP LINK: ?start=rsvp / ?start=rsvp_<event_id>

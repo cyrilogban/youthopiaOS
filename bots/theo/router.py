@@ -205,48 +205,33 @@ def build_theo_router(description: str) -> Router:
         except Exception as e:
             logger.warning(f"Failed to auto-subscribe user {user['id']} on /start: {e}")
 
-        sub = await services.users.get_subscription(user["id"], "theo", "daily_devotional")
-        sub_status = "ENABLED (6:00 AM)" if (sub and sub.get("enabled")) else "DISABLED"
-
-        state = await services.users.get_user_state(user["id"], "theo")
-        translation = state.get("translation", "kjv").upper()
-
         if user.get("engagement_level") == "new":
             welcome_text = (
-                f"<b>Welcome to Daily Scripture, {first_name}! 📖</b>\n\n"
-                f"<blockquote>I am <b>Theodore</b>, but you can call me <b>Theo</b>! I am your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
-                f"Here in our community, we stay anchored in God's Word every day! Every YouTopian has access to daily devotionals and instant verse lookups across all 5 YouThopiaOS pillar bots:\n"
-                f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-                f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-                f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-                f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-                f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-                f"<b>SEARCH OR EXPLORE BELOW:</b>"
+                f"Welcome, <b>{first_name}</b>. I'm Theo, your daily scripture companion.\n\n"
+                f"Each morning I share a verse of the day, and I can look up any passage you ask about.\n\n"
+                f"Tap a button below to begin."
             )
             await services.users.set_engagement_level(user["id"], "active")
         else:
             welcome_text = (
-                f"<b>Welcome back, {first_name}! 📖</b>\n\n"
-                f"<blockquote>📖 <b>Translation:</b> <code>{translation}</code>\n"
-                f"🌅 <b>Daily Verse:</b> <code>{sub_status}</code>\n\n"
-                f"Ready to explore God's Word today? Type any verse reference directly in this chat!</blockquote>\n\n"
-                f"<b>SEARCH OR EXPLORE BELOW:</b>"
+                f"Welcome back, <b>{first_name}</b>. Your daily verse is waiting.\n\n"
+                f"What shall we look up today?"
             )
 
         reply_menu = build_theo_reply_keyboard()
         inline_menu = build_theo_welcome_inline_keyboard()
 
-        await message.answer("📖 <b>Welcome to Theodore Devotional Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=reply_menu)
         if THEO_PHOTO:
             await message.answer_photo(
                 photo=THEO_PHOTO,
-                caption=welcome_text,
+                caption="Quick shortcuts below.",
                 parse_mode="HTML",
                 reply_markup=inline_menu,
             )
         else:
             await message.answer(
-                welcome_text,
+                "Quick shortcuts below.",
                 parse_mode="HTML",
                 disable_web_page_preview=True,
                 reply_markup=inline_menu,

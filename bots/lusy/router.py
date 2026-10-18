@@ -146,35 +146,21 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
                 total_xp = user.get("total_xp", 0)
                 level = user.get("level", 1)
 
-            rank = services.ranks.resolve_rank(total_xp, user.get("manual_rank_id"))
-            rank_title = f"{rank.emoji} {rank.title}"
-            correct_answers = len([h for h in history if h.get("is_correct", False)])
-            accuracy = (correct_answers / total_quizzes * 100) if total_quizzes > 0 else 0.0
-
             welcome_text = (
-                f"<b>Welcome back, {first_name}! 🎯</b>\n\n"
-                f"<blockquote>🌟 <b>Level {level} ({rank_title})</b> | <code>{total_xp} YP</code>\n"
-                f"🎯 <b>Accuracy:</b> <code>{accuracy:.1f}%</code> ({correct_answers}/{total_quizzes} played)\n\n"
-                "Ready to take on another challenge and advance your rank?</blockquote>\n\n"
-                "<b>SELECT A QUIZ MODE BELOW:</b>"
+                f"Welcome back, <b>{first_name}</b>. Level {level}, {total_xp} points.\n\n"
+                f"Shall we raise that number?"
             )
         else:
             welcome_text = (
-                f"<b>Welcome to Scripture Mastery, {first_name}! 🎯</b>\n\n"
-                "<blockquote>I am Lucy, but you can call me Lusie — your Scripture Mastery & Gamification Engine in <b>YouThopiaOS</b>.\n\n"
-                "Here in our community, mastering God's Word is an exciting journey we share together! Test your knowledge, earn <b>YouTopian Points (YP)</b>, and climb our global leaderboard synced across all 5 YouThopiaOS pillar bots:\n"
-                "• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-                "• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-                "• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-                "• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-                "• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-                "<b>SELECT A QUIZ MODE BELOW:</b>"
+                f"Hi <b>{first_name}</b>, welcome in. I'm Lusie.\n\n"
+                f"I host the community's scripture games — play, earn points, and climb the leaderboard.\n\n"
+                f"Ready when you are."
             )
 
         reply_markup = build_lusy_reply_keyboard()
         inline_markup = build_game_selection_inline_keyboard()
-        await message.answer("🎯 <b>Welcome to Lucy Quiz Dashboard!</b>", parse_mode="HTML", reply_markup=reply_markup)
-        await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_markup)
+        await message.answer(welcome_text, parse_mode="HTML", reply_markup=reply_markup)
+        await message.answer("Quick shortcuts below.", parse_mode="HTML", reply_markup=inline_markup)
 
     # -------------------------------------------------------------------------
     # GROUP JOIN WELCOME EVENT (BOT ADDED TO GROUP)

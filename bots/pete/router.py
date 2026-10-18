@@ -798,42 +798,27 @@ async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -
     await register_group_chat(message, services, "pete")
     user = await services.identity.resolve_telegram_user(message.from_user)
     first_name = message.from_user.first_name or "Friend"
-    
-    try:
-        warnings = await services.moderation.get_user_warnings_count(user["id"])
-    except Exception:
-        warnings = 0
-        
+
     trust_score = user.get("trust_score", 100)
 
     if user.get("engagement_level") == "new":
         welcome_text = (
-            f"<b>Welcome to YouThopia Security, {first_name}! 🛡️</b>\n\n"
-            f"<blockquote>I am Peter (High King Peter), but you can call me Pete — guardian of the <b>YouThopiaOS</b> ecosystem.\n\n"
-            f"I protect our community atmosphere by enforcing rules, filtering spam, and keeping our borders secure across all 5 pillar bots:\n"
-            f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-            f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-            f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-            f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-            f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-            f"<b>SELECT AN OPTION BELOW TO GET STARTED:</b>"
+            f"Welcome, <b>{first_name}</b>. I'm Pete.\n\n"
+            f"I keep this community safe — I verify new members, filter out spam, and hold the line.\n\n"
+            f"You're in good hands."
         )
         await services.users.set_engagement_level(user["id"], "active")
     else:
         welcome_text = (
-            f"<b>Welcome back, {first_name}! 🛡️</b>\n\n"
-            f"<blockquote>🛡️ <b>Active Warnings:</b> <code>{warnings}/5</code>\n"
-            f"📜 <b>Safety Record:</b> <code>{'Clean Record ✨' if warnings == 0 else 'Under Observation'}</code>\n"
-            f"💯 <b>Trust Score:</b> <code>{trust_score}/100</code>\n\n"
-            f"I am constantly monitoring our community borders so you can fellowship in a clean, safe environment!</blockquote>\n\n"
-            f"<b>WHAT WOULD YOU LIKE TO DO TODAY?</b>"
+            f"Welcome back, <b>{first_name}</b>. All quiet on my watch.\n\n"
+            f"Trust score: {trust_score}/100."
         )
-    
+
     reply_menu = build_pete_reply_keyboard()
     inline_menu = build_pete_start_inline_keyboard()
-    
-    await message.answer("🛡️ <b>Welcome to Peter Security Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
-    await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
+
+    await message.answer(welcome_text, parse_mode="HTML", reply_markup=reply_menu)
+    await message.answer("Quick shortcuts below.", parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
 
 # -------------------------------------------------------------------------
 # PROFILE & HELP HANDLERS
