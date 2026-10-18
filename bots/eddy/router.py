@@ -35,6 +35,7 @@ from shared.utils.ui import (
     get_community_links_keyboard,
     render_shared_profile_card,
     send_community_exploration_page,
+    send_community_links_card,
     handle_global_onboarding_callback,
     handle_group_profile_acknowledgment,
 )
@@ -588,12 +589,12 @@ def build_eddy_router(description: str) -> Router:
     async def community_handler(message: Message) -> None:
         if message.chat.type != "private":
             return
-        await send_community_exploration_page(message, 1)
+        await send_community_links_card(message)
 
     @router.callback_query(F.data == "eddy_community_links")
     async def handle_eddy_community_links(callback: CallbackQuery) -> None:
         await callback.answer()
-        await send_community_exploration_page(callback.message, 1)
+        await send_community_links_card(callback.message)
 
     @router.callback_query(F.data.startswith("onboarding_"))
     async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:

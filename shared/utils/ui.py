@@ -118,6 +118,22 @@ def get_community_links_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+COMMUNITY_LINKS_CARD_TEXT = (
+    "<b>🌐 YOUTHOPIA BIBLE COMMUNITY LINKS</b>\n"
+    "<blockquote>Connect with us across all platforms to stay updated, fellowship, "
+    "and grow together! 🤍</blockquote>"
+)
+
+
+async def send_community_links_card(message: Message) -> None:
+    """Sends the standard community links card (the '🌐 Community' reply button)."""
+    await message.answer(
+        COMMUNITY_LINKS_CARD_TEXT,
+        parse_mode="HTML",
+        reply_markup=get_community_links_keyboard(),
+    )
+
+
 # -----------------------------------------------------------------------------
 # GLOBAL BOT FAMILY DIRECTORY (Used across all help cards)
 # -----------------------------------------------------------------------------
