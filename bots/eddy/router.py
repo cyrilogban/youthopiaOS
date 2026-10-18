@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Router, Bot, F
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 from aiogram.types import (
     Message,
     BotCommand,
@@ -303,10 +303,10 @@ def build_eddy_router(description: str) -> Router:
             logger.warning(f"Edie failed to leave chat {chat_id}: {e}")
 
     # -------------------------------------------------------------------------
-    # COMMAND: /start
+    # COMMAND: /start (with deep-link payload dispatch)
     # -------------------------------------------------------------------------
     @router.message(Command("start"))
-    async def handle_start(message: Message, bot: Bot, services: ServiceContainer) -> None:
+    async def handle_start(message: Message, bot: Bot, services: ServiceContainer, command: CommandObject = None, state: FSMContext = None) -> None:
         if message.chat.type != "private":
             try:
                 await message.delete()
@@ -327,6 +327,24 @@ def build_eddy_router(description: str) -> Router:
                 asyncio.create_task(self_destruct_message(bot, message.chat.id, sent_msg.message_id, 10))
             except Exception:
                 pass
+            return
+
+        args = (command.args or "").strip().lower() if command else ""
+        if args == "rsvp" or args.startswith("rsvp_"):
+            await register_group_chat(message, services, "eddy")
+            await send_rsvp_entry(message, services, args)
+            return
+        if args == "events":
+            await register_group_chat(message, services, "eddy")
+            await on_my_events(message, services)
+            return
+        if args == "calendar":
+            await register_group_chat(message, services, "eddy")
+            await on_view_calendar(message, services)
+            return
+        if args == "birthday" and state is not None:
+            await register_group_chat(message, services, "eddy")
+            await start_add_birthday(message, state)
             return
 
         await register_group_chat(message, services, "eddy")
@@ -384,6 +402,54 @@ def build_eddy_router(description: str) -> Router:
 
         await message.answer("📅 <b>Welcome to Edmund Events Dashboard!</b>", parse_mode="HTML", reply_markup=reply_menu)
         await message.answer(welcome_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=inline_menu)
+
+    # -------------------------------------------------------------------------
+    # DEEP LINK: ?start=rsvp / ?start=rsvp_<event_id>
+    # Opens Edie directly on the RSVP flow for the next (or requested) gathering.
+    # -------------------------------------------------------------------------
+    async def send_rsvp_entry(message: Message, services: ServiceContainer, args: str = "") -> None:
+        event = None
+        requested_id = args[5:] if args.startswith("rsvp_") else ""
+        try:
+            if requested_id:
+                event = await services.events.get_event_by_id(requested_id)
+            if not event:
+                event = await services.events.get_latest_event()
+        except Exception:
+            logger.warning("Edie failed to load event for RSVP deep link", exc_info=True)
+
+        if not event or not event.get("id"):
+            await message.answer(
+                "<b>There is no gathering open for RSVP right now.</b>\n\n"
+                "Keep an eye on the daily 5:00 PM announcement, or open the weekly calendar with /calendar!",
+                parse_mode="HTML",
+            )
+            return
+
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        try:
+            dt = datetime.fromisoformat(event["starts_at"])
+            when = dt.astimezone(ZoneInfo("Africa/Lagos")).strftime("%A, %b %d at %I:%M %p WAT")
+        except Exception:
+            when = event.get("starts_at") or "To be announced"
+
+        rsvp_text = (
+            "<b>You are invited to our next gathering.</b>\n\n"
+            f"<blockquote><b>{event['title']}</b>\n"
+            f"{event.get('description') or 'A time of fellowship with the YouThopia community.'}</blockquote>\n\n"
+            f"<b>When:</b> {when}\n"
+            f"<b>Where:</b> {event.get('location') or 'YouThopia community session'}\n\n"
+            "<b>Will you be joining us?</b>"
+        )
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Yes", callback_data=f"rsvp_coming:{event['id']}"),
+                InlineKeyboardButton(text="Maybe", callback_data=f"rsvp_maybe:{event['id']}"),
+                InlineKeyboardButton(text="No", callback_data=f"rsvp_no:{event['id']}"),
+            ]
+        ])
+        await message.answer(rsvp_text, parse_mode="HTML", reply_markup=markup)
 
     # -------------------------------------------------------------------------
     # GLOBAL BUTTON 1: 👤 My Profile / /profile

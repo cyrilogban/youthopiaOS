@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchEvents, type EventItem } from '../../services/api';
 import { Card, Pill, SectionTitle, Skeleton } from '../ui';
 
-const eventLink = 'https://t.me/ediecalendarbot?start=calendar';
+const edieLink = (payload: string) => `https://t.me/ediecalendarbot?start=${payload}`;
 
 export const EventsTab: React.FC = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -44,7 +44,7 @@ export const EventsTab: React.FC = () => {
           </div>
           <p className="muted-copy" style={{ marginTop: 10 }}>{next.startsAt}</p>
           <p className="muted-copy" style={{ marginTop: 4 }}>{next.location ?? 'YouThopia community'}</p>
-          <a className="primary-button" href={eventLink} target="_blank" rel="noreferrer" style={{ marginTop: 18 }}>RSVP with Edie</a>
+          <a className="primary-button" href={next.id ? edieLink(`rsvp_${next.id}`) : edieLink('rsvp')} target="_blank" rel="noreferrer" style={{ marginTop: 18 }}>RSVP with Edie</a>
         </Card>
       ) : (
         <Card style={{ padding: 20 }}><p className="muted-copy">There are no upcoming gatherings just yet. Check back soon.</p></Card>
@@ -72,8 +72,8 @@ export const EventsTab: React.FC = () => {
       <Card style={{ padding: 18 }}>
         <SectionTitle eyebrow="Keep connected">Manage through Edie</SectionTitle>
         <div className="inline-actions">
-          <a className="secondary-button" href={eventLink} target="_blank" rel="noreferrer">My events</a>
-          <a className="secondary-button" href="https://t.me/ediecalendarbot?start=birthday" target="_blank" rel="noreferrer">Add birthday</a>
+          <a className="secondary-button" href={edieLink('events')} target="_blank" rel="noreferrer">My events</a>
+          <a className="secondary-button" href={edieLink('birthday')} target="_blank" rel="noreferrer">Add birthday</a>
         </div>
       </Card>
     </div>
