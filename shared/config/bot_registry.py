@@ -110,3 +110,9 @@ def get_bot_identity(internal_name: str) -> BotIdentity:
     if internal_name not in BOT_REGISTRY:
         raise KeyError(f"Unknown bot internal_name: {internal_name}")
     return BOT_REGISTRY[internal_name]
+
+
+def meet_description(internal_name: str) -> str:
+    """Registry-derived /start menu description, e.g. "Meet Theodore (Theo)"."""
+    identity = get_bot_identity(internal_name)
+    return f"Meet {identity.full_name} ({identity.short_name})"

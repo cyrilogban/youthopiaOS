@@ -21,6 +21,9 @@ docs/
 !README.md
 engineering-notes/
 
+# Bots build journal stays local by decision (Mini App journal is tracked)
+bots/BUILD_PROGRESS.md
+
 
 # Local setup script
 setup.bat
