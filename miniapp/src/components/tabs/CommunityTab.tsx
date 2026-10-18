@@ -122,7 +122,7 @@ export const CommunityTab: React.FC<CommunityTabProps> = ({ onOpenTour }) => {
                   <p className="muted-copy" style={{ marginTop: 4 }}>{a.responsibility}</p>
                   <span style={{ display: 'inline-block', marginTop: 8, color: 'var(--primary-purple)', fontSize: 11, fontWeight: 750 }}>{a.handle}</span>
                 </div>
-                <a className="secondary-button" href={a.link} target="_blank" rel="noreferrer" style={{ minHeight: 36, paddingInline: 13 }}>Open</a>
+                <a className="secondary-button" href={a.link} target="_blank" rel="noreferrer" style={{ minHeight: 44, paddingInline: 13 }}>Open</a>
               </div>
             </Card>
           ))}

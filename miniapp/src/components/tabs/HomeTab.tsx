@@ -54,7 +54,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified, onNav
           <p>“{votd?.text}”</p>
           <footer>
             <span>{votd?.reference}</span>
-            <button onClick={() => onNavigate('bible')} className="secondary-button" style={{ minHeight: 34, color: '#fff', background: 'rgba(255,255,255,0.14)', borderColor: 'rgba(255,255,255,0.35)' }}>Read in Word</button>
+            <button onClick={() => onNavigate('bible')} className="secondary-button" style={{ minHeight: 44, color: '#fff', background: 'rgba(255,255,255,0.14)', borderColor: 'rgba(255,255,255,0.35)' }}>Read in Word</button>
           </footer>
         </section>
       )}

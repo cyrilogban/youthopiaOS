@@ -189,7 +189,7 @@ export const TourOverlay: React.FC<TourOverlayProps> = ({ tour, canEarnXp, rawIn
               <button
                 onClick={handleDismiss}
                 aria-label="Close tour"
-                style={{ width: 34, height: 34, border: '1px solid var(--slate-200)', borderRadius: '50%', background: '#fff', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                style={{ width: 44, height: 44, margin: -6, border: '1px solid var(--slate-200)', borderRadius: '50%', background: '#fff', color: 'var(--text-secondary)', cursor: 'pointer' }}
               >
                 ✕
               </button>

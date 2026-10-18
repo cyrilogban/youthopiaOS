@@ -75,7 +75,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ profile }) => {
                   <p className="muted-copy" style={{ marginTop: 4 }}>{game.description}</p>
                   <Pill color="slate" style={{ marginTop: 10 }}>{game.reward}</Pill>
                 </div>
-                <a className="secondary-button" href={`https://t.me/lusiequizbot?start=${game.path}`} target="_blank" rel="noreferrer" style={{ minHeight: 36, paddingInline: 13 }}>Open</a>
+                <a className="secondary-button" href={`https://t.me/lusiequizbot?start=${game.path}`} target="_blank" rel="noreferrer" style={{ minHeight: 44, paddingInline: 13 }}>Open</a>
               </div>
             </Card>
           ))}
