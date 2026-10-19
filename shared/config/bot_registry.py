@@ -45,7 +45,13 @@ class BotIdentity:
 
     @property
     def mini_app_link(self) -> str:
-        return f"https://t.me/{self.username}/app"
+        """Main Mini App direct link, opens in the current chat (group-safe).
+
+        Uses the ``?startapp`` format because that is the main Mini App link set
+        via BotFather; the ``/app`` form would require a separate /newapp short
+        name "app" for every bot.
+        """
+        return f"https://t.me/{self.username}?startapp"
 
     @property
     def mini_app_route_url(self) -> str:
