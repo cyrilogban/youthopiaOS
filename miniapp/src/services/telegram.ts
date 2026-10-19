@@ -150,12 +150,21 @@ export function getRawInitData(): string | null {
     return raw;
   }
 
-  // Fallback 1: Check window.Telegram.WebApp.initData from telegram-web-app.js
+  // Fallback: read the official telegram-web-app.js bridge (covers webviews
+  // where the SDK's launch params are unavailable).
   const windowRaw = readBridgeInitData();
   if (windowRaw) {
     return windowRaw;
   }
 
+  // Never fabricate signed data outside development: a made-up hash would be
+  // rejected by the gateway and would only mask a real launch-context problem.
+  // Returning null surfaces a truthful "open inside Telegram" state instead.
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
+  // Development-only mock, for `npm run dev` in a plain browser.
   // Fallback 2: Extract from initData.user()
   try {
     const user = initData.user();
