@@ -23,7 +23,7 @@ interface GatewayUser {
 
 export type VerifyResult =
   | { status: 'verified'; user: TelegramUser }
-  | { status: 'unverified'; detail?: string }
+  | { status: 'unverified' }
   | { status: 'no-telegram' }
   | { status: 'error'; message: string };
 
@@ -53,15 +53,7 @@ export async function fetchVerifiedUser(rawInitData: string | null): Promise<Ver
     return { status: 'error', message: 'Could not reach the server.' };
   }
 
-  if (res.status === 401) {
-    let detail = '';
-    try {
-      detail = ((await res.json()) as { detail?: string }).detail ?? '';
-    } catch {
-      detail = '';
-    }
-    return { status: 'unverified', detail };
-  }
+  if (res.status === 401) return { status: 'unverified' };
   if (!res.ok) return { status: 'error', message: `Unexpected response (${res.status}).` };
 
   try {

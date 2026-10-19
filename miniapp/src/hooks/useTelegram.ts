@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getInitDataDiagnostics, getRawInitData, getTelegramUser, initTelegram } from '../services/telegram';
+import { getRawInitData, getTelegramUser, initTelegram } from '../services/telegram';
 import { fetchProfile, fetchVerifiedUser, type ProfileResult, type VerifyResult } from '../services/api';
 import type { TelegramUser } from '../types/telegram';
 
@@ -22,8 +22,6 @@ interface UseTelegramResult {
   refreshProfile: () => Promise<void>;
   /** Re-runs verification with the gateway (used by the root gate's retry). */
   retryVerification: () => Promise<void>;
-  /** TEMPORARY DIAGNOSTIC: how the raw initData was sourced on boot. */
-  diagnostics: string;
 }
 
 /**
@@ -36,7 +34,6 @@ export function useTelegram(): UseTelegramResult {
   const [isInsideTelegram, setIsInsideTelegram] = useState(false);
   const [verification, setVerification] = useState<VerificationState>({ status: 'loading' });
   const [profile, setProfile] = useState<ProfileState>({ status: 'idle' });
-  const [diagnostics, setDiagnostics] = useState('');
   const rawInitDataRef = useRef<string | null>(null);
 
   // Verify the launch claim with the gateway, then — only once verified — load
@@ -64,7 +61,6 @@ export function useTelegram(): UseTelegramResult {
     setUser(getTelegramUser());
     const raw = getRawInitData();
     rawInitDataRef.current = raw;
-    setDiagnostics(getInitDataDiagnostics());
     setIsInsideTelegram(raw !== null);
     void runVerification();
   }, [runVerification]);
@@ -83,6 +79,5 @@ export function useTelegram(): UseTelegramResult {
     profile,
     refreshProfile,
     retryVerification: runVerification,
-    diagnostics,
   };
 }

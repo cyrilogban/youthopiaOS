@@ -34,16 +34,6 @@ const MOCK_INIT_DATA = new URLSearchParams({
 // in development, which would otherwise wrap the mock bridge twice).
 let initialized = false;
 
-// TEMPORARY DIAGNOSTIC: records how getRawInitData() sourced its value so the
-// verification screen can show it. Remove once the production 401 is resolved.
-type InitDataSource = 'sdk' | 'bridge' | 'mock-user' | 'mock-unsafe' | 'none';
-let initDataDiagnostics = 'initData: not read yet';
-
-/** TEMPORARY DIAGNOSTIC: human-readable snapshot of the last getRawInitData() call. */
-export function getInitDataDiagnostics(): string {
-  return initDataDiagnostics;
-}
-
 /**
  * Translate the SDK's snake_case user into our camelCase contract. The single
  * place this mapping happens. Returns null when there is no user.
@@ -138,78 +128,58 @@ export function getTelegramUser(): TelegramUser | null {
 }
 
 /** Read the raw signed initData string from the official Telegram bridge if present. */
-function bridgeInitDataRaw(): string | null {
+function readBridgeInitData(): string | null {
   if (typeof window !== 'undefined') {
     const windowRaw = (window as any).Telegram?.WebApp?.initData;
-    if (typeof windowRaw === 'string') {
+    if (typeof windowRaw === 'string' && windowRaw.trim().length > 0) {
       return windowRaw;
     }
   }
   return null;
 }
+
 /** Read the raw signed initData string — with fallback for Telegram Reply Keyboard webviews. */
 export function getRawInitData(): string | null {
   let raw: string | null = null;
-  let sdkErr = '';
   try {
     raw = initData.raw() ?? null;
-  } catch (e) {
-    sdkErr = (e as Error)?.message ?? 'error';
+  } catch {
     raw = null;
   }
-  const sdkRawLen = raw ? raw.length : 0;
-
-  const bridge = bridgeInitDataRaw();
-  const bridgeLen = bridge ? bridge.length : 0;
-  const hasTg = typeof window !== 'undefined' && !!(window as any).Telegram;
-  const hasUnsafeUser =
-    typeof window !== 'undefined' && !!(window as any).Telegram?.WebApp?.initDataUnsafe?.user;
-  let hasSdkUser = false;
-  try {
-    hasSdkUser = !!initData.user();
-  } catch {
-    hasSdkUser = false;
-  }
-
-  let source: InitDataSource = 'none';
-  let value: string | null = null;
-
   if (raw && raw.trim().length > 0) {
-    source = 'sdk';
-    value = raw;
-  } else if (bridge && bridge.trim().length > 0) {
-    source = 'bridge';
-    value = bridge;
+    return raw;
   }
 
-  // Fallback 1: Extract from initData.user()
-  if (!value) {
-    try {
-      const user = initData.user();
-      if (user && user.id) {
-        source = 'mock-user';
-        value = new URLSearchParams({
-          user: JSON.stringify({
-            id: user.id,
-            first_name: user.first_name || 'Member',
-            last_name: user.last_name || '',
-            username: user.username || '',
-          }),
-          auth_date: Math.floor(Date.now() / 1000).toString(),
-          hash: 'dev-mock-hash',
-        }).toString();
-      }
-    } catch {
-      // init data unavailable in this launch context.
+  // Fallback 1: Check window.Telegram.WebApp.initData from telegram-web-app.js
+  const windowRaw = readBridgeInitData();
+  if (windowRaw) {
+    return windowRaw;
+  }
+
+  // Fallback 2: Extract from initData.user()
+  try {
+    const user = initData.user();
+    if (user && user.id) {
+      return new URLSearchParams({
+        user: JSON.stringify({
+          id: user.id,
+          first_name: user.first_name || 'Member',
+          last_name: user.last_name || '',
+          username: user.username || '',
+        }),
+        auth_date: Math.floor(Date.now() / 1000).toString(),
+        hash: 'dev-mock-hash',
+      }).toString();
     }
+  } catch {
+    // init data unavailable in this launch context.
   }
 
-  // Fallback 2: Check window.Telegram.WebApp.initDataUnsafe
-  if (!value && hasUnsafeUser) {
+  // Fallback 3: Check window.Telegram.WebApp.initDataUnsafe
+  if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
     const tgUser = (window as any).Telegram.WebApp.initDataUnsafe.user;
     if (tgUser && tgUser.id) {
-      source = 'mock-unsafe';
-      value = new URLSearchParams({
+      return new URLSearchParams({
         user: JSON.stringify({
           id: tgUser.id,
           first_name: tgUser.first_name || 'Member',
@@ -222,10 +192,5 @@ export function getRawInitData(): string | null {
     }
   }
 
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  initDataDiagnostics =
-    `src=${source} len=${value ? value.length : 0} ` +
-    `sdkRaw=${sdkRawLen}${sdkErr ? `(err:${sdkErr})` : ''} bridge=${bridgeLen} ` +
-    `tg=${hasTg} unsafeUser=${hasUnsafeUser} sdkUser=${hasSdkUser} origin=${host}`;
-  return value;
+  return null;
 }

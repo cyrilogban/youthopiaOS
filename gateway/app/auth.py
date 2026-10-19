@@ -17,7 +17,7 @@ from fastapi import Header, HTTPException, status
 
 from gateway.app.config import BOT_TOKENS, IS_PRODUCTION
 from gateway.app.models import TelegramUser
-from gateway.app.validator import debug_conventions, is_fresh, verify_init_data
+from gateway.app.validator import is_fresh, verify_init_data
 
 _SCHEME = "tma "
 _UNAUTHORIZED = {"WWW-Authenticate": "tma"}
@@ -48,9 +48,8 @@ def require_telegram_user(authorization: str | None = Header(default=None)) -> T
     clean_tokens = {k: v.strip() for k, v in BOT_TOKENS.items() if v and v.strip()}
     signer = verify_init_data(raw_init_data, clean_tokens)
     if signer is None:
-        dbg = debug_conventions(raw_init_data, clean_tokens)  # TEMP diagnostic
-        logging.warning("Rejected initData: invalid signature for Telegram user %s (%s) | %s", user.id, user.first_name, dbg)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"initData signature is invalid | {dbg}", headers=_UNAUTHORIZED)
+        logging.warning("Rejected initData: invalid signature for Telegram user %s (%s)", user.id, user.first_name)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "initData signature is invalid", headers=_UNAUTHORIZED)
 
     # Recent? (anti-replay)
     if not is_fresh(raw_init_data, max_age_seconds=_MAX_INIT_DATA_AGE_SECONDS):
