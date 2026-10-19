@@ -58,6 +58,25 @@ def test_require_telegram_user_invalid_signature():
     assert exc_info.value.status_code == 401
 
 
+def test_verify_init_data_signs_with_signature_field():
+    """Bot API 8.0+ payloads carry a `signature` field that IS part of the HMAC."""
+    from gateway.app.validator import verify_init_data
+
+    params = {
+        "auth_date": str(int(time.time())),
+        "chat_instance": "1234567890123456789",
+        "chat_type": "private",
+        "user": json.dumps({"id": 12345, "first_name": "Test"}),
+        "signature": "TG_ed25519_signature_value-with_dash_and_underscore",
+    }
+    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
+    secret_key = hmac.new(b"WebAppData", TEST_TOKEN.encode(), hashlib.sha256).digest()
+    params["hash"] = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+    raw_data = urllib.parse.urlencode(params)
+    assert verify_init_data(raw_data, {"test": TEST_TOKEN}) == "test"
+
+
 def test_require_telegram_user_stale_init_data():
     stale_date = int(time.time()) - (86400 + 3600)  # 25 hours ago
     raw_data = _create_valid_init_data(TEST_TOKEN, {"id": 12345, "first_name": "Test"}, auth_date=stale_date)

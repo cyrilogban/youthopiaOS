@@ -22,6 +22,11 @@ import time
 from urllib.parse import parse_qsl
 
 
+def _data_check_string(pairs: dict[str, str]) -> str:
+    """Chain of `key=value` pairs sorted by key, '\n'-joined (Telegram's recipe)."""
+    return "\n".join(f"{k}={v}" for k, v in sorted(pairs.items()))
+
+
 def verify_init_data(raw_init_data: str, bot_tokens: dict[str, str]) -> str | None:
     """Return the name of the bot that signed `raw_init_data`, or None if the
     signature verifies against no trusted token.
@@ -37,17 +42,24 @@ def verify_init_data(raw_init_data: str, bot_tokens: dict[str, str]) -> str | No
     if not received_hash:
         return None  # no signature present -> cannot be trusted
 
-    pairs.pop("signature", None)  # newer 3rd-party field; not part of the HMAC
-
     # 2. data-check-string: remaining fields sorted by key, 'key=value', \n-joined.
-    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(pairs.items()))
+    #    Telegram's HMAC covers ALL fields except `hash` — and, since Bot API 8.0,
+    #    the `signature` field IS one of them. (Only the separate Ed25519
+    #    third-party check excludes `signature`.) Older clients sent no
+    #    `signature` at all, so we also accept the legacy variant that drops it.
+    variants = [_data_check_string(pairs)]
+    if "signature" in pairs:
+        legacy_pairs = dict(pairs)
+        legacy_pairs.pop("signature")
+        variants.append(_data_check_string(legacy_pairs))
 
     # 3-5. Try each trusted token (five doors -> five possible signers).
     for bot_name, token in bot_tokens.items():
         secret_key = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
-        computed = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
-        if hmac.compare_digest(computed, received_hash):
-            return bot_name  # authentic — and we now know which door
+        for data_check_string in variants:
+            computed = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+            if hmac.compare_digest(computed, received_hash):
+                return bot_name  # authentic — and we now know which door
 
     return None  # matched no trusted token -> forged or corrupt
 
@@ -77,18 +89,17 @@ def is_fresh(raw_init_data: str, max_age_seconds: int = 86400, now_ts: float | N
 def debug_conventions(raw_init_data: str, bot_tokens: dict[str, str]) -> str:
     """TEMPORARY DIAGNOSTIC (remove once prod verification is fixed).
 
-    Reports whether the received hash matches each token under the decoded
-    data-check-string convention (what we ship) or the raw/undecoded one, plus
-    the field names present. Lets us see, from a live failure, whether the bug
-    is the decoding convention or a token mismatch.
+    Reports whether the received hash matches each token under the decoded vs
+    raw data-check-string convention, each with `signature` included or dropped.
+    Lets us see, from a live failure, exactly which convention is in play.
     """
     orig_keys = [k for k, _ in parse_qsl(raw_init_data, keep_blank_values=True)]
 
     decoded = dict(parse_qsl(raw_init_data, keep_blank_values=True))
     received_hash = decoded.get("hash", "")
     decoded.pop("hash", None)
+    decoded_with_sig = dict(decoded)
     decoded.pop("signature", None)
-    dcs_decoded = "\n".join(f"{k}={v}" for k, v in sorted(decoded.items()))
 
     raw_pairs: dict[str, str] = {}
     for chunk in raw_init_data.split("&"):
@@ -96,13 +107,23 @@ def debug_conventions(raw_init_data: str, bot_tokens: dict[str, str]) -> str:
             key, value = chunk.split("=", 1)
             raw_pairs[key] = value
     raw_pairs.pop("hash", None)
+    raw_with_sig = dict(raw_pairs)
     raw_pairs.pop("signature", None)
-    dcs_raw = "\n".join(f"{k}={v}" for k, v in sorted(raw_pairs.items()))
+
+    candidates = {
+        "dec+sig": _data_check_string(decoded_with_sig),
+        "dec": _data_check_string(decoded),
+        "raw+sig": _data_check_string(raw_with_sig),
+        "raw": _data_check_string(raw_pairs),
+    }
 
     marks = []
     for name, token in bot_tokens.items():
         secret = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
-        dec = hmac.new(secret, dcs_decoded.encode(), hashlib.sha256).hexdigest()
-        raw = hmac.new(secret, dcs_raw.encode(), hashlib.sha256).hexdigest()
-        marks.append(f"{name}:dec={'Y' if dec == received_hash else 'N'},raw={'Y' if raw == received_hash else 'N'}")
+        hits = []
+        for label, dcs in candidates.items():
+            computed = hmac.new(secret, dcs.encode(), hashlib.sha256).hexdigest()
+            if computed == received_hash:
+                hits.append(label)
+        marks.append(f"{name}={'|'.join(hits) if hits else 'N'}")
     return f"keys={sorted(orig_keys)} recv={received_hash[:10]} toks={len(bot_tokens)} " + " ".join(marks)
