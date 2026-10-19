@@ -72,3 +72,37 @@ def is_fresh(raw_init_data: str, max_age_seconds: int = 86400, now_ts: float | N
         return False
     now = now_ts if now_ts is not None else time.time()
     return (now - auth_date) <= max_age_seconds
+
+
+def debug_conventions(raw_init_data: str, bot_tokens: dict[str, str]) -> str:
+    """TEMPORARY DIAGNOSTIC (remove once prod verification is fixed).
+
+    Reports whether the received hash matches each token under the decoded
+    data-check-string convention (what we ship) or the raw/undecoded one, plus
+    the field names present. Lets us see, from a live failure, whether the bug
+    is the decoding convention or a token mismatch.
+    """
+    orig_keys = [k for k, _ in parse_qsl(raw_init_data, keep_blank_values=True)]
+
+    decoded = dict(parse_qsl(raw_init_data, keep_blank_values=True))
+    received_hash = decoded.get("hash", "")
+    decoded.pop("hash", None)
+    decoded.pop("signature", None)
+    dcs_decoded = "\n".join(f"{k}={v}" for k, v in sorted(decoded.items()))
+
+    raw_pairs: dict[str, str] = {}
+    for chunk in raw_init_data.split("&"):
+        if "=" in chunk:
+            key, value = chunk.split("=", 1)
+            raw_pairs[key] = value
+    raw_pairs.pop("hash", None)
+    raw_pairs.pop("signature", None)
+    dcs_raw = "\n".join(f"{k}={v}" for k, v in sorted(raw_pairs.items()))
+
+    marks = []
+    for name, token in bot_tokens.items():
+        secret = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
+        dec = hmac.new(secret, dcs_decoded.encode(), hashlib.sha256).hexdigest()
+        raw = hmac.new(secret, dcs_raw.encode(), hashlib.sha256).hexdigest()
+        marks.append(f"{name}:dec={'Y' if dec == received_hash else 'N'},raw={'Y' if raw == received_hash else 'N'}")
+    return f"keys={sorted(orig_keys)} recv={received_hash[:10]} toks={len(bot_tokens)} " + " ".join(marks)
