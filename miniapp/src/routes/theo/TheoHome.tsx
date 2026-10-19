@@ -8,7 +8,7 @@ const SAMPLE_POSTS: FeedPostData[] = [
   {
     id: 'sample-aotd',
     type: 'Affirmation',
-    sourceName: 'Theodore',
+    sourceName: 'Theo',
     sourceHandle: '@theobiblebot',
     timeLabel: 'Today',
     body: 'I am rooted in grace, I walk in purpose, and I carry peace into everything I touch today.',
@@ -18,7 +18,7 @@ const SAMPLE_POSTS: FeedPostData[] = [
   {
     id: 'sample-prayer',
     type: 'Prayer',
-    sourceName: 'Theodore',
+    sourceName: 'Theo',
     sourceHandle: '@theobiblebot',
     timeLabel: 'Today',
     body: 'Father, thank You for this day. Steady my heart, order my steps, and let my words bring life to everyone I meet. Amen.',
@@ -28,7 +28,7 @@ const SAMPLE_POSTS: FeedPostData[] = [
   {
     id: 'sample-card',
     type: 'Card',
-    sourceName: 'Theodore',
+    sourceName: 'Theo',
     sourceHandle: '@theobiblebot',
     timeLabel: 'Today',
     body: 'Your word is a lamp to my feet, and a light to my path. - Psalm 119:105',

@@ -10,6 +10,11 @@ Secrets come from the existing shared settings (loaded once from the repo-root
 """
 from shared.config.settings import settings
 
+# Production hard-enforces verification: forged/stale initData is rejected and
+# the dev-mock bypass is ignored. Development keeps both escape hatches so local
+# preview (and the mock login) keeps working.
+IS_PRODUCTION: bool = settings.is_production
+
 # bot name -> token, for every bot that actually has a token configured.
 # Blank tokens (bot not set up yet) are excluded so the gateway never tries to
 # validate initData against an empty secret.

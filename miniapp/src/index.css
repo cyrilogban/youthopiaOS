@@ -77,7 +77,7 @@ button { touch-action: manipulation; }
   width: min(100%, 520px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 18px 16px calc(110px + env(safe-area-inset-bottom));
+  padding: 18px 16px calc(130px + env(safe-area-inset-bottom));
 }
 
 .app-header {
@@ -354,29 +354,30 @@ button { touch-action: manipulation; }
 }
 
 /* ------------------------------------------------------------------ */
-/* Bot tab bar (Layer 1 of per-bot navigation)                         */
+/* Bot tab bar (Layer 1, top row of the bottom panel)                  */
 /* ------------------------------------------------------------------ */
 .bot-tabbar {
   position: fixed;
   left: 50%;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 46px);
   transform: translateX(-50%);
   width: calc(100% - 24px);
   max-width: 500px;
-  min-height: 68px;
+  min-height: 58px;
   display: grid;
   align-items: center;
   gap: 4px;
-  padding: 6px;
-  border-radius: 20px;
+  padding: 5px 6px;
+  border-radius: 20px 20px 0 0;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--slate-200);
-  box-shadow: 0 12px 30px rgba(34, 24, 48, 0.14);
+  border-bottom: 0;
   z-index: 1000;
+  transition: transform 0.28s var(--ease);
 }
 .bot-tab {
   min-width: 0;
-  min-height: 56px;
+  min-height: 48px;
   border: 0;
   border-radius: 16px;
   background: transparent;
@@ -394,6 +395,63 @@ button { touch-action: manipulation; }
 .bot-tab.is-active { background: var(--accent-soft); color: var(--accent); font-weight: 900; }
 
 /* ------------------------------------------------------------------ */
+/* Bot switcher (Layer 2, bottom row of the bottom panel)              */
+/* ------------------------------------------------------------------ */
+.bot-switcher {
+  position: fixed;
+  left: 50%;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 500px;
+  height: 46px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--slate-200);
+  box-shadow: 0 14px 30px rgba(34, 24, 48, 0.16);
+  z-index: 1000;
+  transition: transform 0.28s var(--ease);
+}
+/* Docked beneath the tab bar: one panel, thin divider, square top corners. */
+.bot-switcher.is-attached {
+  border-radius: 0 0 20px 20px;
+  border-top: 1px solid var(--slate-200);
+}
+.bot-switch {
+  min-width: 0;
+  min-height: 36px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+.bot-switch-name {
+  height: 10px;
+  line-height: 10px;
+  font-size: 9px;
+  font-weight: 900;
+}
+.bot-switch.is-active { font-weight: 900; }
+
+/* Hide the bottom panel while scrolling down; slide it back on scroll up. */
+.app-shell.nav-hidden .bot-tabbar,
+.app-shell.nav-hidden .bot-switcher {
+  transform: translate(-50%, 200px);
+}
+
+/* ------------------------------------------------------------------ */
 /* Empty state                                                         */
 /* ------------------------------------------------------------------ */
 .empty-state {
@@ -408,3 +466,62 @@ button { touch-action: manipulation; }
 }
 .empty-state strong { font-size: 15px; font-weight: 850; }
 .empty-state p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; max-width: 280px; }
+
+/* ------------------------------------------------------------------ */
+/* Verification gate                                                   */
+/* ------------------------------------------------------------------ */
+.verify-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 20px;
+  background: var(--canvas);
+}
+.verify-card {
+  width: 100%;
+  max-width: 340px;
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--slate-200);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.verify-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--primary-purple);
+  background: var(--accent-soft, var(--purple-50));
+}
+.verify-card h1 { margin: 0; font-size: 17px; font-weight: 900; color: var(--ink); }
+.verify-card p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 260px; }
+.verify-retry {
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--grad-hero);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--shadow-purple);
+}
+.verify-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--purple-100);
+  border-top-color: var(--primary-purple);
+  animation: verify-spin 0.8s linear infinite;
+}
+@keyframes verify-spin { to { transform: rotate(360deg); } }

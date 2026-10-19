@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useTelegram } from './hooks/useTelegram';
+import { useHideNavOnScroll } from './hooks/useHideNavOnScroll';
 import { AppDataProvider } from './context/AppData';
-import { BottomNav } from './components/BottomNav';
+import { BotSwitcher } from './components/BotSwitcher';
+import { VerificationGate } from './components/VerificationGate';
 import { TourOverlay, markTourAsSeen } from './components/TourOverlay';
 import { fetchCommunityTour, type Tour } from './services/api';
 import { getRawInitData } from './services/telegram';
@@ -12,17 +14,16 @@ import { LusieRoute } from './routes/lusie/LusieRoute';
 import { EdieRoute } from './routes/edie/EdieRoute';
 import { SusieRoute } from './routes/susie/SusieRoute';
 import { PeteRoute } from './routes/pete/PeteRoute';
-import { pathForTab, tabForPath, type TabId } from './types/navigation';
-
-const BOT_PATHS = ['/theo', '/lusie', '/edie', '/susie', '/pete'];
+import { pathForTab, type TabId } from './types/navigation';
 
 const App: React.FC = () => {
   const telegram = useTelegram();
-  const { user, isInsideTelegram, verification, profile, refreshProfile } = telegram;
+  const { user, isInsideTelegram, verification, profile, refreshProfile, retryVerification } = telegram;
   const location = useLocation();
   const navigate = useNavigate();
   const [tour, setTour] = useState<Tour | null>(null);
   const [tourOpen, setTourOpen] = useState(false);
+  const navHidden = useHideNavOnScroll();
 
   const profileData = profile.status === 'ok' ? profile.profile : null;
   const isVerified = verification.status === 'verified';
@@ -31,9 +32,7 @@ const App: React.FC = () => {
   const level = profileData?.level && profileData.level > 1 ? profileData.level : computedLevel;
   const displayName = user?.firstName || profileData?.displayName || 'Member';
   const initial = displayName[0]?.toUpperCase() || 'Y';
-  const activeTab = tabForPath(location.pathname);
 
-  const isBotRoute = BOT_PATHS.some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`));
   const botMatch = location.pathname.match(/^\/(theo|lusie|edie|susie|pete)(?:\/|$)/);
   const profilePath = botMatch ? `/${botMatch[1]}/profile` : '/theo/profile';
 
@@ -79,8 +78,9 @@ const App: React.FC = () => {
 
   return (
     <AppDataProvider value={telegram}>
-      <div className="app-shell">
-        <div className="app-frame" style={{ paddingBottom: isBotRoute ? 96 : undefined }}>
+      <VerificationGate verification={verification} onRetry={retryVerification}>
+      <div className={`app-shell${navHidden ? ' nav-hidden' : ''}`}>
+        <div className="app-frame">
           <header className="app-header">
             <div>
               <div className="brand-kicker">YouThopia Bible Community</div>
@@ -119,7 +119,7 @@ const App: React.FC = () => {
           </footer>
         </div>
 
-        {!isBotRoute && <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />}
+        <BotSwitcher />
 
         {tourOpen && (
           <TourOverlay
@@ -131,6 +131,7 @@ const App: React.FC = () => {
           />
         )}
       </div>
+      </VerificationGate>
     </AppDataProvider>
   );
 };

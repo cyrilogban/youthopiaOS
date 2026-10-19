@@ -20,6 +20,8 @@ interface UseTelegramResult {
   profile: ProfileState;
   /** Re-runs the /profile call (after XP changes, e.g. finishing the tour). */
   refreshProfile: () => Promise<void>;
+  /** Re-runs verification with the gateway (used by the root gate's retry). */
+  retryVerification: () => Promise<void>;
 }
 
 /**
@@ -34,36 +36,34 @@ export function useTelegram(): UseTelegramResult {
   const [profile, setProfile] = useState<ProfileState>({ status: 'idle' });
   const rawInitDataRef = useRef<string | null>(null);
 
-  // Empty dependency array -> run once, after the first render (on mount).
+  // Verify the launch claim with the gateway, then — only once verified — load
+  // the stored profile. Reused on mount and by the gate's retry, so a rejected
+  // session can be re-checked without a full reload.
+  const runVerification = useCallback(async () => {
+    const raw = rawInitDataRef.current;
+    setVerification({ status: 'loading' });
+    setProfile({ status: 'idle' });
+
+    const result = await fetchVerifiedUser(raw);
+    setVerification(result);
+
+    // Only reach into our own stored data once the server has proven who they
+    // are. Unverified / no-telegram / error users never trigger a /profile call.
+    if (raw && result.status === 'verified') {
+      setProfile({ status: 'loading' });
+      setProfile(await fetchProfile(raw));
+    }
+  }, []);
+
+  // Boot once: init the SDK, read the launch context, then verify.
   useEffect(() => {
     initTelegram();
     setUser(getTelegramUser());
     const raw = getRawInitData();
     rawInitDataRef.current = raw;
     setIsInsideTelegram(raw !== null);
-
-    // The effect callback must stay synchronous (it may only return a cleanup
-    // fn, never a Promise), so run the async verify in an inner IIFE and ignore
-    // a late resolve if we've unmounted (also neutralizes StrictMode's dev
-    // double-invoke).
-    let cancelled = false;
-    void (async () => {
-      const result = await fetchVerifiedUser(raw);
-      if (cancelled) return;
-      setVerification(result);
-
-      // Only reach into our own stored data once the server has proven who they
-      // are. Unverified / no-telegram / error users never trigger a /profile call.
-      if (raw) {
-        setProfile({ status: 'loading' });
-        const loaded = await fetchProfile(raw);
-        if (!cancelled) setProfile(loaded);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void runVerification();
+  }, [runVerification]);
 
   const refreshProfile = useCallback(async () => {
     const raw = rawInitDataRef.current;
@@ -72,5 +72,12 @@ export function useTelegram(): UseTelegramResult {
     setProfile(await fetchProfile(raw));
   }, []);
 
-  return { user, isInsideTelegram, verification, profile, refreshProfile };
+  return {
+    user,
+    isInsideTelegram,
+    verification,
+    profile,
+    refreshProfile,
+    retryVerification: runVerification,
+  };
 }
