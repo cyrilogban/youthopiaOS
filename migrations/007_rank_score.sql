@@ -46,15 +46,31 @@ on conflict (rank_id) do update set
 
 alter table public.rank_definitions enable row level security;
 
-create policy if not exists "Anyone can read rank definitions"
-    on public.rank_definitions
-    for select
-    using (true);
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public' and tablename = 'rank_definitions'
+          and policyname = 'Anyone can read rank definitions'
+    ) then
+        create policy "Anyone can read rank definitions"
+            on public.rank_definitions
+            for select
+            using (true);
+    end if;
 
-create policy if not exists "Service role has full access to rank definitions"
-    on public.rank_definitions
-    for all
-    using (true);
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public' and tablename = 'rank_definitions'
+          and policyname = 'Service role has full access to rank definitions'
+    ) then
+        create policy "Service role has full access to rank definitions"
+            on public.rank_definitions
+            for all
+            using (true);
+    end if;
+end
+$$;
 
 -- Store the computed score + resolved rank on the user row.
 -- manual_rank_id was previously created ad hoc; declare it here for reproducibility.
