@@ -158,7 +158,7 @@ class UserService:
                 response = (
                     self.db._client()
                     .table("users")
-                    .select("id, display_name, total_xp, level, manual_rank_id")
+                    .select("id, display_name, total_xp, level, manual_rank_id, rank_score")
                     .gt("total_xp", 0)
                     .order("total_xp", desc=True)
                     .limit(limit)

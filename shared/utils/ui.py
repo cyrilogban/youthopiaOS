@@ -196,8 +196,7 @@ def render_shared_profile_card(
     if level == 1 and xp > 0:
         level = calculate_level(xp)
     trust = user_data.get("trust_score", 100)
-    manual_rank = user_data.get("manual_rank_id")
-    rank = RankService.resolve_rank(xp, manual_rank)
+    rank = RankService.resolve_for_user(user_data)
 
     card_lines = [
         f"👤 <b>{display_name}</b>",

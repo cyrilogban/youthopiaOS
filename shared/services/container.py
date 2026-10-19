@@ -13,6 +13,7 @@ from shared.services.chat_service import ChatService
 from shared.services.event_service import EventService
 from shared.services.moderation_service import ModerationService
 from shared.services.quiz_service import QuizService
+from shared.services.rank_score_service import RankScoreService
 from shared.services.rank_service import RankService
 from shared.services.user_service import UserService
 from shared.services.xp_service import XPService
@@ -33,6 +34,7 @@ class ServiceContainer:
     quizzes: QuizService
     admin: AdminService
     ranks: RankService = RankService()
+    rank_scores: RankScoreService | None = None
     app_config: Any = None
 
 
@@ -52,4 +54,5 @@ def build_services(supabase: SupabaseGateway, telemetry: TelemetryMongoGateway) 
         quizzes=QuizService(supabase),
         admin=AdminService(supabase),
         ranks=RankService(),
+        rank_scores=RankScoreService(supabase),
     )

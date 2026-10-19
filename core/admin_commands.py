@@ -239,11 +239,13 @@ def create_admin_router(bot_name: str = "global") -> Router:
         if rank_arg == "auto":
             await services.supabase.update_by_id("users", user_id, {"manual_rank_id": None})
             xp = int((user or {}).get("total_xp", 0))
-            resolved = services.ranks.resolve_rank(xp)
+            score = int((user or {}).get("rank_score", 0) or 0)
+            resolved = services.ranks.resolve_for_user(user)
             await message.answer(
                 f"✅ <b>Rank Reset to Automated!</b>\n\n"
                 f"👤 Member: <b>{display_name}</b>\n"
-                f"🏅 Current XP Rank: <b>{resolved.emoji} {resolved.title}</b> ({resolved.tier})\n"
+                f"🏅 Current Rank: <b>{resolved.emoji} {resolved.title}</b> ({resolved.tier})\n"
+                f"🏅 Rank Score: <code>{score}</code>\n"
                 f"⭐ XP: <code>{xp} YP</code>",
                 parse_mode="HTML"
             )

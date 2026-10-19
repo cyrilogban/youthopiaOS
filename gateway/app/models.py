@@ -49,6 +49,7 @@ class UserProfile(BaseModel):
     trust_score: int = 100
     quizzes_played: int = 0
     accuracy_pct: int = 100
+    rank_score: int = 0
     rank_title: str = "YouTopian Seeker"
     rank_tier: str = "Entry Level"
     rank_badge_color: str = "#D98A95"

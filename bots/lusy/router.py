@@ -363,13 +363,8 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         user = await services.identity.resolve_telegram_user(user_from)
         user_id = user["id"]
 
-        # Fetch level and YP
-        level_info = await services.xp.get_level(user_id)
-        total_xp = level_info["total_xp"]
-        level = level_info["level"]
-
         # Define rank title based on centralized RankService
-        rank = services.ranks.resolve_rank(total_xp, user.get("manual_rank_id"))
+        rank = services.ranks.resolve_for_user(user)
         rank_title = f"{rank.emoji} {rank.title}"
 
         # Fetch game history statistics
@@ -560,7 +555,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
             display_name = u.get("display_name") or "Anonymous"
             xp = u.get("total_xp", 0)
             level = u.get("level", 1)
-            rank = services.ranks.resolve_rank(xp, u.get("manual_rank_id"))
+            rank = services.ranks.resolve_for_user(u)
             medal = medals[idx] if idx < len(medals) else f"#{idx+1}"
             leaderboard_text += f"{medal} <b>{display_name}</b> ({rank.emoji} {rank.title}) - <code>{xp} YP</code>\n"
 
@@ -626,7 +621,7 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         xp_to_next = 100 - progress_xp
         next_level = level + 1
 
-        rank = services.ranks.resolve_rank(total_xp, user.get("manual_rank_id"))
+        rank = services.ranks.resolve_for_user(user)
         rank_title = f"{rank.emoji} {rank.title}"
 
         history = await services.quizzes.get_game_history(user_id)

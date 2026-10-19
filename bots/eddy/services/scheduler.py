@@ -316,6 +316,28 @@ async def trigger_live_event(bot: Bot, group_chat_id: int):
         logger.error(f"Failed to send 9PM trigger: {e}")
 
 
+async def recompute_daily_ranks() -> None:
+    """Recomputes the holistic cross-bot rank_score for every member (Decision 7).
+
+    Runs daily at 03:00 WAT and once shortly after startup to backfill stored
+    rank fields for members created before the rank system existed.
+    """
+    from shared.db.supabase import SupabaseGateway
+    from shared.services.rank_score_service import RankScoreService
+
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY", "")
+    if not supabase_url or not supabase_key:
+        return
+
+    db = SupabaseGateway(supabase_url, supabase_key)
+    try:
+        updated = await RankScoreService(db).recompute_all()
+        logger.info(f"Daily rank recompute completed for {updated} member(s).")
+    except Exception as e:
+        logger.error(f"Daily rank recompute failed: {e}", exc_info=True)
+
+
 async def sweep_daily_rank_nominations(bot: Bot):
     """Daily 24-hour background sweep (runs at 02:00 AM WAT).
     Scouts members who meet the multi-bot criteria for Tier 4 (Elite/Ambassador)
@@ -340,8 +362,8 @@ async def sweep_daily_rank_nominations(bot: Bot):
             res = (
                 db._client()
                 .table("users")
-                .select("id, display_name, total_xp, level, manual_rank_id, trust_score")
-                .gte("total_xp", RankService.NOMINATION_MIN_XP)
+                .select("id, display_name, total_xp, level, manual_rank_id, trust_score, rank_score")
+                .gte("rank_score", RankService.NOMINATION_MIN_SCORE)
                 .is_("manual_rank_id", "null")
                 .execute()
             )
@@ -354,9 +376,10 @@ async def sweep_daily_rank_nominations(bot: Bot):
         for user in candidates:
             user_id = user["id"]
             xp = int(user.get("total_xp", 0))
+            score = int(user.get("rank_score", 0))
             trust = int(user.get("trust_score", 100))
             
-            if not RankService.is_nomination_eligible(xp, trust):
+            if not RankService.is_nomination_eligible(score, trust):
                 continue
 
             # Fetch telegram account details
@@ -370,7 +393,7 @@ async def sweep_daily_rank_nominations(bot: Bot):
             mention = f"@{username}" if username else f"<code>{tg_id}</code>"
             setrank_target = f"@{username}" if username else str(tg_id)
 
-            target_rank_id = "ambassador" if xp >= 25000 else "elite"
+            target_rank_id = "ambassador" if score >= 3001 else "elite"
             target_rank = RankService.get_rank_by_id(target_rank_id)
             if not target_rank:
                 continue
@@ -386,7 +409,8 @@ async def sweep_daily_rank_nominations(bot: Bot):
             nomination_card = (
                 "👑 <b>Leadership Nomination Scout (24h Daily Sweep)</b>\n\n"
                 f"👤 <b>Candidate:</b> <b>{display_name}</b> ({mention})\n"
-                f"⭐ <b>Total XP:</b> <code>{xp:,} YP</code> (Capped at 🏛️ Pillar ceiling)\n"
+                f"🏅 <b>Rank Score:</b> <code>{score:,}</code> (Capped at 🏛️ Pillar ceiling)\n"
+                f"⭐ <b>Total XP:</b> <code>{xp:,} YP</code>\n"
                 f"🛡️ <b>Pete Trust Score:</b> <code>{trust}/100</code>\n"
                 f"🏅 <b>Eligible Rank:</b> {target_rank.emoji} <b>{target_rank.title}</b> ({target_rank.tier})\n\n"
                 "<i>This member has surpassed the algorithmic ceiling and meets all multi-bot prerequisites.</i>\n\n"
@@ -466,5 +490,24 @@ def setup_eddy_scheduler(bot: Bot):
         args=[bot]
     )
     
+    # 6. Recompute holistic rank scores daily at 3:00 AM WAT (after the nomination sweep)
+    scheduler.add_job(
+        recompute_daily_ranks,
+        CronTrigger(hour=3, minute=0, timezone="Africa/Lagos"),
+        id="daily_rank_recompute"
+    )
+    
     scheduler.start()
     logger.info("Eddy's timezone-aware scheduler has started (Africa/Lagos)")
+
+    # One-time backfill so stored rank fields are fresh immediately after a deploy.
+    async def _initial_rank_backfill() -> None:
+        import asyncio
+        await asyncio.sleep(20)
+        await recompute_daily_ranks()
+
+    try:
+        import asyncio
+        asyncio.get_running_loop().create_task(_initial_rank_backfill())
+    except RuntimeError:
+        pass
