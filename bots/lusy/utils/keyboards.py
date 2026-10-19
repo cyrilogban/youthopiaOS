@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
-from shared.config.bot_registry import get_bot_identity, DEFAULT_MINI_APP_LINK
+from shared.config.bot_registry import get_bot_identity
 
 
 def build_lusy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -37,7 +37,7 @@ def build_game_selection_inline_keyboard(is_group: bool = False) -> InlineKeyboa
     [ 🔀 Verse Scramble ]
     [ ⚡ Trivia Race ]
     """
-    open_app_btn = InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK) if is_group else get_open_app_inline_button()
+    open_app_btn = InlineKeyboardButton(text="Open App", url=get_bot_identity("lusy").mini_app_link) if is_group else get_open_app_inline_button("lusy")
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [open_app_btn],
@@ -56,7 +56,7 @@ def build_lusy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("lusy").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="🎯 Start Quiz", callback_data="lusy_menu_play"),
@@ -76,7 +76,7 @@ def build_lusy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("lusy").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Lucy to Admin", callback_data="lusy_prompt_admin"),

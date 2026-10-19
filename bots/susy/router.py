@@ -21,7 +21,7 @@ from aiogram.types import (
 )
 
 from shared.services.container import ServiceContainer
-from shared.config.bot_registry import DEFAULT_MINI_APP_LINK, get_bot_identity, meet_description
+from shared.config.bot_registry import get_bot_identity, meet_description
 from shared.utils.ui import (
     BOT_FAMILY_DIRECTORY_TEXT,
     TELEGRAM_GROUP_LINK,
@@ -264,7 +264,7 @@ def build_susy_router(description: str) -> Router:
             "Tap the button below to launch the YouThopiaOS Mini App and unlock your YouTopian profile!</blockquote>"
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK)]
+            [InlineKeyboardButton(text="Open App", url=get_bot_identity("susy").mini_app_link)]
         ])
 
         try:

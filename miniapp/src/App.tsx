@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useTelegram } from './hooks/useTelegram';
+import { AppDataProvider } from './context/AppData';
 import { BottomNav } from './components/BottomNav';
-import { HomeTab } from './components/tabs/HomeTab';
-import { BibleTab } from './components/tabs/BibleTab';
-import { QuizTab } from './components/tabs/QuizTab';
-import { EventsTab } from './components/tabs/EventsTab';
-import { CommunityTab } from './components/tabs/CommunityTab';
-import { Card, Pill } from './components/ui';
-import { RankBadge } from './components/RankBadge';
 import { TourOverlay, markTourAsSeen } from './components/TourOverlay';
 import { fetchCommunityTour, type Tour } from './services/api';
 import { getRawInitData } from './services/telegram';
-import type { TabId } from './types/navigation';
+import { HomeRoute } from './routes/HomeRoute';
+import { TheoRoute } from './routes/theo/TheoRoute';
+import { LusieRoute } from './routes/lusie/LusieRoute';
+import { EdieRoute } from './routes/edie/EdieRoute';
+import { SusieRoute } from './routes/susie/SusieRoute';
+import { PeteRoute } from './routes/pete/PeteRoute';
+import { pathForTab, tabForPath, type TabId } from './types/navigation';
+
+const BOT_PATHS = ['/theo', '/lusie', '/edie', '/susie', '/pete'];
 
 const App: React.FC = () => {
-  const { user, isInsideTelegram, verification, profile, refreshProfile } = useTelegram();
-  const [activeTab, setActiveTab] = useState<TabId>('home');
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [tabKey, setTabKey] = useState(0);
+  const telegram = useTelegram();
+  const { user, isInsideTelegram, verification, profile, refreshProfile } = telegram;
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tour, setTour] = useState<Tour | null>(null);
   const [tourOpen, setTourOpen] = useState(false);
 
@@ -28,6 +31,12 @@ const App: React.FC = () => {
   const level = profileData?.level && profileData.level > 1 ? profileData.level : computedLevel;
   const displayName = user?.firstName || profileData?.displayName || 'Member';
   const initial = displayName[0]?.toUpperCase() || 'Y';
+  const activeTab = tabForPath(location.pathname);
+
+  const isBotRoute = BOT_PATHS.some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`));
+  const botMatch = location.pathname.match(/^\/(theo|lusie|edie|susie|pete)(?:\/|$)/);
+  const profilePath = botMatch ? `/${botMatch[1]}/profile` : '/theo/profile';
+
 
   // Load the shared tour copy once (same content the 5 Telegram bots serve).
   useEffect(() => {
@@ -64,126 +73,65 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: TabId) => {
-    if (tab === activeTab) return;
-    setActiveTab(tab);
-    setTabKey((current) => current + 1);
-  };
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'home':
-        return <HomeTab user={user} profile={profile} verified={isVerified} onNavigate={handleTabChange} />;
-      case 'bible':
-        return <BibleTab />;
-      case 'quiz':
-        return <QuizTab profile={profile} />;
-      case 'events':
-        return <EventsTab />;
-      case 'community':
-        return <CommunityTab onOpenTour={openTour} />;
-    }
+    const nextPath = pathForTab(tab);
+    if (nextPath !== location.pathname) navigate(nextPath);
   };
 
   return (
-    <div className="app-shell">
-      <div className="app-frame">
-        <header className="app-header">
-          <div>
-            <div className="brand-kicker">YouThopia Bible Community</div>
-            <div className="brand-name">Sharing God's Love All The Way</div>
-          </div>
-
-          <button className="profile-trigger" onClick={() => setShowProfileModal(true)} aria-label="Open your profile">
-            <span className="profile-avatar">
-              {user?.photoUrl ? <img src={user.photoUrl} alt={displayName} /> : initial}
-            </span>
-            <span className="profile-trigger-copy">
-              <strong>Level {level}</strong>
-              <span>{totalXp.toLocaleString()} XP</span>
-            </span>
-          </button>
-        </header>
-
-        <main key={tabKey} className="tab-enter">
-          {renderActiveTab()}
-        </main>
-
-        <footer style={{ marginTop: 28, color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
-          {isInsideTelegram ? 'Connected through Telegram' : 'Preview mode'}
-        </footer>
-      </div>
-
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-
-      {tourOpen && (
-        <TourOverlay
-          tour={tour}
-          canEarnXp={isVerified && profileData?.engagementLevel !== 'onboarded'}
-          rawInitData={getRawInitData()}
-          onClose={closeTour}
-          onFinish={() => void refreshProfile()}
-        />
-      )}
-
-      {showProfileModal && (
-        <div
-          onClick={() => setShowProfileModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'flex-end',
-            padding: 12,
-            background: 'rgba(31, 23, 43, 0.36)',
-          }}
-        >
-          <Card
-            onClick={(event) => event.stopPropagation()}
-            style={{ width: '100%', maxWidth: 496, margin: '0 auto', padding: 20, borderRadius: '24px 24px 18px 18px' }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
-              <div>
-                <div className="eyebrow">Growth passport</div>
-                <h2 style={{ margin: '4px 0 0', fontSize: 24 }}>{displayName}</h2>
-                {user?.username && <p className="muted-copy" style={{ marginTop: 3 }}>@{user.username}</p>}
-              </div>
-              <button
-                onClick={() => setShowProfileModal(false)}
-                aria-label="Close profile"
-                style={{ width: 36, height: 36, border: '1px solid var(--slate-200)', borderRadius: '50%', background: '#fff', color: 'var(--text-secondary)', cursor: 'pointer' }}
-              >
-                Close
-              </button>
+    <AppDataProvider value={telegram}>
+      <div className="app-shell">
+        <div className="app-frame" style={{ paddingBottom: isBotRoute ? 96 : undefined }}>
+          <header className="app-header">
+            <div>
+              <div className="brand-kicker">YouThopia Bible Community</div>
+              <div className="brand-name">Sharing God's Love All The Way</div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 20 }}>
-              <span className="profile-avatar" style={{ width: 58, height: 58, fontSize: 20 }}>
+            <button className="profile-trigger" onClick={() => navigate(profilePath)} aria-label="Open your profile">
+              <span className="profile-avatar">
                 {user?.photoUrl ? <img src={user.photoUrl} alt={displayName} /> : initial}
               </span>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {profileData?.rankTitle && <RankBadge title={profileData.rankTitle} emoji={profileData.rankEmoji} color={profileData.rankBadgeColor} size="md" />}
-                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                  <Pill color={isVerified ? 'success' : 'warning'}>{isVerified ? 'Verified member' : 'Identity pending'}</Pill>
-                  <Pill color="purple">Trust {profileData?.trustScore ?? 100}</Pill>
-                </div>
-              </div>
-            </div>
+              <span className="profile-trigger-copy">
+                <strong>Level {level}</strong>
+                <span>{totalXp.toLocaleString()} XP</span>
+              </span>
+            </button>
+          </header>
 
-            <div className="metric-grid" style={{ marginTop: 20 }}>
-              <div className="metric-tile"><div className="metric-label">Level</div><div className="metric-value">{level}</div></div>
-              <div className="metric-tile"><div className="metric-label">XP</div><div className="metric-value">{totalXp.toLocaleString()}</div></div>
-              <div className="metric-tile"><div className="metric-label">Accuracy</div><div className="metric-value">{profileData?.accuracyPct ?? 100}%</div></div>
-            </div>
+          <main key={location.pathname} className="tab-enter">
+            <Routes>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route
+                path="/home"
+                element={<HomeRoute user={user} profile={profile} verified={isVerified} onNavigate={handleTabChange} />}
+              />
+              <Route path="/theo/*" element={<TheoRoute />} />
+              <Route path="/lusie/*" element={<LusieRoute />} />
+              <Route path="/edie/*" element={<EdieRoute />} />
+              <Route path="/susie/*" element={<SusieRoute onOpenTour={openTour} />} />
+              <Route path="/pete/*" element={<PeteRoute />} />
+              <Route path="*" element={<Navigate to="/home" replace />} />
+            </Routes>
+          </main>
 
-            <div style={{ display: 'grid', gap: 10, marginTop: 20, color: 'var(--text-secondary)', fontSize: 13 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span>Community tier</span><strong style={{ color: 'var(--ink)', textTransform: 'capitalize' }}>{profileData?.engagementLevel ?? 'Member'}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span>Quizzes played</span><strong style={{ color: 'var(--ink)' }}>{profileData?.quizzesPlayed ?? 0}</strong></div>
-            </div>
-          </Card>
+          <footer style={{ marginTop: 28, color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
+            {isInsideTelegram ? 'Connected through Telegram' : 'Preview mode'}
+          </footer>
         </div>
-      )}
-    </div>
+
+        {!isBotRoute && <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />}
+
+        {tourOpen && (
+          <TourOverlay
+            tour={tour}
+            canEarnXp={isVerified && profileData?.engagementLevel !== 'onboarded'}
+            rawInitData={getRawInitData()}
+            onClose={closeTour}
+            onFinish={() => void refreshProfile()}
+          />
+        )}
+      </div>
+    </AppDataProvider>
   );
 };
 

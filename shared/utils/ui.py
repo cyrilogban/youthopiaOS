@@ -11,20 +11,24 @@ from aiogram.types import (
     WebAppInfo,
 )
 from shared.services.container import ServiceContainer
-from shared.config.bot_registry import BOT_REGISTRY
+from shared.config.bot_registry import BOT_REGISTRY, MINI_APP_BASE_URL, get_bot_identity
 from shared.content import tour as tour_content
 
 logger = logging.getLogger(__name__)
 
-MINI_APP_URL = "https://youthopiaos.onrender.com"
+MINI_APP_URL = MINI_APP_BASE_URL
 
 
-def get_open_app_inline_button() -> InlineKeyboardButton:
-    return InlineKeyboardButton(text="Open App", web_app=WebAppInfo(url=MINI_APP_URL))
+def get_open_app_inline_button(bot_name: Optional[str] = None) -> InlineKeyboardButton:
+    """Inline Mini App launcher. Pass a bot name to open that bot's route."""
+    url = get_bot_identity(bot_name).mini_app_route_url if bot_name else MINI_APP_URL
+    return InlineKeyboardButton(text="Open App", web_app=WebAppInfo(url=url))
 
 
-def get_open_app_reply_button() -> KeyboardButton:
-    return KeyboardButton(text="Open App", web_app=WebAppInfo(url=MINI_APP_URL))
+def get_open_app_reply_button(bot_name: Optional[str] = None) -> KeyboardButton:
+    """Reply-keyboard Mini App launcher. Pass a bot name to open that bot's route."""
+    url = get_bot_identity(bot_name).mini_app_route_url if bot_name else MINI_APP_URL
+    return KeyboardButton(text="Open App", web_app=WebAppInfo(url=url))
 
 # -----------------------------------------------------------------------------
 # GLOBAL COMMUNITY LINKS (Used across all bots)

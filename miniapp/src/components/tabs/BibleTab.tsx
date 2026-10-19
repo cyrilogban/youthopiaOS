@@ -43,7 +43,7 @@ export const BibleTab: React.FC = () => {
   return (
     <div className="section-stack">
       <section className="page-heading">
-        <span className="quiet-chip">Theodore's space</span>
+        <span className="quiet-chip">Theo's space</span>
         <h1>Spend time in the Word.</h1>
         <p>Choose the translation that helps you read slowly, reflect clearly, and return often.</p>
       </section>
@@ -89,7 +89,7 @@ export const BibleTab: React.FC = () => {
           <div style={{ display: 'grid', gap: 12 }}>
             <div><strong style={{ fontSize: 14 }}>Saved verses</strong><p className="muted-copy" style={{ marginTop: 4 }}>Keep the verses you want to carry with you.</p></div>
             <div><strong style={{ fontSize: 14 }}>Reading plans</strong><p className="muted-copy" style={{ marginTop: 4 }}>A calm home for consistent Bible reading will live here.</p></div>
-            <div><strong style={{ fontSize: 14 }}>Visual verse cards</strong><p className="muted-copy" style={{ marginTop: 4 }}>Shareable VOTD graphics are the next visual layer for Theodore.</p></div>
+            <div><strong style={{ fontSize: 14 }}>Visual verse cards</strong><p className="muted-copy" style={{ marginTop: 4 }}>Shareable VOTD graphics are the next visual layer for Theo.</p></div>
           </div>
         </Card>
       </section>

@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { fetchEvents, type EventItem } from '../../services/api';
-import { Card, Pill, SectionTitle, Skeleton } from '../ui';
+import { Card, Pill, SectionTitle, Skeleton } from '../../components/ui';
 
 const edieLink = (payload: string) => `https://t.me/ediecalendarbot?start=${payload}`;
 
-export const EventsTab: React.FC = () => {
+export const EdieCalendar: React.FC = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    void (async () => {
-      const results = await fetchEvents();
+    void fetchEvents().then((results) => {
       if (!cancelled) {
         setEvents(results);
         setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const next = events[0];
@@ -26,13 +27,16 @@ export const EventsTab: React.FC = () => {
   return (
     <div className="section-stack">
       <section className="page-heading">
-        <span className="quiet-chip">Edie's calendar</span>
-        <h1>Make room for fellowship.</h1>
-        <p>Keep the next gathering close, set reminders, and arrive ready for the moments that matter.</p>
+        <h1>This week's schedule.</h1>
+        <p>Every gathering and live session in one calm view. RSVP so we can save you a seat.</p>
       </section>
 
       {loading ? (
-        <Card style={{ padding: 20 }}><Skeleton height={14} width="32%" /><Skeleton height={28} style={{ marginTop: 16 }} /><Skeleton height={18} width="78%" style={{ marginTop: 8 }} /></Card>
+        <Card style={{ padding: 20 }}>
+          <Skeleton height={14} width="32%" />
+          <Skeleton height={28} style={{ marginTop: 16 }} />
+          <Skeleton height={18} width="78%" style={{ marginTop: 8 }} />
+        </Card>
       ) : next ? (
         <Card style={{ padding: 20, background: 'var(--grad-quiet)', borderColor: 'var(--purple-200)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start' }}>
@@ -44,16 +48,22 @@ export const EventsTab: React.FC = () => {
           </div>
           <p className="muted-copy" style={{ marginTop: 10 }}>{next.startsAt}</p>
           <p className="muted-copy" style={{ marginTop: 4 }}>{next.location ?? 'YouThopia community'}</p>
-          <a className="primary-button" href={next.id ? edieLink(`rsvp_${next.id}`) : edieLink('rsvp')} target="_blank" rel="noreferrer" style={{ marginTop: 18 }}>RSVP with Edie</a>
+          <a className="primary-button" href={next.id ? edieLink(`rsvp_${next.id}`) : edieLink('rsvp')} target="_blank" rel="noreferrer" style={{ marginTop: 18 }}>
+            RSVP with Edie
+          </a>
         </Card>
       ) : (
-        <Card style={{ padding: 20 }}><p className="muted-copy">There are no upcoming gatherings just yet. Check back soon.</p></Card>
+        <Card style={{ padding: 20 }}>
+          <p className="muted-copy">There are no upcoming gatherings just yet. Check back soon.</p>
+        </Card>
       )}
 
       <section className="section-group">
-        <SectionTitle eyebrow="Coming up" right={<Pill color="slate">{events.length} events</Pill>}>Plan your week</SectionTitle>
+        <SectionTitle eyebrow="Coming up" right={<Pill color="slate">{remaining.length} more</Pill>}>Plan your week</SectionTitle>
         {loading ? (
-          <div style={{ display: 'grid', gap: 10 }}>{[1, 2].map((item) => <Skeleton key={item} height={78} />)}</div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {[1, 2].map((item) => <Skeleton key={item} height={78} />)}
+          </div>
         ) : remaining.length ? (
           <div style={{ display: 'grid', gap: 10 }}>
             {remaining.map((event) => (
@@ -61,21 +71,18 @@ export const EventsTab: React.FC = () => {
                 <div className="eyebrow">{event.category ?? 'Community'}</div>
                 <strong style={{ display: 'block', marginTop: 5, fontSize: 15 }}>{event.title}</strong>
                 <p className="muted-copy" style={{ marginTop: 5 }}>{event.startsAt} · {event.location ?? 'YouThopia'}</p>
+                <a className="secondary-button" href={event.id ? edieLink(`rsvp_${event.id}`) : edieLink('rsvp')} target="_blank" rel="noreferrer" style={{ marginTop: 12 }}>
+                  RSVP
+                </a>
               </Card>
             ))}
           </div>
         ) : (
-          <Card style={{ padding: 16 }}><p className="muted-copy">Your next events will appear here after the featured gathering.</p></Card>
+          <Card style={{ padding: 16 }}>
+            <p className="muted-copy">Your next events will appear here after the featured gathering.</p>
+          </Card>
         )}
       </section>
-
-      <Card style={{ padding: 18 }}>
-        <SectionTitle eyebrow="Keep connected">Manage through Edie</SectionTitle>
-        <div className="inline-actions">
-          <a className="secondary-button" href={edieLink('events')} target="_blank" rel="noreferrer">My events</a>
-          <a className="secondary-button" href={edieLink('birthday')} target="_blank" rel="noreferrer">Add birthday</a>
-        </div>
-      </Card>
     </div>
   );
 };

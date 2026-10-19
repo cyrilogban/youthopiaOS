@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
-from shared.config.bot_registry import get_bot_identity, DEFAULT_MINI_APP_LINK
+from shared.config.bot_registry import get_bot_identity
 
 class VerseAction(CallbackData, prefix="verse", sep="|"):
     action: str  # "save", "compare_menu", "switch_trans", "back"
@@ -46,7 +46,7 @@ def build_theo_welcome_inline_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                get_open_app_inline_button("theo"),
             ],
             [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
@@ -63,7 +63,7 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("theo").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
@@ -83,7 +83,7 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("theo").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Theodore to Admin", callback_data="theo_prompt_admin"),

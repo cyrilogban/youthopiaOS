@@ -143,3 +143,63 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ value, max = 100, tone
     </div>
   );
 };
+
+interface EmptyStateProps {
+  title: string;
+  body: string;
+  action?: React.ReactNode;
+}
+
+export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, action }) => (
+  <div className="empty-state">
+    <strong>{title}</strong>
+    <p>{body}</p>
+    {action}
+  </div>
+);
+
+interface SegmentedControlProps<T extends string> {
+  options: readonly T[];
+  value: T;
+  onChange: (value: T) => void;
+  disabled?: boolean;
+}
+
+export function SegmentedControl<T extends string>({ options, value, onChange, disabled }: SegmentedControlProps<T>) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
+        gap: 6,
+        padding: 5,
+        borderRadius: 'var(--radius-lg)',
+        background: 'var(--surface-muted)',
+      }}
+    >
+      {options.map((option) => {
+        const selected = option === value;
+        return (
+          <button
+            key={option}
+            disabled={disabled}
+            onClick={() => onChange(option)}
+            style={{
+              minHeight: 40,
+              border: 0,
+              borderRadius: 10,
+              background: selected ? '#fff' : 'transparent',
+              color: selected ? 'var(--accent)' : 'var(--text-secondary)',
+              boxShadow: selected ? 'var(--shadow-xs)' : 'none',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: disabled ? 'wait' : 'pointer',
+            }}
+          >
+            {option}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

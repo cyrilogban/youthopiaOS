@@ -44,7 +44,7 @@ router = Router()
 # /setrank) + the always-on /app card, registered before Pete's own handlers.
 router.include_router(create_admin_router("pete"))
 attach_global_tour(router, "pete")
-attach_open_app(router)
+attach_open_app(router, "pete")
 
 from core.filters import IsAdminFilter
 

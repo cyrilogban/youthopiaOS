@@ -25,7 +25,7 @@ from core.config import BotConfig
 from core.admin_commands import create_admin_router
 from shared.logging.logger import get_logger
 from shared.services.container import ServiceContainer
-from shared.config.bot_registry import DEFAULT_MINI_APP_LINK
+from shared.config.bot_registry import get_bot_identity
 from shared.utils.ui import (
     get_open_app_inline_button,
     send_community_exploration_page,
@@ -247,16 +247,17 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
         )
 
 
-def attach_open_app(router: Router) -> None:
+def attach_open_app(router: Router, bot_name: str) -> None:
     """Mounts the always-on /app + /miniapp handler serving the Mini App launch card.
 
     Registered on every bot (centrally via build_router, and explicitly on
     Pete's raw router) so the advertised `/app` menu command works everywhere.
+    Opens this bot's own routed Mini App.
     """
     @router.message(Command("app", "miniapp"))
     async def handle_app_command(message: Message) -> None:
         markup = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK)
+            InlineKeyboardButton(text="Open App", url=get_bot_identity(bot_name).mini_app_link)
         ]])
         await message.answer(
             "Open <b>YOUTHOPIA BIBLE COMMUNITY</b> Mini App:\n"
@@ -270,7 +271,7 @@ def build_router(bot_name: str, description: str, *, include_base_commands: bool
     router = Router(name=bot_name)
     router.include_router(create_admin_router(bot_name))
     attach_global_tour(router, bot_name)
-    attach_open_app(router)
+    attach_open_app(router, bot_name)
 
     if include_base_commands:
         @router.message(Command("start"))
@@ -291,7 +292,7 @@ def build_router(bot_name: str, description: str, *, include_base_commands: bool
 
         @router.message(Command("app", "miniapp"))
         async def handle_app_command(message: Message) -> None:
-            markup = InlineKeyboardMarkup(inline_keyboard=[[get_open_app_inline_button()]])
+            markup = InlineKeyboardMarkup(inline_keyboard=[[get_open_app_inline_button(bot_name)]])
             await message.answer(
                 "Open <b>YOUTHOPIA BIBLE COMMUNITY</b> Mini App:\n"
                 "<i>Sharing God's Love All The Way</i>",

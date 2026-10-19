@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from shared.utils.ui import FACEBOOK_LINK, TELEGRAM_GROUP_LINK, WHATSAPP_LINK, GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
-from shared.config.bot_registry import get_bot_identity, DEFAULT_MINI_APP_LINK
+from shared.config.bot_registry import get_bot_identity
 
 
 def build_susy_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -27,7 +27,7 @@ def build_susy_start_inline_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                get_open_app_inline_button("susy"),
             ],
             [
                 InlineKeyboardButton(text="🚀 Start Tour", url=get_bot_identity("susy").get_start_link("tour")),
@@ -47,7 +47,7 @@ def build_susy_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("susy").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="💬 Meet Susan", url="https://t.me/susiehelpsbot?start=welcome"),
@@ -71,7 +71,7 @@ def build_susy_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("susy").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Susan to Admin", callback_data="susy_prompt_admin"),

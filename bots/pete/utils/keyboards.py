@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
-from shared.config.bot_registry import get_bot_identity, DEFAULT_MINI_APP_LINK
+from shared.config.bot_registry import get_bot_identity
 
 
 def build_pete_reply_keyboard() -> ReplyKeyboardMarkup:
@@ -31,7 +31,7 @@ def build_pete_start_inline_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                get_open_app_inline_button(),
+                get_open_app_inline_button("pete"),
             ],
             [
                 InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
@@ -48,7 +48,7 @@ def build_pete_group_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("pete").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="📝 Appeal", callback_data="appeal_init"),
@@ -68,7 +68,7 @@ def build_pete_member_welcome_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Open App", url=DEFAULT_MINI_APP_LINK),
+                InlineKeyboardButton(text="Open App", url=get_bot_identity("pete").mini_app_link),
             ],
             [
                 InlineKeyboardButton(text="⚡ Promote Peter to Admin", callback_data="pete_prompt_admin"),
