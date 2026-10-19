@@ -10,12 +10,28 @@ create table if not exists public.user_saved_verses (
 
 alter table public.user_saved_verses enable row level security;
 
-create policy if not exists "Users can read their own saved verses"
-  on public.user_saved_verses
-  for select
-  using (true);
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public' and tablename = 'user_saved_verses'
+          and policyname = 'Users can read their own saved verses'
+    ) then
+        create policy "Users can read their own saved verses"
+            on public.user_saved_verses
+            for select
+            using (true);
+    end if;
 
-create policy if not exists "Service role has full access to user_saved_verses"
-  on public.user_saved_verses
-  for all
-  using (true);
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public' and tablename = 'user_saved_verses'
+          and policyname = 'Service role has full access to user_saved_verses'
+    ) then
+        create policy "Service role has full access to user_saved_verses"
+            on public.user_saved_verses
+            for all
+            using (true);
+    end if;
+end
+$$;
