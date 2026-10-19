@@ -4,6 +4,8 @@ import type { VerificationState } from '../hooks/useTelegram';
 interface VerificationGateProps {
   verification: VerificationState;
   onRetry: () => void | Promise<void>;
+  /** TEMPORARY DIAGNOSTIC: initData sourcing snapshot, shown on the blocked screen. */
+  diagnostics?: string;
   children: React.ReactNode;
 }
 
@@ -44,7 +46,7 @@ function copyFor(status: BlockedStatus): ScreenCopy {
  * - blocked: in production show an explanatory screen with a retry; in local
  *   development fall through so preview mode keeps working without Telegram.
  */
-export const VerificationGate: React.FC<VerificationGateProps> = ({ verification, onRetry, children }) => {
+export const VerificationGate: React.FC<VerificationGateProps> = ({ verification, onRetry, diagnostics, children }) => {
   if (verification.status === 'loading') {
     return (
       <div className="verify-screen">
@@ -67,6 +69,7 @@ export const VerificationGate: React.FC<VerificationGateProps> = ({ verification
   }
 
   const { title, message } = copyFor(verification.status);
+  const detail = verification.status === 'unverified' ? verification.detail : undefined;
 
   return (
     <div className="verify-screen">
@@ -77,6 +80,19 @@ export const VerificationGate: React.FC<VerificationGateProps> = ({ verification
         <button type="button" className="verify-retry" onClick={() => void onRetry()}>
           Try again
         </button>
+        <pre
+          style={{
+            marginTop: 16,
+            textAlign: 'left',
+            fontSize: 10,
+            lineHeight: 1.4,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            color: 'var(--text-muted)',
+          }}
+        >
+          {`DIAG\n${diagnostics ?? ''}\nserver=${detail ?? 'n/a'}`}
+        </pre>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ import { pathForTab, type TabId } from './types/navigation';
 
 const App: React.FC = () => {
   const telegram = useTelegram();
-  const { user, isInsideTelegram, verification, profile, refreshProfile, retryVerification } = telegram;
+  const { user, isInsideTelegram, verification, profile, refreshProfile, retryVerification, diagnostics } = telegram;
   const location = useLocation();
   const navigate = useNavigate();
   const [tour, setTour] = useState<Tour | null>(null);
@@ -78,7 +78,7 @@ const App: React.FC = () => {
 
   return (
     <AppDataProvider value={telegram}>
-      <VerificationGate verification={verification} onRetry={retryVerification}>
+      <VerificationGate verification={verification} onRetry={retryVerification} diagnostics={diagnostics}>
       <div className={`app-shell${navHidden ? ' nav-hidden' : ''}`}>
         <div className="app-frame">
           <header className="app-header">
