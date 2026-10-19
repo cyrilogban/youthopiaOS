@@ -25,11 +25,6 @@ def get_open_app_inline_button(bot_name: Optional[str] = None) -> InlineKeyboard
     return InlineKeyboardButton(text="Open App", web_app=WebAppInfo(url=url))
 
 
-def get_open_app_reply_button(bot_name: Optional[str] = None) -> KeyboardButton:
-    """Reply-keyboard Mini App launcher. Pass a bot name to open that bot's route."""
-    url = get_bot_identity(bot_name).mini_app_route_url if bot_name else MINI_APP_URL
-    return KeyboardButton(text="Open App", web_app=WebAppInfo(url=url))
-
 # -----------------------------------------------------------------------------
 # GLOBAL COMMUNITY LINKS (Used across all bots)
 # -----------------------------------------------------------------------------

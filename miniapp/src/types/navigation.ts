@@ -27,22 +27,7 @@ export const TAB_ROUTES: Record<TabId, string> = {
   community: '/susie',
 };
 
-const PATH_TO_TAB: Record<string, TabId> = {
-  '/home': 'home',
-  '/theo': 'bible',
-  '/lusie': 'quiz',
-  '/edie': 'events',
-  '/susie': 'community',
-  '/pete': 'community',
-};
-
 /** Route path for a dashboard tab. */
 export function pathForTab(tab: TabId): string {
   return TAB_ROUTES[tab];
-}
-
-/** Which dashboard tab a route path belongs to (defaults to home). */
-export function tabForPath(pathname: string): TabId {
-  const normalized = pathname.replace(/\/+$/, '') || '/home';
-  return PATH_TO_TAB[normalized] ?? 'home';
 }
