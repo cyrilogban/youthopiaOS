@@ -3,7 +3,6 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-
 import { useTelegram } from './hooks/useTelegram';
 import { useHideNavOnScroll } from './hooks/useHideNavOnScroll';
 import { AppDataProvider } from './context/AppData';
-import { BotSwitcher } from './components/BotSwitcher';
 import { VerificationGate } from './components/VerificationGate';
 import { TourOverlay, markTourAsSeen } from './components/TourOverlay';
 import { fetchCommunityTour, type Tour } from './services/api';
@@ -118,8 +117,6 @@ const App: React.FC = () => {
             {isInsideTelegram ? 'Connected through Telegram' : 'Preview mode'}
           </footer>
         </div>
-
-        <BotSwitcher />
 
         {tourOpen && (
           <TourOverlay

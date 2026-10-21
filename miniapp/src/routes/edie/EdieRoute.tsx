@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BotTabBar, type BotTab } from '../../components/BotTabBar';
+import { BotIdentityBar } from '../../components/BotSwitcherSheet';
 import { EdieHome } from './EdieHome';
 import { EdieCalendar } from './EdieCalendar';
 import { EdieMyEvents } from './EdieMyEvents';
@@ -70,21 +71,18 @@ export const EdieRoute: React.FC = () => {
 
   return (
     <div className="theme-edie">
-      <div className="bot-identity">
-        <span className="bot-mark">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <BotIdentityBar
+        botId="edie"
+        tag="Events Bot"
+        mark={
+          <>
             <rect x="3" y="4.5" width="18" height="16" rx="3" />
             <path d="M3 9.5h18" />
             <path d="M8 3v3" />
             <path d="M16 3v3" />
-          </svg>
-        </span>
-        <div className="bot-identity-copy">
-          <strong>Edie</strong>
-          <span>@ediecalendarbot</span>
-        </div>
-        <span className="bot-identity-tag">Events Bot</span>
-      </div>
+          </>
+        }
+      />
 
       <Routes>
         <Route index element={<Navigate to="home" replace />} />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BotTabBar, type BotTab } from '../../components/BotTabBar';
+import { BotIdentityBar } from '../../components/BotSwitcherSheet';
 import { BibleTab } from '../../components/tabs/BibleTab';
 import { TheoHome } from './TheoHome';
 import { TheoSaved } from './TheoSaved';
@@ -60,19 +61,16 @@ export const TheoRoute: React.FC = () => {
 
   return (
     <div className="theme-theo">
-      <div className="bot-identity">
-        <span className="bot-mark">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <BotIdentityBar
+        botId="theo"
+        tag="Daily Word"
+        mark={
+          <>
             <path d="M5 19.5A2.5 2.5 0 0 1 7.5 17H20" />
             <path d="M7.5 3H20v19H7.5A2.5 2.5 0 0 1 5 19.5v-14A2.5 2.5 0 0 1 7.5 3z" />
-          </svg>
-        </span>
-        <div className="bot-identity-copy">
-          <strong>Theo</strong>
-          <span>@theobiblebot</span>
-        </div>
-        <span className="bot-identity-tag">Daily Word</span>
-      </div>
+          </>
+        }
+      />
 
       <Routes>
         <Route index element={<Navigate to="home" replace />} />

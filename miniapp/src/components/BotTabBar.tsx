@@ -14,8 +14,8 @@ interface BotTabBarProps {
 }
 
 /**
- * Layer 1 navigation: a bot's own tabs. Sits at the bottom of that bot's route.
- * The cross-bot switcher bar (Layer 2) will sit beneath this later.
+ * Layer 1 navigation: a bot's own tabs. Sits alone at the bottom of its route.
+ * Bot switching lives in the identity header's switch sheet, never in this bar.
  */
 export const BotTabBar: React.FC<BotTabBarProps> = ({ tabs, activeId }) => {
   const navigate = useNavigate();

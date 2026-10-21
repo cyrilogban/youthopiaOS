@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BotTabBar, type BotTab } from '../../components/BotTabBar';
+import { BotIdentityBar } from '../../components/BotSwitcherSheet';
 import { LusieHome } from './LusieHome';
 import { LusiePlay } from './LusiePlay';
 import { LusieLeaderboard } from './LusieLeaderboard';
@@ -67,20 +68,17 @@ export const LusieRoute: React.FC = () => {
 
   return (
     <div className="theme-lusie">
-      <div className="bot-identity">
-        <span className="bot-mark">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <BotIdentityBar
+        botId="lusie"
+        tag="Games & XP"
+        mark={
+          <>
             <circle cx="12" cy="12" r="9" />
             <circle cx="12" cy="12" r="4" />
             <circle cx="12" cy="12" r="1" />
-          </svg>
-        </span>
-        <div className="bot-identity-copy">
-          <strong>Lusie</strong>
-          <span>@lusiequizbot</span>
-        </div>
-        <span className="bot-identity-tag">Games &amp; XP</span>
-      </div>
+          </>
+        }
+      />
 
       <Routes>
         <Route index element={<Navigate to="home" replace />} />

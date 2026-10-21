@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BotTabBar, type BotTab } from '../../components/BotTabBar';
+import { BotIdentityBar } from '../../components/BotSwitcherSheet';
 import { SusieHome } from './SusieHome';
 import { SusieOnboarding } from './SusieOnboarding';
 import { SusieDirectory } from './SusieDirectory';
@@ -71,18 +72,11 @@ export const SusieRoute: React.FC<SusieRouteProps> = ({ onOpenTour }) => {
 
   return (
     <div className="theme-susie">
-      <div className="bot-identity">
-        <span className="bot-mark">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8 8.38 8.38 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z" />
-          </svg>
-        </span>
-        <div className="bot-identity-copy">
-          <strong>Susie</strong>
-          <span>@susiehelpsbot</span>
-        </div>
-        <span className="bot-identity-tag">Welcome Bot</span>
-      </div>
+      <BotIdentityBar
+        botId="susie"
+        tag="Welcome Bot"
+        mark={<path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8 8.38 8.38 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z" />}
+      />
 
       <Routes>
         <Route index element={<Navigate to="home" replace />} />

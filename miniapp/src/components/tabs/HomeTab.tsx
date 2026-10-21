@@ -5,6 +5,7 @@ import type { ProfileState } from '../../hooks/useTelegram';
 import { fetchEvents, fetchVotd, type EventItem, type VotdItem } from '../../services/api';
 import { Card, Pill, ProgressBar, SectionTitle, Skeleton } from '../ui';
 import { RankBadge } from '../RankBadge';
+import { BotSwitcherSheet } from '../BotSwitcherSheet';
 
 interface HomeTabProps {
   user: TelegramUser | null;
@@ -18,6 +19,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified, onNav
   const [votd, setVotd] = useState<VotdItem | null>(null);
   const [event, setEvent] = useState<EventItem | null>(null);
   const [loadingVotd, setLoadingVotd] = useState(true);
+  const [switchOpen, setSwitchOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,7 +96,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({ user, profile, verified, onNav
           </span>
           <span className="feature-row-arrow">→</span>
         </button>
+        <button className="feature-row" onClick={() => setSwitchOpen(true)}>
+          <span style={{ minWidth: 0 }}>
+            <strong>Switch bot</strong>
+            <span>Jump between Theo, Lusie, Pete, Edie and Susie without leaving the app.</span>
+          </span>
+          <span className="feature-row-arrow">→</span>
+        </button>
       </section>
+
+      <BotSwitcherSheet open={switchOpen} onClose={() => setSwitchOpen(false)} />
     </div>
   );
 };
