@@ -10,5 +10,7 @@ dist-ssr
 npm-debug.log*
 
 # Local env files & OS/editor cruft
+.env
+.env.*
 *.local
 .DS_Store

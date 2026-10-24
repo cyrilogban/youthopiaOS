@@ -350,3 +350,143 @@ export async function completeCommunityTour(rawInitData: string | null): Promise
     return { status: 'error', xpAwarded: 0 };
   }
 }
+
+// -----------------------------------------------------------------------------
+// Theo Bible Feed API — Featured, Saved, Likes, and Share tracking
+// -----------------------------------------------------------------------------
+
+export interface FeaturedVerse {
+  id?: string;
+  verse_reference: string;
+  verse_text: string;
+  translation: string;
+  scheduled_date?: string;
+  style_override?: number | null;
+}
+
+export interface SavedVerseRow {
+  id?: string;
+  user_id: number;
+  verse_reference: string;
+  verse_text: string;
+  translation: string;
+  saved_at: string;
+}
+
+export async function fetchFeaturedVerses(): Promise<FeaturedVerse[]> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/featured`);
+    if (!res.ok) return [];
+    return (await res.json()) as FeaturedVerse[];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchSavedVerses(rawInitData: string | null): Promise<SavedVerseRow[]> {
+  if (!rawInitData) return [];
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/saved`, {
+      headers: { Authorization: `tma ${rawInitData}` },
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as SavedVerseRow[];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveVerse(
+  rawInitData: string | null,
+  verse: { verse_reference: string; verse_text: string; translation?: string }
+): Promise<boolean> {
+  if (!rawInitData) return false;
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/saved`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `tma ${rawInitData}`,
+      },
+      body: JSON.stringify(verse),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function unsaveVerse(
+  rawInitData: string | null,
+  verse_reference: string
+): Promise<boolean> {
+  if (!rawInitData) return false;
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/saved/remove`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `tma ${rawInitData}`,
+      },
+      body: JSON.stringify({ verse_reference, verse_text: '' }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchLikedVerses(rawInitData: string | null): Promise<string[]> {
+  if (!rawInitData) return [];
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/likes`, {
+      headers: { Authorization: `tma ${rawInitData}` },
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as string[];
+  } catch {
+    return [];
+  }
+}
+
+export async function toggleLikeVerse(
+  rawInitData: string | null,
+  verse_reference: string
+): Promise<{ liked: boolean }> {
+  if (!rawInitData) return { liked: false };
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/likes/toggle`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `tma ${rawInitData}`,
+      },
+      body: JSON.stringify({ verse_reference }),
+    });
+    if (!res.ok) return { liked: false };
+    return (await res.json()) as { liked: boolean };
+  } catch {
+    return { liked: false };
+  }
+}
+
+export async function logShareVerse(
+  rawInitData: string | null,
+  verse_reference: string
+): Promise<boolean> {
+  if (!rawInitData) return false;
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/theo/share`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `tma ${rawInitData}`,
+      },
+      body: JSON.stringify({ verse_reference }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+

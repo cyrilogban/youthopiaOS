@@ -98,3 +98,27 @@ class CommunityStats(BaseModel):
     total_members: int = 0
     active_groups: int = 0
     quizzes_played: int = 0
+
+
+class FeaturedVerseItem(BaseModel):
+    id: str | None = None
+    verse_reference: str
+    verse_text: str
+    translation: str = "KJV"
+    scheduled_date: str | None = None
+    style_override: int | None = None
+
+
+class SaveVerseRequest(BaseModel):
+    verse_reference: str
+    verse_text: str
+    translation: str = "KJV"
+
+
+class LikeVerseRequest(BaseModel):
+    verse_reference: str
+
+
+class ShareVerseRequest(BaseModel):
+    verse_reference: str
+

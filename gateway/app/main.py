@@ -26,7 +26,11 @@ from gateway.app.auth import require_telegram_user
 from gateway.app.models import (
     CommunityStats,
     EventItem,
+    FeaturedVerseItem,
     LeaderboardItem,
+    LikeVerseRequest,
+    SaveVerseRequest,
+    ShareVerseRequest,
     TelegramUser,
     UserProfile,
     UserSettings,
@@ -38,6 +42,7 @@ from shared.services.event_service import EventService
 from shared.services.moderation_service import ModerationService
 from shared.services.quiz_service import QuizService
 from shared.services.rank_service import RankService
+from shared.services.theo_feed_service import TheoFeedService
 from shared.services.user_service import UserService
 from shared.services.xp_service import XPService, calculate_level
 
@@ -119,6 +124,14 @@ def get_moderation_service() -> ModerationService:
     """Build the ModerationService once per process and reuse it."""
     gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
     return ModerationService(gateway)
+
+
+@lru_cache
+def get_theo_feed_service() -> TheoFeedService:
+    """Build the TheoFeedService once per process and reuse it."""
+    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
+    return TheoFeedService(gateway)
+
 
 
 @app.get("/profile")
@@ -435,6 +448,93 @@ async def complete_community_tour(
         return {"status": "error", "xp_awarded": 0}
 
     return {"status": "completed", "xp_awarded": 50}
+
+
+@app.get("/api/theo/featured")
+async def get_theo_featured(
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> list[FeaturedVerseItem]:
+    """Return active curated featured verses from Supabase."""
+    rows = await feed_svc.get_featured_verses(limit=10)
+    return [
+        FeaturedVerseItem(
+            id=str(r.get("id")),
+            verse_reference=r["verse_reference"],
+            verse_text=r["verse_text"],
+            translation=r.get("translation", "KJV"),
+            scheduled_date=str(r.get("scheduled_date")),
+            style_override=r.get("style_override"),
+        )
+        for r in rows
+    ]
+
+
+@app.get("/api/theo/saved")
+async def get_theo_saved(
+    user: TelegramUser = Depends(require_telegram_user),
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> list[dict[str, Any]]:
+    """Return all saved/bookmarked verses for the verified caller."""
+    return await feed_svc.get_saved_verses(user.id)
+
+
+@app.post("/api/theo/saved")
+async def save_theo_verse(
+    req: SaveVerseRequest,
+    user: TelegramUser = Depends(require_telegram_user),
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> dict[str, Any]:
+    """Save/bookmark a verse in Supabase for the verified caller."""
+    return await feed_svc.save_verse(
+        telegram_id=user.id,
+        verse_reference=req.verse_reference,
+        verse_text=req.verse_text,
+        translation=req.translation,
+    )
+
+
+@app.post("/api/theo/saved/remove")
+async def unsave_theo_verse(
+    req: SaveVerseRequest,
+    user: TelegramUser = Depends(require_telegram_user),
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> dict[str, Any]:
+    """Remove a bookmarked verse in Supabase for the verified caller."""
+    removed = await feed_svc.unsave_verse(telegram_id=user.id, verse_reference=req.verse_reference)
+    return {"success": removed}
+
+
+@app.get("/api/theo/likes")
+async def get_theo_likes(
+    user: TelegramUser = Depends(require_telegram_user),
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> list[str]:
+    """Return list of verse references liked by the verified caller."""
+    return await feed_svc.get_user_likes(user.id)
+
+
+@app.post("/api/theo/likes/toggle")
+async def toggle_theo_like(
+    req: LikeVerseRequest,
+    user: TelegramUser = Depends(require_telegram_user),
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> dict[str, Any]:
+    """Toggle like on a verse in Supabase. Returns {"liked": bool}."""
+    liked = await feed_svc.toggle_like(telegram_id=user.id, verse_reference=req.verse_reference)
+    return {"liked": liked}
+
+
+@app.post("/api/theo/share")
+async def log_theo_share(
+    req: ShareVerseRequest,
+    user: TelegramUser = Depends(require_telegram_user),
+    users: UserService = Depends(get_user_service),
+    feed_svc: TheoFeedService = Depends(get_theo_feed_service),
+) -> dict[str, Any]:
+    """Log a verse share event in analytics_events in Supabase."""
+    row = await users.get_or_create_from_telegram({"telegram_id": user.id, "first_name": user.first_name})
+    user_uuid = row["id"]
+    return await feed_svc.log_share_event(user_uuid=user_uuid, verse_reference=req.verse_reference)
 
 
 # Single-service deployment: Mount compiled Mini App frontend at root '/'
