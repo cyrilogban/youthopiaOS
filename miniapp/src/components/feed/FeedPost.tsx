@@ -102,7 +102,7 @@ export const FeedPost: React.FC<{ post: FeedPostData }> = ({ post }) => {
         </div>
       )}
 
-      {post.sample && <div className="sample-note">Sample post · {post.type} content is coming soon</div>}
+
 
       <div className="post-actions">
         <button className={`post-action${saved ? ' is-active' : ''}`} onClick={onSave} aria-pressed={saved}>

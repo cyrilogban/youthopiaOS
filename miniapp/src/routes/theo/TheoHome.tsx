@@ -4,7 +4,7 @@ import { fetchSettings, fetchVotd, type VotdItem } from '../../services/api';
 import { FeedPost, type FeedPostData } from '../../components/feed/FeedPost';
 import { Skeleton } from '../../components/ui';
 
-const SAMPLE_POSTS: FeedPostData[] = [
+const DAILY_POSTS: FeedPostData[] = [
   {
     id: 'sample-aotd',
     type: 'Affirmation',
@@ -13,7 +13,6 @@ const SAMPLE_POSTS: FeedPostData[] = [
     timeLabel: 'Today',
     body: 'I am rooted in grace, I walk in purpose, and I carry peace into everything I touch today.',
     reference: 'Affirmation of the Day',
-    sample: true,
   },
   {
     id: 'sample-prayer',
@@ -23,7 +22,6 @@ const SAMPLE_POSTS: FeedPostData[] = [
     timeLabel: 'Today',
     body: 'Father, thank You for this day. Steady my heart, order my steps, and let my words bring life to everyone I meet. Amen.',
     reference: 'Prayer of the Day',
-    sample: true,
   },
   {
     id: 'sample-card',
@@ -34,7 +32,6 @@ const SAMPLE_POSTS: FeedPostData[] = [
     body: 'Your word is a lamp to my feet, and a light to my path. - Psalm 119:105',
     reference: 'Psalm 119:105',
     visual: { eyebrow: 'Verse card', text: '“Your word is a lamp to my feet, and a light to my path.”' },
-    sample: true,
   },
 ];
 
@@ -90,7 +87,7 @@ export const TheoHome: React.FC = () => {
       ) : (
         <div className="feed">
           {votdPost && <FeedPost post={votdPost} />}
-          {SAMPLE_POSTS.map((post) => (
+          {DAILY_POSTS.map((post) => (
             <FeedPost key={post.id} post={post} />
           ))}
         </div>
