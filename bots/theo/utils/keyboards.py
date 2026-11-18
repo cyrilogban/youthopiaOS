@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
-from shared.utils.ui import GLOBAL_REPLY_BUTTONS, get_open_app_inline_button
+from shared.utils.ui import get_open_app_inline_button
 from shared.config.bot_registry import get_bot_identity
 
 class VerseAction(CallbackData, prefix="verse", sep="|"):
@@ -16,13 +16,17 @@ class SavedVersesPage(CallbackData, prefix="sv_page"):
 def build_theo_reply_keyboard() -> ReplyKeyboardMarkup:
     """
     Theo persistent reply keyboard:
-    Row 1 (Global):        [ 👤 My Profile ]      [ Open App ] [ ℹ️ Help ]  [ 🌐 Community ]
+    Row 1 (Theo):          [ 👤 My Profile ] [ Open App ] [ ℹ️ Help ]
     Row 2 (Bot Specific): [ 🔍 Search Scripture ]  [ 🔖 Saved Verses ]
     Row 3 (Settings):      [ 🌐 Translation ]
     """
     return ReplyKeyboardMarkup(
         keyboard=[
-            GLOBAL_REPLY_BUTTONS,
+            [
+                KeyboardButton(text="My Profile"),
+                KeyboardButton(text="Open App"),
+                KeyboardButton(text="Help"),
+            ],
             [
                 KeyboardButton(text="Search Scripture"),
                 KeyboardButton(text="Saved Verses"),
@@ -69,9 +73,6 @@ def build_theo_group_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ],
-            [
-                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
-            ],
         ]
     )
 
@@ -92,9 +93,6 @@ def build_theo_member_welcome_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🔍 Search", callback_data="theo_search_scripture"),
                 InlineKeyboardButton(text="🌐 Translation", callback_data="theo_translation_menu"),
             ],
-            [
-                InlineKeyboardButton(text="🧭 Start Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
-            ],
         ]
     )
 
@@ -106,7 +104,6 @@ def build_theo_farewell_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="🧭 Community Tour", url=get_bot_identity("theo").get_start_link("tour")),
                 InlineKeyboardButton(text="➕ Re-invite Theodore", url="https://t.me/theobiblebot?startgroup=true"),
             ],
         ]

@@ -20,7 +20,7 @@ function copyFor(status: BlockedStatus): ScreenCopy {
   if (status === 'no-telegram') {
     return {
       title: 'Open inside Telegram',
-      message: 'YouThopiaOS lives in Telegram. Open the Mini App from one of our bots to continue.',
+      message: "Theo's Scripture Mini App runs inside Telegram. Open it from Theo to continue.",
     };
   }
   if (status === 'unverified') {

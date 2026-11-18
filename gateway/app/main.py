@@ -66,6 +66,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="YouThopiaOS Gateway", lifespan=lifespan)
 
+
+def require_community_features() -> None:
+    if not settings.COMMUNITY_FEATURES_ENABLED:
+        raise HTTPException(status_code=404, detail="Feature unavailable")
+
 _ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Vite dev server
     "http://127.0.0.1:3000",  # Vite dev server IP
@@ -134,13 +139,12 @@ def get_theo_feed_service() -> TheoFeedService:
 
 
 
-@app.get("/profile")
+@app.get("/profile", response_model_exclude_defaults=True)
 async def profile(
     user: TelegramUser = Depends(require_telegram_user),
     service: UserService = Depends(get_user_service),
-    quiz_svc: QuizService = Depends(get_quiz_service),
 ) -> UserProfile:
-    """Return the verified caller's stored YouThopiaOS profile (profile + XP + quiz stats + official rank)."""
+    """Return the verified caller's personal profile for Theo."""
     # Always synchronize Supabase profile with the verified Telegram user data
     row = await service.get_or_create_from_telegram({
         "telegram_id": user.id,
@@ -149,33 +153,7 @@ async def profile(
         "username": user.username,
     })
 
-    stats = await quiz_svc.get_user_quiz_stats(row["id"])
-    profile_dict = dict(row)
-    profile_dict["quizzes_played"] = stats.get("quizzes_played", 0)
-    profile_dict["accuracy_pct"] = stats.get("accuracy_pct", 100)
-
-    # Resolve official YouThopia rank from the holistic rank_score & calculate level dynamically
-    total_xp = int(row.get("total_xp", 0))
-    computed_level = calculate_level(total_xp)
-    rank_score = int(row.get("rank_score", 0) or 0)
-    rank = RankService.resolve_rank(rank_score, row.get("manual_rank_id"))
-
-    profile_dict["total_xp"] = total_xp
-    profile_dict["level"] = computed_level
-    profile_dict["rank_score"] = rank_score
-    profile_dict["rank_title"] = rank.title
-    profile_dict["rank_tier"] = rank.tier
-    profile_dict["rank_badge_color"] = rank.bg_color
-    profile_dict["rank_emoji"] = rank.emoji
-
-    # Asynchronously synchronize the users.level column in Supabase if out of sync
-    if row.get("level") != computed_level:
-        try:
-            await service.db.update_by_id("users", row["id"], {"level": computed_level})
-        except Exception:
-            pass
-
-    return UserProfile.model_validate(profile_dict)
+    return UserProfile(display_name=row.get("display_name"))
 
 
 @app.get("/api/settings")
@@ -226,6 +204,7 @@ async def update_settings(
 
 @app.get("/api/leaderboard")
 async def get_leaderboard(
+    _: None = Depends(require_community_features),
     service: UserService = Depends(get_user_service),
 ) -> list[LeaderboardItem]:
     """Return top 10 community members ordered by total_xp descending from Supabase with official rank badges."""
@@ -249,6 +228,7 @@ async def get_leaderboard(
 
 @app.get("/api/events")
 async def get_events(
+    _: None = Depends(require_community_features),
     event_svc: EventService = Depends(get_event_service),
 ) -> list[EventItem]:
     """Return live upcoming community events from Supabase."""
@@ -317,6 +297,7 @@ async def get_votd(
 
 @app.get("/api/community/stats")
 async def get_community_stats(
+    _: None = Depends(require_community_features),
     service: UserService = Depends(get_user_service),
 ) -> CommunityStats:
     """Return 100% live raw community statistics directly from Supabase."""
@@ -341,7 +322,7 @@ async def get_community_stats(
 
 
 @app.get("/api/community/tour")
-def get_community_tour() -> dict[str, Any]:
+def get_community_tour(_: None = Depends(require_community_features)) -> dict[str, Any]:
     """The unified YouThopia Tour — the same 5 pages & copy all 5 Telegram bots serve (no auth)."""
     # Imported lazily so the plain-content modules stay out of the process bootstrap graph.
     from shared.config.bot_registry import BOT_REGISTRY
@@ -394,6 +375,7 @@ def get_community_tour() -> dict[str, Any]:
 
 @app.post("/api/community/tour/complete")
 async def complete_community_tour(
+    _: None = Depends(require_community_features),
     user: TelegramUser = Depends(require_telegram_user),
     users: UserService = Depends(get_user_service),
     xp_svc: XPService = Depends(get_xp_service),

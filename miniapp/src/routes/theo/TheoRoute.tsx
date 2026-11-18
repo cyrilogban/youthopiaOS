@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { YouVersionProvider } from '@youversion/platform-react-ui';
 import { BotTabBar, type BotTab } from '../../components/BotTabBar';
-import { BotIdentityBar } from '../../components/BotSwitcherSheet';
 import { BibleTab } from '../../components/tabs/BibleTab';
 import { TheoHome } from './TheoHome';
 import { TheoSaved } from './TheoSaved';
@@ -67,20 +66,9 @@ export const TheoRoute: React.FC = () => {
       appKey={YOUVERSION_APP_KEY}
       theme="light"
       includeAuth={false}
-      appName="YouThopia Bible Community"
+      appName="Theo"
     >
       <div className="theme-theo">
-        <BotIdentityBar
-          botId="theo"
-          tag="Daily Word"
-          mark={
-            <>
-              <path d="M5 19.5A2.5 2.5 0 0 1 7.5 17H20" />
-              <path d="M7.5 3H20v19H7.5A2.5 2.5 0 0 1 5 19.5v-14A2.5 2.5 0 0 1 7.5 3z" />
-            </>
-          }
-        />
-
         <Routes>
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<TheoHome />} />

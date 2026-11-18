@@ -1,79 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useTelegram } from './hooks/useTelegram';
 import { useHideNavOnScroll } from './hooks/useHideNavOnScroll';
 import { AppDataProvider } from './context/AppData';
 import { VerificationGate } from './components/VerificationGate';
-import { TourOverlay, markTourAsSeen } from './components/TourOverlay';
-import { fetchCommunityTour, type Tour } from './services/api';
-import { getRawInitData } from './services/telegram';
-import { HomeRoute } from './routes/HomeRoute';
 import { TheoRoute } from './routes/theo/TheoRoute';
-import { LusieRoute } from './routes/lusie/LusieRoute';
-import { EdieRoute } from './routes/edie/EdieRoute';
-import { SusieRoute } from './routes/susie/SusieRoute';
-import { PeteRoute } from './routes/pete/PeteRoute';
-import { pathForTab, type TabId } from './types/navigation';
 
 const App: React.FC = () => {
   const telegram = useTelegram();
-  const { user, isInsideTelegram, verification, profile, refreshProfile, retryVerification } = telegram;
+  const { user, isInsideTelegram, verification, retryVerification } = telegram;
   const location = useLocation();
   const navigate = useNavigate();
-  const [tour, setTour] = useState<Tour | null>(null);
-  const [tourOpen, setTourOpen] = useState(false);
   const navHidden = useHideNavOnScroll();
 
-  const profileData = profile.status === 'ok' ? profile.profile : null;
-  const isVerified = verification.status === 'verified';
-  const totalXp = profileData?.totalXp ?? 0;
-  const computedLevel = Math.max(1, Math.floor(totalXp / 100) + 1);
-  const level = profileData?.level && profileData.level > 1 ? profileData.level : computedLevel;
-  const displayName = user?.firstName || profileData?.displayName || 'Member';
-  const initial = displayName[0]?.toUpperCase() || 'Y';
-
-  const botMatch = location.pathname.match(/^\/(theo|lusie|edie|susie|pete)(?:\/|$)/);
-  const profilePath = botMatch ? `/${botMatch[1]}/profile` : '/theo/profile';
-
-
-  // Load the shared tour copy once (same content the 5 Telegram bots serve).
-  useEffect(() => {
-    let cancelled = false;
-    void fetchCommunityTour().then((loaded) => {
-      if (!cancelled && loaded) setTour(loaded);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // First-launch auto-open: only for verified members who never finished
-  // orientation, and only once per device.
-  useEffect(() => {
-    if (profile.status !== 'ok') return;
-    if (profile.profile.engagementLevel === 'onboarded') {
-      markTourAsSeen();
-      return;
-    }
-    let seen = false;
-    try {
-      seen = window.localStorage.getItem('youthopia_tour_seen_v1') === '1';
-    } catch {
-      seen = true;
-    }
-    if (!seen) setTourOpen(true);
-  }, [profile]);
-
-  const openTour = () => setTourOpen(true);
-  const closeTour = () => {
-    markTourAsSeen();
-    setTourOpen(false);
-  };
-
-  const handleTabChange = (tab: TabId) => {
-    const nextPath = pathForTab(tab);
-    if (nextPath !== location.pathname) navigate(nextPath);
-  };
+  const displayName = user?.firstName || 'Member';
+  const initial = displayName[0]?.toUpperCase() || 'T';
 
   return (
     <AppDataProvider value={telegram}>
@@ -82,34 +23,28 @@ const App: React.FC = () => {
         <div className="app-frame">
           <header className="app-header">
             <div>
-              <div className="brand-kicker">YouThopia Bible Community</div>
-              <div className="brand-name">Sharing God's Love All The Way</div>
+              <div className="brand-kicker">Theo</div>
+              <div className="brand-name">Scripture for your day</div>
             </div>
 
-            <button className="profile-trigger" onClick={() => navigate(profilePath)} aria-label="Open your profile">
+            <button className="profile-trigger" onClick={() => navigate('/theo/profile')} aria-label="Open your Scripture profile">
               <span className="profile-avatar">
                 {user?.photoUrl ? <img src={user.photoUrl} alt={displayName} /> : initial}
               </span>
-              <span className="profile-trigger-copy">
-                <strong>Level {level}</strong>
-                <span>{totalXp.toLocaleString()} XP</span>
-              </span>
+              <span className="profile-trigger-copy"><strong>{displayName}</strong><span>Scripture profile</span></span>
             </button>
           </header>
 
           <main key={location.pathname} className="tab-enter">
             <Routes>
-              <Route path="/" element={<Navigate to="/home" replace />} />
-              <Route
-                path="/home"
-                element={<HomeRoute user={user} profile={profile} verified={isVerified} onNavigate={handleTabChange} />}
-              />
+              <Route path="/" element={<Navigate to="/theo/home" replace />} />
+              <Route path="/home" element={<Navigate to="/theo/home" replace />} />
               <Route path="/theo/*" element={<TheoRoute />} />
-              <Route path="/lusie/*" element={<LusieRoute />} />
-              <Route path="/edie/*" element={<EdieRoute />} />
-              <Route path="/susie/*" element={<SusieRoute onOpenTour={openTour} />} />
-              <Route path="/pete/*" element={<PeteRoute />} />
-              <Route path="*" element={<Navigate to="/home" replace />} />
+              <Route path="/lusie/*" element={<Navigate to="/theo/home" replace />} />
+              <Route path="/edie/*" element={<Navigate to="/theo/home" replace />} />
+              <Route path="/susie/*" element={<Navigate to="/theo/home" replace />} />
+              <Route path="/pete/*" element={<Navigate to="/theo/home" replace />} />
+              <Route path="*" element={<Navigate to="/theo/home" replace />} />
             </Routes>
           </main>
 
@@ -118,15 +53,6 @@ const App: React.FC = () => {
           </footer>
         </div>
 
-        {tourOpen && (
-          <TourOverlay
-            tour={tour}
-            canEarnXp={isVerified && profileData?.engagementLevel !== 'onboarded'}
-            rawInitData={getRawInitData()}
-            onClose={closeTour}
-            onFinish={() => void refreshProfile()}
-          />
-        )}
       </div>
       </VerificationGate>
     </AppDataProvider>

@@ -66,9 +66,9 @@ export async function fetchVerifiedUser(rawInitData: string | null): Promise<Ver
 
 interface GatewayProfile {
   display_name?: string | null;
-  engagement_level: string;
-  total_xp: number;
-  level: number;
+  engagement_level?: string;
+  total_xp?: number;
+  level?: number;
   trust_score?: number | null;
   quizzes_played?: number | null;
   accuracy_pct?: number | null;
@@ -87,9 +87,9 @@ export type ProfileResult =
 function mapGatewayProfile(p: GatewayProfile): UserProfile {
   return {
     displayName: p.display_name ?? undefined,
-    engagementLevel: p.engagement_level,
-    totalXp: p.total_xp,
-    level: p.level,
+    engagementLevel: p.engagement_level ?? '',
+    totalXp: p.total_xp ?? 0,
+    level: p.level ?? 1,
     trustScore: p.trust_score ?? 100,
     quizzesPlayed: p.quizzes_played ?? 0,
     accuracyPct: p.accuracy_pct ?? 100,
@@ -272,85 +272,6 @@ export async function fetchCommunityStats(): Promise<CommunityStats> {
 }
 
 // -----------------------------------------------------------------------------
-// The YouThopia Tour — one guided flow shared by the Mini App and all 5 bots.
-// -----------------------------------------------------------------------------
-
-export interface TourBlock {
-  label: string;
-  text: string;
-}
-
-export interface TourBot {
-  emoji: string;
-  name: string;
-  short: string;
-  tagline: string;
-  handle: string;
-  link: string;
-  responsibility: string;
-}
-
-export interface TourSpace {
-  name: string;
-  role: string;
-  link: string;
-}
-
-export interface TourPage {
-  id: number;
-  heading: string;
-  blocks?: TourBlock[];
-  bullets?: string[];
-  bots?: TourBot[];
-  spaces?: TourSpace[];
-  note?: string;
-}
-
-export interface Tour {
-  title: string;
-  slogan: string;
-  pages: TourPage[];
-}
-
-export async function fetchCommunityTour(): Promise<Tour | null> {
-  try {
-    const res = await fetch(`${GATEWAY_URL}/api/community/tour`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return {
-      title: data.title,
-      slogan: data.slogan,
-      pages: Array.isArray(data.pages) ? data.pages : [],
-    };
-  } catch {
-    return null;
-  }
-}
-
-export interface TourCompleteResult {
-  status: 'completed' | 'already_completed' | 'error';
-  xpAwarded: number;
-}
-
-export async function completeCommunityTour(rawInitData: string | null): Promise<TourCompleteResult> {
-  if (!rawInitData) return { status: 'error', xpAwarded: 0 };
-  try {
-    const res = await fetch(`${GATEWAY_URL}/api/community/tour/complete`, {
-      method: 'POST',
-      headers: { Authorization: `tma ${rawInitData}` },
-    });
-    if (res.status === 401) return { status: 'error', xpAwarded: 0 };
-    if (!res.ok) return { status: 'error', xpAwarded: 0 };
-    const data = await res.json();
-    return {
-      status: data.status ?? 'error',
-      xpAwarded: data.xp_awarded ?? 0,
-    };
-  } catch {
-    return { status: 'error', xpAwarded: 0 };
-  }
-}
-
 // -----------------------------------------------------------------------------
 // Theo Bible Feed API — Featured, Saved, Likes, and Share tracking
 // -----------------------------------------------------------------------------

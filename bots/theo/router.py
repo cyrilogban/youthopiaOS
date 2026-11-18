@@ -20,15 +20,6 @@ from aiogram.types import (
 from core.telegram_runtime import build_router, register_group_chat, register_chat
 from shared.config.bot_registry import meet_description
 from shared.services.container import ServiceContainer
-from shared.utils.ui import (
-    BOT_FAMILY_DIRECTORY_TEXT,
-    get_community_links_keyboard,
-    render_shared_profile_card,
-    send_community_exploration_page,
-    send_community_links_card,
-    handle_global_onboarding_callback,
-    handle_group_profile_acknowledgment,
-)
 from bots.theo.handlers.messages import handle_bible_detection
 from bots.theo.services.devotional_service import VOTDService
 from bots.theo.utils.keyboards import (
@@ -74,7 +65,13 @@ def build_translation_selection_keyboard() -> InlineKeyboardMarkup:
 
 
 def build_theo_router(description: str) -> Router:
-    router = build_router("theo", description, include_base_commands=False)
+    router = build_router(
+        "theo",
+        description,
+        include_base_commands=False,
+        include_admin_commands=False,
+        include_tour=False,
+    )
 
     @router.startup()
     async def on_startup(bot: Bot, services: ServiceContainer) -> None:
@@ -82,8 +79,7 @@ def build_theo_router(description: str) -> Router:
 
         private_commands = [
             BotCommand(command="start", description=meet_description("theo")),
-            BotCommand(command="tour", description="Take the YouThopia community tour"),
-            BotCommand(command="app", description="Open the YouThopia Mini App"),
+            BotCommand(command="app", description="Open Theo's Scripture Mini App"),
             BotCommand(command="help", description="Show help information"),
             BotCommand(command="translation", description="Change personal translation"),
             BotCommand(command="subscribe", description="Subscribe to daily verses"),
@@ -94,14 +90,12 @@ def build_theo_router(description: str) -> Router:
         ]
         group_commands = [
             BotCommand(command="start", description=meet_description("theo")),
-            BotCommand(command="tour", description="Take the YouThopia community tour"),
             BotCommand(command="help", description="Show help information"),
         ]
         admin_group_commands = group_commands + [
             BotCommand(command="translation", description="Change group translation"),
             BotCommand(command="subscribe", description="Subscribe group to daily verses"),
             BotCommand(command="unsubscribe", description="Unsubscribe group from daily verses"),
-            BotCommand(command="setrank", description="Set user rank (@user <rank> | auto)"),
         ]
 
         try:
@@ -244,10 +238,15 @@ def build_theo_router(description: str) -> Router:
     @router.message(Command("profile"))
     async def profile_handler(message: Message, bot: Bot, services: ServiceContainer) -> None:
         if message.chat.type != "private":
-            await handle_group_profile_acknowledgment(message, bot)
+            try:
+                await message.delete()
+            except Exception:
+                pass
             if message.from_user:
                 try:
                     await send_theo_profile(message, services, telegram_user=message.from_user, send_to_dm=True, bot=bot)
+                    notice = await message.answer("I sent your Theo profile in a private message.")
+                    asyncio.create_task(self_destruct_message(bot, message.chat.id, notice.message_id, 10))
                 except Exception as e:
                     logger.warning(f"Failed to send Theo profile to DM for user {message.from_user.id}: {e}")
             return
@@ -262,7 +261,6 @@ def build_theo_router(description: str) -> Router:
     async def send_theo_profile(
         message: Message, services: ServiceContainer, telegram_user: Any | None = None, send_to_dm: bool = False, bot: Bot | None = None
     ) -> None:
-        await register_group_chat(message, services, "theo")
         user_from = telegram_user or message.from_user
         user = await services.identity.resolve_telegram_user(user_from)
 
@@ -274,16 +272,13 @@ def build_theo_router(description: str) -> Router:
         state = await services.users.get_user_state(user["id"], "theo")
         translation = state.get("translation", "kjv").upper()
 
-        # Theo-specific stats for profile card
-        bot_stats = [
-            f"📖 Translation: <b>{translation}</b>",
-            f"🌅 Daily Verse: <b>{subscribed_text}</b>",
-        ]
-
-        card_text = render_shared_profile_card(
-            user_data=user,
-            telegram_first_name=user_from.first_name or "Friend",
-            bot_specific_stats=bot_stats
+        display_name = user.get("display_name") or user_from.first_name or "Friend"
+        saved_verses = await services.users.get_saved_verses(user["id"], "theo")
+        card_text = (
+            f"<b>{display_name}'s Theo profile</b>\n\n"
+            f"Preferred translation: <b>{translation}</b>\n"
+            f"Daily Verse: <b>{subscribed_text}</b>\n"
+            f"Saved verses: <b>{len(saved_verses)}</b>"
         )
 
         if send_to_dm and bot and user_from:
@@ -312,13 +307,13 @@ def build_theo_router(description: str) -> Router:
             except Exception:
                 pass
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="📖 Open Theodore Guide in DM", url="https://t.me/theobiblebot?start=help")],
+                [InlineKeyboardButton(text="Open Theo's Guide in DM", url="https://t.me/theobiblebot?start=help")],
                 [InlineKeyboardButton(text="🔍 Search Scripture", callback_data="theo_search_scripture")],
             ])
             try:
                 sent_msg = await message.answer(
-                    "<blockquote>📖 <b>Theodore Devotional Help Guide</b>\n"
-                    "Tap below to view full features and community guide in DM.</blockquote>",
+                    "<blockquote><b>Theodore Scripture Guide</b>\n"
+                    "Tap below to view Theo's features and commands in DM.</blockquote>",
                     parse_mode="HTML",
                     reply_markup=markup
                 )
@@ -335,22 +330,21 @@ def build_theo_router(description: str) -> Router:
 
     async def send_theo_help(message: Message) -> None:
         help_text = (
-            "<b>📖 Theodore | Daily Word Help Guide</b>\n"
-            "<blockquote>I am Theodore (@theobiblebot), your devotional companion in YOUTHOPIA BIBLE COMMUNITY.\n\n"
+            "<b>Theodore | Scripture Guide</b>\n"
+            "<blockquote>Theo helps you read Scripture, save verses, and receive a daily verse.\n\n"
             "<b>Theodore Features & Commands</b>\n"
             "• 🔍 <b>Search Scripture:</b> Type any reference in chat (e.g. John 3:16).\n"
             "• 🔖 <b>Saved Verses:</b> View your saved bookmarks.\n"
-            "• 🌐 <b>Translation:</b> Switch between KJV, ASV, WEB, and BBE.\n"
+            "• <b>/translation:</b> Choose KJV, ASV, WEB, or BBE.\n"
+            "• <b>/app:</b> Open Theo's Scripture Mini App.\n"
             "• <b>/subscribe:</b> Receive Daily Verses every morning at 6:00 AM.\n"
-            "• <b>/unsubscribe:</b> Pause daily verse notifications.</blockquote>\n\n"
-            f"{BOT_FAMILY_DIRECTORY_TEXT}\n\n"
-            "Sharing God's Love All The Way 💜"
+            "• <b>/unsubscribe:</b> Pause daily verse notifications.</blockquote>"
         )
         await message.answer(
             help_text,
             parse_mode="HTML",
             disable_web_page_preview=True,
-            reply_markup=get_community_links_keyboard(),
+            reply_markup=build_theo_welcome_inline_keyboard(),
         )
 
     # -------------------------------------------------------------------------
@@ -398,33 +392,16 @@ def build_theo_router(description: str) -> Router:
             # Differentiated Welcome Card based on Admin vs Member status
             if new_status == "administrator":
                 welcome_text = (
-                    f"<b>THEODORE (THEO) IS HERE 📖</b>\n\n"
-                    f"<blockquote>I am <b>Theodore</b>, but you can call me <b>Theo</b>! I am your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
-                    f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-                    f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-                    f"<b>GROUP QUICK START</b>\n"
-                    f"<blockquote>• Type any Bible reference in chat (e.g. <code>John 3:16</code>).\n"
-                    f"• <b>Daily Verse:</b> <code>ENABLED</code> (Delivered daily at 6:00 AM).\n"
-                    f"• <b>Admins:</b> Manage anytime using <code>/subscribe</code> or <code>/unsubscribe</code>.</blockquote>\n\n"
-                    f"<i>Sharing God's Love All The Way 💜</i>"
+                    f"<b>Theo is ready in {group_title}.</b>\n\n"
+                    "<blockquote>Ask Theo about any Bible passage, or use /subscribe to receive the daily verse here. "
+                    "Group administrators can manage delivery with /subscribe and /unsubscribe.</blockquote>"
                 )
                 markup = build_theo_group_welcome_keyboard()
             else:
                 welcome_text = (
-                    f"<b>THEODORE (THEO) IS HERE 📖</b>\n\n"
-                    f"<blockquote>I am <b>Theodore</b>, but you can call me <b>Theo</b>! I am your Daily Word & Scripture Companion in <b>YouThopiaOS</b>.\n\n"
-                    f"I keep our community anchored in God's Word across our 5-bot ecosystem:\n"
-                    f"• 📖 <b>Theodore (Theo):</b> Daily Scripture & Devotionals\n"
-                    f"• 🎯 <b>Lucy (Lusie):</b> Quizzes & YouTopian Points (YP)\n"
-                    f"• 🛡️ <b>Peter (Pete):</b> Security & Group Moderation\n"
-                    f"• 📅 <b>Edmund (Edie):</b> Events & Reminders\n"
-                    f"• 💬 <b>Susan (Susie):</b> Welcome & Onboarding</blockquote>\n\n"
-                    f"<b>⚠️ ADMIN RIGHTS NEEDED</b>\n"
-                    f"<blockquote>To send daily 6 AM devotional broadcasts smoothly, please grant Theodore (Theo) <b>Admin Rights</b>!</blockquote>"
+                    f"<b>Theo is ready in {group_title}.</b>\n\n"
+                    "<blockquote>Ask Theo about any Bible passage. To enable daily verse delivery, "
+                    "a group administrator can promote Theo and use /subscribe.</blockquote>"
                 )
                 markup = build_theo_member_welcome_keyboard()
 
@@ -457,7 +434,7 @@ def build_theo_router(description: str) -> Router:
                         f"<b>Theodore Departs {group_title} 📖</b>\n\n"
                         f"<blockquote>Theodore has been removed from <b>{group_title}</b>.\n"
                         f"Daily devotional broadcasts have been paused for this group. "
-                        f"You can re-invite Theodore anytime or explore our other 4 community bots below! 💜</blockquote>"
+                        "You can add Theo again whenever you need Scripture tools in this group.</blockquote>"
                     )
                     await bot.send_message(
                         chat_id=admin_user_id,
@@ -533,7 +510,7 @@ def build_theo_router(description: str) -> Router:
                     f"<b>Theodore Departs {group_title} 📖</b>\n\n"
                     f"<blockquote>Theodore has left <b>{group_title}</b> as requested.\n"
                     f"Daily devotional broadcasts have been paused for this group. "
-                    f"You can re-invite Theodore anytime or explore our other 4 community bots below! 💜</blockquote>"
+                    "You can add Theo again whenever you need Scripture tools in this group.</blockquote>"
                 )
                 await bot.send_message(
                     chat_id=admin_id,
@@ -549,29 +526,6 @@ def build_theo_router(description: str) -> Router:
             await bot.leave_chat(chat_id)
         except Exception as e:
             logger.warning(f"Theo failed to leave chat {chat_id}: {e}")
-
-    # -------------------------------------------------------------------------
-    # GLOBAL BUTTON 3: 🌐 Community
-    # -------------------------------------------------------------------------
-    @router.message(F.text == "Community")
-    @router.message(F.text == "Community Links")
-    async def community_handler(message: Message) -> None:
-        if message.chat.type != "private":
-            return
-        await send_community_links_card(message)
-
-    @router.callback_query(F.data == "theo_community_links")
-    async def inline_community_links_handler(callback: CallbackQuery) -> None:
-        await callback.answer()
-        await send_community_links_card(callback.message)
-
-    @router.callback_query(F.data.startswith("onboarding_"))
-    async def global_onboarding_callback_handler(callback_query: CallbackQuery, services: ServiceContainer) -> None:
-        await handle_global_onboarding_callback(callback_query, services)
-
-    @router.callback_query(F.data == "global_ignore")
-    async def inline_global_ignore(callback: CallbackQuery) -> None:
-        await callback.answer("Threads community link coming soon!", show_alert=True)
 
     # -------------------------------------------------------------------------
     # BOT-SPECIFIC BUTTON: 🔍 Search Scripture

@@ -43,9 +43,9 @@ class UserProfile(BaseModel):
     """The public YouThopiaOS profile for a verified user."""
 
     display_name: str | None = None
-    engagement_level: str
-    total_xp: int
-    level: int
+    engagement_level: str = ""
+    total_xp: int = 0
+    level: int = 1
     trust_score: int = 100
     quizzes_played: int = 0
     accuracy_pct: int = 100

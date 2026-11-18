@@ -25,6 +25,9 @@ class Settings:
     # MongoDB (Optional Secondary Database)
     MONGO_URI: str = os.getenv("MONGO_URI", "")
     MONGO_DATABASE: str = os.getenv("MONGO_DATABASE", "youthopiaos")
+    COMMUNITY_FEATURES_ENABLED: bool = os.getenv("COMMUNITY_FEATURES_ENABLED", "false").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
 
     @property
     def is_production(self) -> bool:

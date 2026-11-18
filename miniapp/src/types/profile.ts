@@ -4,12 +4,10 @@
 export interface UserProfile {
   /** The YouThopiaOS display name. Optional — may be unset (null in the DB). */
   displayName?: string;
-  /** Community engagement tier (e.g. 'new', 'active'). Always present. */
-  engagementLevel: string;
-  /** Lifetime XP earned across the community. */
-  totalXp: number;
-  /** Level derived from XP. */
-  level: number;
+  /** Legacy community metrics are optional and are not exposed by Theo. */
+  engagementLevel?: string;
+  totalXp?: number;
+  level?: number;
   /** Community trust rating (Pete Bot security score). */
   trustScore?: number;
   /** Total quizzes played in Lusy Bot. */

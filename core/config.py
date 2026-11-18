@@ -39,6 +39,12 @@ def _env_bool(name: str, default: bool = True) -> bool:
 def load_config() -> AppConfig:
     load_dotenv()
 
+    enabled_bot_names = {
+        name.strip().lower()
+        for name in os.getenv("ENABLED_BOTS", "theo").split(",")
+        if name.strip()
+    }
+
     bots: dict[str, BotConfig] = {}
     for bot_name in BOT_NAMES:
         env_prefix = bot_name.upper()
@@ -47,7 +53,7 @@ def load_config() -> AppConfig:
         else:
             token = os.getenv(f"{env_prefix}_BOT_TOKEN", "")
         token = token.strip()
-        enabled = _env_bool(f"{env_prefix}_BOT_ENABLED", True)
+        enabled = bot_name in enabled_bot_names and _env_bool(f"{env_prefix}_BOT_ENABLED", True)
         bots[bot_name] = BotConfig(name=bot_name, token=token, enabled=enabled)
 
     return AppConfig(

@@ -26,6 +26,7 @@ from core.admin_commands import create_admin_router
 from shared.logging.logger import get_logger
 from shared.services.container import ServiceContainer
 from shared.config.bot_registry import get_bot_identity
+from shared.config.settings import settings
 from shared.utils.ui import (
     get_open_app_inline_button,
     send_community_exploration_page,
@@ -179,6 +180,9 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
     - /start tour deep link (fired before each bot's own /start handler)
     - the shared "Take Tour" reply-keyboard button
     """
+    if not settings.COMMUNITY_FEATURES_ENABLED:
+        return
+
     @router.message(Command("tour"))
     async def tour_command(message: Message, services: ServiceContainer) -> None:
         if message.chat.type == "private":
@@ -259,18 +263,30 @@ def attach_open_app(router: Router, bot_name: str) -> None:
         markup = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(text="Open App", url=get_bot_identity(bot_name).mini_app_link)
         ]])
-        await message.answer(
+        text = "Open Theo's Scripture Mini App:" if bot_name == "theo" else (
             "Open <b>YOUTHOPIA BIBLE COMMUNITY</b> Mini App:\n"
-            "<i>Sharing God's Love All The Way</i>",
+            "<i>Sharing God's Love All The Way</i>"
+        )
+        await message.answer(
+            text,
             parse_mode="HTML",
             reply_markup=markup
         )
 
 
-def build_router(bot_name: str, description: str, *, include_base_commands: bool = True) -> Router:
+def build_router(
+    bot_name: str,
+    description: str,
+    *,
+    include_base_commands: bool = True,
+    include_admin_commands: bool = True,
+    include_tour: bool = True,
+) -> Router:
     router = Router(name=bot_name)
-    router.include_router(create_admin_router(bot_name))
-    attach_global_tour(router, bot_name)
+    if include_admin_commands:
+        router.include_router(create_admin_router(bot_name))
+    if include_tour:
+        attach_global_tour(router, bot_name)
     attach_open_app(router, bot_name)
 
     if include_base_commands:
