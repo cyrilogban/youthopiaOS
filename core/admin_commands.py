@@ -27,7 +27,6 @@ BOT_NATIVE_COMMANDS = {
     "pete": [
         BotCommand(command="start", description=meet_description("pete")),
         BotCommand(command="tour", description="Take the YouThopia community tour"),
-        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="appeal", description="Submit Appeal"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Peter Safety Guide"),
@@ -45,7 +44,6 @@ BOT_NATIVE_COMMANDS = {
     "lusy": [
         BotCommand(command="start", description=meet_description("lusy")),
         BotCommand(command="tour", description="Take the YouThopia community tour"),
-        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
         BotCommand(command="quit", description="Quit active quiz session"),
         BotCommand(command="leaderboard", description="View global leaderboard"),
@@ -56,14 +54,12 @@ BOT_NATIVE_COMMANDS = {
     "susy": [
         BotCommand(command="start", description=meet_description("susy")),
         BotCommand(command="tour", description="Take the YouThopia community tour"),
-        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="profile", description="View your profile"),
         BotCommand(command="help", description="Susan Hostess Guide"),
     ],
     "eddy": [
         BotCommand(command="start", description=meet_description("eddy")),
         BotCommand(command="tour", description="Take the YouThopia community tour"),
-        BotCommand(command="app", description="Open the YouThopia Mini App"),
         BotCommand(command="calendar", description="View this week's event schedule"),
         BotCommand(command="my_events", description="View events I am attending"),
         BotCommand(command="addbirthday", description="Add your birthday"),

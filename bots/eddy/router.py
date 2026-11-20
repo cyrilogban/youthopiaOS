@@ -75,7 +75,6 @@ def build_eddy_router(description: str) -> Router:
         private_commands = [
             BotCommand(command="start", description=meet_description("eddy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
-            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="calendar", description="View this week's event schedule"),
             BotCommand(command="my_events", description="View events I am attending"),
             BotCommand(command="addbirthday", description="Add your birthday"),

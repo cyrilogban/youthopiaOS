@@ -62,7 +62,7 @@ class SmartGroupCommandCleanerMiddleware(BaseMiddleware):
 
     # Standard persistent reply keyboard button labels across all 5 bots
     REPLY_KEYBOARD_TRIGGERS: set[str] = {
-        "My Profile", "Take Tour", "Open App", "Help", "Community",
+        "My Profile", "Take Tour", "Help", "Community",
         "Search Scripture", "Saved Verses", "Translation",
         "Play Quizzes", "Leaderboard", "🏆 Rankings", "My Points", "Quit Quiz",
         "View Calendar", "📅 Calendar", "My Events", "Add Birthday", "Reminders",
@@ -252,12 +252,10 @@ def attach_global_tour(router: Router, bot_name: str) -> None:
 
 
 def attach_open_app(router: Router, bot_name: str) -> None:
-    """Mounts the always-on /app + /miniapp handler serving the Mini App launch card.
+    """Mount Theo's /app + /miniapp handler; other bots do not expose the Mini App."""
+    if bot_name != "theo":
+        return
 
-    Registered on every bot (centrally via build_router, and explicitly on
-    Pete's raw router) so the advertised `/app` menu command works everywhere.
-    Opens this bot's own routed Mini App.
-    """
     @router.message(Command("app", "miniapp"))
     async def handle_app_command(message: Message) -> None:
         markup = InlineKeyboardMarkup(inline_keyboard=[[
@@ -306,15 +304,16 @@ def build_router(
                 f"Trust: {user.get('trust_score', 100)}"
             )
 
-        @router.message(Command("app", "miniapp"))
-        async def handle_app_command(message: Message) -> None:
-            markup = InlineKeyboardMarkup(inline_keyboard=[[get_open_app_inline_button(bot_name)]])
-            await message.answer(
-                "Open <b>YOUTHOPIA BIBLE COMMUNITY</b> Mini App:\n"
-                "<i>Sharing God's Love All The Way</i>",
-                parse_mode="HTML",
-                reply_markup=markup
-            )
+        if bot_name == "theo":
+            @router.message(Command("app", "miniapp"))
+            async def handle_app_command(message: Message) -> None:
+                markup = InlineKeyboardMarkup(inline_keyboard=[[get_open_app_inline_button(bot_name)]])
+                await message.answer(
+                    "Open <b>YOUTHOPIA BIBLE COMMUNITY</b> Mini App:\n"
+                    "<i>Sharing God's Love All The Way</i>",
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
 
     # Fallback sub-router for default group tracking
     _fallback = Router(name=f"{bot_name}_fallback")

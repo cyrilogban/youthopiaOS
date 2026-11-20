@@ -65,7 +65,6 @@ def build_susy_router(description: str) -> Router:
         private_commands = [
             BotCommand(command="start", description=meet_description("susy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
-            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="profile", description="View your profile"),
             BotCommand(command="help", description="Susan Hostess Guide"),
         ]
@@ -261,10 +260,10 @@ def build_susy_router(description: str) -> Router:
         welcome_text = (
             "<b>WELCOME TO YOUTHOPIA BIBLE COMMUNITY 💜</b>\n\n"
             "<blockquote>Here, we grow together in God's Word, challenge ourselves with Bible quizzes, and connect with fellow believers.\n\n"
-            "Tap the button below to launch the YouThopiaOS Mini App and unlock your YouTopian profile!</blockquote>"
+            "Tap the button below to meet Susy and get help exploring the community.</blockquote>"
         )
         markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Open App", url=get_bot_identity("susy").mini_app_link)]
+            [InlineKeyboardButton(text="Meet Susy", url="https://t.me/susiehelpsbot?start=welcome")]
         ])
 
         try:

@@ -57,7 +57,6 @@ def build_lusy_router(description: str = "Lusy games and XP bot") -> Router:
         private_commands = [
             BotCommand(command="start", description=meet_description("lusy")),
             BotCommand(command="tour", description="Take the YouThopia community tour"),
-            BotCommand(command="app", description="Open the YouThopia Mini App"),
             BotCommand(command="playquiz", description="Choose and start a Bible quiz"),
             BotCommand(command="quit", description="Quit active quiz session"),
             BotCommand(command="leaderboard", description="View global leaderboard"),
