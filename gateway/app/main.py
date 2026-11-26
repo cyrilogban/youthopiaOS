@@ -3,12 +3,11 @@
 Exposes:
   - GET /health         — liveness probe (no auth).
   - GET /me             — verified Telegram identity.
-  - GET /profile        — verified user's stored YouThopiaOS profile + XP from Supabase.
+  - GET /profile        — verified user's stored YouThopiaOS profile from Supabase.
   - GET /api/settings   — verified user's saved preferences (translation, daily devotional).
   - PUT /api/settings   — update verified user's preferences in Supabase.
-  - GET /api/leaderboard— live top community rankings from Supabase users table.
-  - GET /api/events     — live upcoming community gatherings & schedule from Supabase.
   - GET /api/votd       — live Verse of the Day text & reference from Supabase.
+  - GET /api/theo/*     — Theo featured, saved, liked, and shared verses.
   - Static Mini App     — Serves miniapp/dist compiled SPA at root '/' when deployed.
 """
 import asyncio
@@ -17,17 +16,14 @@ from functools import lru_cache
 import os
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from gateway.app.auth import require_telegram_user
 from gateway.app.models import (
-    CommunityStats,
-    EventItem,
     FeaturedVerseItem,
-    LeaderboardItem,
     LikeVerseRequest,
     SaveVerseRequest,
     ShareVerseRequest,
@@ -38,18 +34,13 @@ from gateway.app.models import (
 )
 from shared.config.settings import settings
 from shared.db.supabase import SupabaseGateway
-from shared.services.event_service import EventService
-from shared.services.moderation_service import ModerationService
-from shared.services.quiz_service import QuizService
-from shared.services.rank_service import RankService
 from shared.services.theo_feed_service import TheoFeedService
 from shared.services.user_service import UserService
-from shared.services.xp_service import XPService, calculate_level
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager — starts all 5 Telegram bots concurrently in background
+    """Lifespan context manager — starts configured Telegram bots concurrently in background
     tasks when the FastAPI web server boots, ensuring a single process runs both the
     bots and the gateway web server.
     """
@@ -65,11 +56,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="YouThopiaOS Gateway", lifespan=lifespan)
-
-
-def require_community_features() -> None:
-    if not settings.COMMUNITY_FEATURES_ENABLED:
-        raise HTTPException(status_code=404, detail="Feature unavailable")
 
 _ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Vite dev server
@@ -101,34 +87,6 @@ def get_user_service() -> UserService:
     """Build the UserService once per process and reuse it."""
     gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
     return UserService(gateway)
-
-
-@lru_cache
-def get_quiz_service() -> QuizService:
-    """Build the QuizService once per process and reuse it."""
-    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
-    return QuizService(gateway)
-
-
-@lru_cache
-def get_event_service() -> EventService:
-    """Build the EventService once per process and reuse it."""
-    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
-    return EventService(gateway)
-
-
-@lru_cache
-def get_xp_service() -> XPService:
-    """Build the XPService once per process and reuse it."""
-    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
-    return XPService(gateway)
-
-
-@lru_cache
-def get_moderation_service() -> ModerationService:
-    """Build the ModerationService once per process and reuse it."""
-    gateway = SupabaseGateway(settings.SUPABASE_URL, settings.SUPABASE_KEY).connect()
-    return ModerationService(gateway)
 
 
 @lru_cache
@@ -202,72 +160,6 @@ async def update_settings(
     return UserSettings(translation=clean_trans.upper(), daily_devotional=new_settings.daily_devotional)
 
 
-@app.get("/api/leaderboard")
-async def get_leaderboard(
-    _: None = Depends(require_community_features),
-    service: UserService = Depends(get_user_service),
-) -> list[LeaderboardItem]:
-    """Return top 10 community members ordered by total_xp descending from Supabase with official rank badges."""
-    items = await service.get_leaderboard(limit=10)
-    leaderboard_items = []
-    for item in items:
-        xp = int(item.get("total_xp", 0))
-        computed_level = calculate_level(xp)
-        score = int(item.get("rank_score", 0) or 0)
-        rank = RankService.resolve_rank(score, item.get("manual_rank_id"))
-        leaderboard_items.append(LeaderboardItem(
-            display_name=item.get("display_name"),
-            total_xp=xp,
-            level=computed_level,
-            rank_title=rank.title,
-            rank_badge_color=rank.bg_color,
-            rank_emoji=rank.emoji,
-        ))
-    return leaderboard_items
-
-
-@app.get("/api/events")
-async def get_events(
-    _: None = Depends(require_community_features),
-    event_svc: EventService = Depends(get_event_service),
-) -> list[EventItem]:
-    """Return live upcoming community events from Supabase."""
-    try:
-        latest = await event_svc.get_latest_event()
-        if latest:
-            return [EventItem(
-                id=latest.get("id"),
-                title=latest.get("title", "Weekly Bible Study & Discussion"),
-                starts_at=latest.get("starts_at", "Sundays at 6:00 PM UTC"),
-                category="Community Gathering",
-                location="Telegram Main Channel"
-            )]
-    except Exception:
-        pass
-
-    # Fallback to default community schedule list
-    return [
-        EventItem(
-            title="Weekly Bible Study & Discussion",
-            starts_at="Sundays at 6:00 PM UTC",
-            category="Community Gathering",
-            location="Telegram Main Channel",
-        ),
-        EventItem(
-            title="Midweek Prayer & Intercession",
-            starts_at="Wednesdays at 7:30 PM UTC",
-            category="Prayer Session",
-            location="Voice Chat Room",
-        ),
-        EventItem(
-            title="Weekend Scripture Challenge",
-            starts_at="Saturdays at 4:00 PM UTC",
-            category="Community Quiz",
-            location="Lusy Bot Channel",
-        ),
-    ]
-
-
 @app.get("/api/votd")
 async def get_votd(
     translation: str = "KJV",
@@ -293,143 +185,6 @@ async def get_votd(
         text="Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you. Let not your heart be troubled, neither let it be afraid.",
         translation=translation.upper(),
     )
-
-
-@app.get("/api/community/stats")
-async def get_community_stats(
-    _: None = Depends(require_community_features),
-    service: UserService = Depends(get_user_service),
-) -> CommunityStats:
-    """Return 100% live raw community statistics directly from Supabase."""
-    try:
-        users = await service.db.find_many("users", {})
-        user_count = len(users)
-
-        chats = await service.db.find_many("telegram_chats", {"is_active": True})
-        group_count = len(chats)
-
-        history = await service.db.find_many("lusy_game_history", {})
-        quizzes_count = len(history)
-
-        return CommunityStats(
-            total_members=user_count,
-            active_groups=group_count,
-            quizzes_played=quizzes_count,
-        )
-    except Exception as e:
-        print(f"Warning in /api/community/stats: {e}")
-        return CommunityStats(total_members=0, active_groups=0, quizzes_played=0)
-
-
-@app.get("/api/community/tour")
-def get_community_tour(_: None = Depends(require_community_features)) -> dict[str, Any]:
-    """The unified YouThopia Tour — the same 5 pages & copy all 5 Telegram bots serve (no auth)."""
-    # Imported lazily so the plain-content modules stay out of the process bootstrap graph.
-    from shared.config.bot_registry import BOT_REGISTRY
-    from shared.content import tour as tour_content
-    from shared.utils.ui import FACEBOOK_LINK, TELEGRAM_GROUP_LINK, WHATSAPP_LINK
-
-    bots = [
-        {
-            "emoji": identity.emoji,
-            "name": identity.full_name,
-            "short": identity.short_name,
-            "tagline": identity.tagline,
-            "handle": identity.handle,
-            "link": identity.link,
-            "responsibility": identity.responsibility,
-        }
-        for identity in BOT_REGISTRY.values()
-    ]
-    pages = [
-        {"id": 1, "heading": "About YouThopia", "blocks": [
-            {"label": "Who we are", "text": tour_content.ABOUT_TEXT},
-            {"label": "Our Vision", "text": tour_content.VISION_TEXT},
-        ]},
-        {"id": 2, "heading": "Our Mission", "bullets": list(tour_content.MISSION_BULLETS)},
-        {"id": 3, "heading": "Our Aims & Objectives", "bullets": list(tour_content.AIMS_BULLETS)},
-        {"id": 4, "heading": "Five Pillars, One Family", "bots": bots, "note": (
-            "Each pillar has its own duty — together we grow, connect, "
-            "and shine as one family in CHRIST."
-        )},
-        {"id": 5, "heading": "Your Journey", "blocks": [{
-            "label": "Grow in grace",
-            "text": (
-                "Every YouTopian grows through 9 ranks of grace — from The Seeker to "
-                "YouThopia's Ambassador. Earn YouTopian Points (YP) by engaging in the "
-                "community: quizzes, devotionals, events, and fellowship — and your "
-                "Trust Score reflects your reliability and integrity."
-            ),
-        }], "spaces": [
-            {"name": "Telegram Community", "role": "Main fellowship group", "link": TELEGRAM_GROUP_LINK},
-            {"name": "WhatsApp Community", "role": "Daily encouragement on WhatsApp", "link": WHATSAPP_LINK},
-            {"name": "Facebook Community", "role": "Fellowship and community updates", "link": FACEBOOK_LINK},
-        ]},
-    ]
-    return {
-        "title": tour_content.TOUR_TITLE,
-        "slogan": tour_content.TOUR_SLOGAN,
-        "pages": pages,
-    }
-
-
-@app.post("/api/community/tour/complete")
-async def complete_community_tour(
-    _: None = Depends(require_community_features),
-    user: TelegramUser = Depends(require_telegram_user),
-    users: UserService = Depends(get_user_service),
-    xp_svc: XPService = Depends(get_xp_service),
-    moderation: ModerationService = Depends(get_moderation_service),
-) -> dict[str, Any]:
-    """Marks the caller oriented and awards the one-time +50 YP welcome boost.
-
-    Shared-channel idempotency: uses the same `orientation_completed` action and
-    `onboarding_xp_{user_id}` XP idempotency key the Telegram bots use, so the
-    tour's boost can only ever be awarded once per member — finishing it in the
-    Mini App first, and a bot later, resolves to `already_completed` on the bot
-    side (and vice versa).
-    """
-    row = await users.get_or_create_from_telegram({
-        "telegram_id": user.id,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "username": user.username,
-    })
-    user_id = row["id"]
-
-    already = row.get("engagement_level") == "onboarded"
-    if not already:
-        try:
-            actions = await users.db.find_many(
-                "moderation_actions", {"user_id": user_id, "action_type": "orientation_completed"}
-            )
-            already = bool(actions)
-        except Exception:
-            pass
-
-    if already:
-        return {"status": "already_completed", "xp_awarded": 0}
-
-    try:
-        await users.set_engagement_level(user_id, "onboarded")
-        await moderation.record_action(
-            user_id=user_id,
-            action_type="orientation_completed",
-            reason="Completed the YouThopia community tour in the Mini App.",
-            trust_delta=50,
-        )
-        await xp_svc.award_xp(
-            user_id=user_id,
-            amount=50,
-            bot_name="susy",
-            source="onboarding_tour",
-            idempotency_key=f"onboarding_xp_{user_id}",
-        )
-    except Exception as e:
-        print(f"Warning in /api/community/tour/complete: {e}")
-        return {"status": "error", "xp_awarded": 0}
-
-    return {"status": "completed", "xp_awarded": 50}
 
 
 @app.get("/api/theo/featured")
