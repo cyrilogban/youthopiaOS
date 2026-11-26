@@ -1,189 +1,100 @@
-# YouThopiaOS
+# Theo (YouThopiaOS)
 
-`YouThopiaOS` is a modular, Python-powered, multi-bot Telegram ecosystem designed to run multiple specialized bots under a single architecture, shared intelligence layer, and centralized deployment pipeline.
+**Theo** (@theobiblebot) is an AI theological guide, daily scripture companion, and devotional ecosystem built for Telegram and the web.
 
-Rather than treating bots as isolated scripts, YouThopiaOS approaches community automation as an integrated operating system where independent bots work together through shared services, unified user identity, and centralized infrastructure.
+Theo helps individuals and groups engage with Scripture through automated daily Verse of the Day (VOTD) delivery, dynamic multi-translation lookups, smart passage detection, and a rich Telegram Mini App powered by the YouVersion Platform.
 
----
-
-## Vision
-YouThopiaOS exists to create a scalable and intelligent digital ecosystem for community management, engagement, discipleship, moderation, and automation.
-
-The project is designed around one central philosophy:
-> **Multiple specialized bots. One ecosystem. One intelligence layer.**
+> **Note on Project Scope:**
+> This repository is **Theo only**. The previous 5-bot community ecosystem (Susy, Ed, Pete, and Lusy) was safely archived on November 24, 2026. See [docs/ARCHIVE.md](file:///c:/Users/HP%20240/Desktop/YOUTHOPIA%20BIBLE%20COMMUNITY/YouThopiaOS/docs/ARCHIVE.md) for restoration instructions and the permanent archive tag `archive/multi-bot-2026-11-24`.
 
 ---
 
-## Background & Evolution
-The bots inside YouThopiaOS were originally developed as separate standalone Telegram systems with distinct responsibilities and infrastructure.
+## Features
 
-Over time, maintaining multiple isolated deployments, duplicated logic, and fragmented databases introduced operational overhead and scalability limitations.
+### 1. Telegram Bot (@theobiblebot)
+- **Daily Devotional Delivery:** Automated Verse of the Day broadcasts every morning at 6:00 AM WAT via APScheduler.
+- **Passive Scripture Detection:** Automatically detects Bible citations in chat (e.g. `John 3:16`, `Psalm 23:1-6`) and returns formatted scripture cards with one-tap bookmarking and translation comparisons.
+- **Multi-Translation Engine:** Quick toggling across King James (KJV), American Standard (ASV), World English Bible (WEB), and Basic English (BBE).
+- **Personal & Group Subscriptions:** Subscriptions for individual DMs and group chats with customizable group translation defaults.
+- **Bookmarks & Saved Verses:** Fast in-chat gallery of bookmarked passages with interactive pagination.
 
-YouThopiaOS is the architectural evolution of those systems. It consolidates previously independent bots into a single coordinated platform while preserving their individual identities and responsibilities.
-
-This transition enables:
-* **Shared Infrastructure** — Consolidated compute resources and unified configurations.
-* **Reduced Operational Costs** — Single deployment instance instead of five.
-* **Unified User Experience** — Unified user profiles and stats shared across bots.
-* **Cross-Bot Intelligence** — Services can coordinate actions seamlessly.
-* **Centralized Maintenance** — Global updates applied in a single repository.
-
----
-
-## Bot Ecosystem
-Each bot retains its own Telegram token, Telegram identity, and independent interaction model, but all operate through a shared backend architecture.
-
-### Theo Bot *(Bible & Scripture Engagement)*
-* Daily Bible delivery (Verse of the Day)
-* Scripture engagement & reading consistency tracking
-* Devotionals and faith-based interactions
-
-### Lusy Bot *(Gamification & Engagement)*
-* Custom games (Bible Challenge, Verse Completion, Verse Scramble, Trivia Race)
-* Global user XP, levels, and leaderboard stats
-* Automated participation reward distribution
-
-### Pete Bot *(Moderation & Security)*
-* Group spam control and warning workflows
-* Administrative ban & kick automation
-* Community safety logs and trust scores
-
-### Ed Bot *(Events & Reminders)*
-* Community event scheduling, registrations, and reminders
-* Announcement broadcast coordination
-* Attendance and participation analytics
-
-### Susy Bot *(Hospitality & Onboarding)*
-* Member welcome flow and onboarding guides
-* Social engagement support
+### 2. Telegram Mini App
+- **Living Devotional Feed:** Daily scripture cards, Affirmation of the Day, and Prayer of the Day.
+- **YouVersion Platform Integration:** Embedded Scripture explorer across major translations.
+- **Verse Actions:** Heart (love), save, and native Telegram share sheet integration.
+- **Personal Preferences:** Translation selector and daily reminder delivery toggles.
 
 ---
 
-## Layered Architecture
+## Architecture Overview
 
 ```text
-       [ Bot Interface Layer ] (aiogram command routers & presentation)
-                   │
-                   ▼
-      [ Shared Services Layer ] (business logic, XP, event scheduling)
-                   │
-                   ▼
-     [ Database Access Layer ] (Supabase PostgreSQL / MongoDB Client)
+       [ Telegram Bot (@theobiblebot) ]   [ React Telegram Mini App ]
+                         │                                │
+                         ▼                                ▼
+       [ FastAPI Gateway & Bot Runtime ] ──► [ Core Engine & Schedulers ]
+                                        │
+                                        ▼
+                      [ Supabase PostgreSQL & Bible APIs ]
 ```
 
-### 1. Bot Layer
-* **Location:** `/bots`
-* **Purpose:** Handles Telegram-specific interaction, message routing, and response formatting.
-* *Note: Bots contain interface logic only. No business logic or database queries reside here.*
-
-### 2. Core Layer
-* **Location:** `/core`
-* **Purpose:** Bot orchestration runtime, lifecycle management, and shared config loaders.
-
-### 3. Services Layer
-* **Location:** `/services`
-* **Purpose:** Centralized business rules (e.g. `xp_service`, `moderation_service`). Reusable across all bot instances.
-
-### 4. Database Layer
-* **Location:** `/db`
-* **Purpose:** Single source of truth for persistence. Shares user state and community stats across all bot interfaces.
+- **Runtime:** Single FastAPI & Uvicorn application serving the Mini App SPA and hosting the aiogram async polling bot in the background.
+- **Database:** Supabase PostgreSQL for persistence (profiles, subscriptions, saved verses, feed items).
+- **External APIs:** Bible-API.com and YouVersion Platform React SDK.
 
 ---
 
-## Folder Blueprint
+## Project Structure
+
 ```text
-youthopiaOS/
-├── bots/                  # Bot presentation interfaces
-│   ├── theo/              # Scripture & Devotional Bot
-│   ├── lusy/              # Games, Quizzes, & XP Bot
-│   ├── pete/              # Anti-Spam & Moderation Bot
-│   ├── ed/                # Event & Reminders Bot
-│   └── susy/              # Hospitality & Greeting Bot
-├── shared/                # Core libraries & utilities
-│   ├── db/                # Supabase & MongoDB clients
-│   ├── services/          # Shared logic (users, analytics)
-│   └── utils/             # Formatters, checkers, time utils
-├── core/                  # Bot Manager startup orchestration
-├── main.py                # Runtime entry point
-└── requirements.txt       # Dependencies
+YouThopiaOS/
+├── bots/
+│   └── theo/              # Theodore bot handlers, services, and keyboards
+├── gateway/
+│   └── app/               # FastAPI trust boundary, auth, and REST endpoints
+├── miniapp/               # React + TypeScript + Vite Telegram Mini App
+│   └── src/
+│       ├── components/    # Reusable UI, BibleTab, VerseCard, FeedPost
+│       └── routes/theo/   # TheoHome, TheoSaved, TheoProfile
+├── core/                  # Bot orchestration and lifecycle management
+├── shared/                # Supabase database client, user/feed services
+├── docs/
+│   └── ARCHIVE.md         # Archived bots reference & revival guide
+└── main.py                # Process entry point (Uvicorn + Bot runner)
 ```
 
 ---
 
-## Tech Stack
-* **Python** (Asyncio runtime core)
-* **AIogram** (Telegram Bot Framework)
-* **Supabase** (Postgres DB, API Client)
-* **FastAPI / Uvicorn** (Webhook management APIs)
-* **APScheduler** (Event reminders and cron tasks)
+## Quickstart
 
----
+### 1. Requirements
+- Python 3.11+
+- Node.js 18+ & npm
 
-## Installation
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/cyrilogban/youthopiaOS.git
-   cd youthopiaOS
-   ```
-2. **Setup virtual environment:**
-   ```powershell
-   python -m venv venv
-   venv\Scripts\activate  # Unix/macOS: source venv/bin/activate
-   ```
-3. **Install dependencies:**
-   ```powershell
-   pip install -r requirements.txt
-   ```
-
----
-
-## Environment Configuration
+### 2. Environment Variables
 Create a `.env` file in the root directory:
 ```env
-THEO_BOT_TOKEN=your_token
-LUSY_BOT_TOKEN=your_token
-PETE_BOT_TOKEN=your_token
-ED_BOT_TOKEN=your_token
-SUSY_BOT_TOKEN=your_token
-
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
+THEO_BOT_TOKEN=your_telegram_bot_token
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_anon_or_service_key
+YOUVERSION_APP_KEY=your_youversion_app_key
 ```
-> [!WARNING]
-> Never commit secrets. Ensure `.env` is listed inside `.gitignore`.
+
+### 3. Setup & Run Locally
+```bash
+# Backend & Bot
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+
+# Frontend Mini App (optional for dev)
+cd miniapp
+npm install
+npm run dev
+```
 
 ---
 
 ## Deployment
-* **Target:** Render
-* **Configuration:** Single web service container running all 5 bots concurrently alongside FastAPI webhooks in a unified process.
-
----
-
-## Core Principles
-* **Single Source of Truth** — Shared logic exists once, never duplicated.
-* **Separation of Concerns** — UI handlers focus purely on presentation.
-* **Modular Design** — New bots or services drop in with minimal friction.
-* **Cost Efficiency** — Multi-bot execution inside a single host runtime.
-
----
-
-## Roadmap
-* ✦ Shared cross-bot user profiles & analytics
-* ✦ Global reputational scoring system
-* ✦ Web-based administrator dashboard
-
----
-
-## Contribution & Collaboration
-This is a faith tool for community use to support Christian digital communities for the furtherance of the gospel in digital ecosystems. It is open to Christian developers who want to collaborate, contribute, and improve the ecosystem.
-
-* **Want to write code?** Check open issues, fork the repo, and submit a Pull Request!
-* **Suggestions & Feedback:** We'd love to hear how we can improve our games, devotional tools, or moderation controls to serve the community better.
-
----
-
-## About YOUTHOPIA BIBLE COMMUNITY
-YouThopiaOS is built for the **YOUTHOPIA BIBLE COMMUNITY** ecosystem — a Christ-centered digital community focused on faith, spiritual growth, personal development, and meaningful connection.
-
-**SHARING GOD'S LOVE ALL THE WAY**
+Deployed on **Render** as a single web service. The `render-build.sh` script installs Python dependencies, compiles the Mini App via Vite, and mounts the compiled frontend at the root `/` of the FastAPI web server.

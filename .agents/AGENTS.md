@@ -1,3 +1,6 @@
+# Scope Notice
+> **This repository is Theo only.** Do not recreate, reference or modify other bots. The old multi-bot version is archived at git tag `archive/multi-bot-2026-11-24`. The shared database still contains tables used by the archived bots; leave them alone.
+
 # Rules
 
 - Always provide a git commit message with the exact command to run after making any file changes.

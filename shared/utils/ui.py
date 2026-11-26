@@ -83,11 +83,12 @@ async def handle_group_profile_acknowledgment(message: Message, bot: Any) -> Non
         pass
 
     user_first = message.from_user.first_name if message.from_user else "Friend"
-    markup = get_5bot_quick_access_keyboard()
+    markup = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="📖 Open Theo DM", url="https://t.me/theobiblebot?start=profile")
+    ]])
     try:
         sent_msg = await message.answer(
-            f"<blockquote>👤 <b>{user_first}</b>, your community profiles from our 5 ecosystem bots have been sent to your private DMs!\n\n"
-            f"<i>Tap below if you haven't unlocked a specific bot yet:</i></blockquote>",
+            f"<blockquote>👤 <b>{user_first}</b>, your Theo profile has been sent to your private DMs!</blockquote>",
             parse_mode="HTML",
             reply_markup=markup
         )

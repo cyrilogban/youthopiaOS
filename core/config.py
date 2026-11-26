@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 
 
-BOT_NAMES = ("theo", "lusy", "pete", "eddy", "susy")
+BOT_NAMES = ("theo",)
 
 
 @dataclass(frozen=True, slots=True)
